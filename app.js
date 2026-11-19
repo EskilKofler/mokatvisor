@@ -53,6 +53,13 @@ const state = {
   rows: new Map(),   // key -> elementi DOM della riga
 };
 
+// Salvataggi da tastiera in attesa (key -> timer), annullabili se cambia l'account
+const kbTimers = new Map();
+function cancelPendingKeyboardSaves() {
+  for (const t of kbTimers.values()) clearTimeout(t);
+  kbTimers.clear();
+}
+
 let auth, db;
 if (configured) {
   const app = initializeApp(firebaseConfig);
@@ -129,16 +136,20 @@ function render() {
       zero.addEventListener("click", () => saveRating(m, d, 0));
 
       // Tastiera (con piccolo ritardo per non fare una scrittura a ogni pressione)
-      let kbTimer;
       stars.addEventListener("keydown", (e) => {
         const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
         if (!step) return;
         e.preventDefault();
-        const next = Math.min(5, Math.max(0, (state.mine.get(key) ?? 0) + step));
+        const cur = state.mine.get(key);
+        // Senza voto, qualsiasi freccia parte da 0.5 (lo 0 si dà solo col bottone "0")
+        const next = cur == null ? 0.5 : Math.min(5, Math.max(0, cur + step));
         state.mine.set(key, next);
         updateRow(key);
-        clearTimeout(kbTimer);
-        kbTimer = setTimeout(() => saveRating(m, d, next), 700);
+        clearTimeout(kbTimers.get(key));
+        kbTimers.set(key, setTimeout(() => {
+          kbTimers.delete(key);
+          saveRating(m, d, next);
+        }, 700));
       });
 
       updateRow(key);
@@ -277,6 +288,7 @@ if (configured) {
       try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Impossibile collegarsi"); }
       return;
     }
+    if (state.user && state.user.uid !== user.uid) cancelPendingKeyboardSaves();
     state.user = user;
     renderAccount();
     try {
