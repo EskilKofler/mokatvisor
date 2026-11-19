@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Un documento per (utente, macchinetta, bevanda):
+    // id = <uid>_<machineId>_<drinkId>  → un solo voto per bevanda, ma modificabile.
+    match /ratings/{ratingId} {
+
+      // Chi ha fatto l'accesso (anche anonimo) può leggere i voti,
+      // serve per calcolare le medie.
+      allow read: if request.auth != null;
+
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'machineId', 'drinkId', 'drinkKey', 'value', 'updatedAt'])
+        && request.resource.data.keys().hasAll(
+             ['uid', 'machineId', 'drinkId', 'drinkKey', 'value', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.machineId is string
+        && request.resource.data.drinkId is string
+        && request.resource.data.machineId.matches('^[a-z0-9-]{1,40}$')
+        && request.resource.data.drinkId.matches('^[a-z0-9-]{1,40}$')
+        && request.resource.data.drinkKey ==
+             request.resource.data.machineId + '_' + request.resource.data.drinkId
+        && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey
+        && request.resource.data.value is number
+        && request.resource.data.value >= 0
+        && request.resource.data.value <= 5
+        && request.resource.data.value * 2 == math.floor(request.resource.data.value * 2)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+  }
+}

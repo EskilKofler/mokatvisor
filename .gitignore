@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Editor / Claude Code (impostazioni locali)
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# Firebase CLI (se in futuro lo usi)
+.firebase/
+firebase-debug.log*
+.firebaserc
+
+# Segreti e dipendenze
+.env
+.env.*
+node_modules/
+*.log

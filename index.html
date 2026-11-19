@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kaffa-isiltep</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>☕ kaffa-isiltep</h1>
+    <p class="by">by ISILTEP</p>
+    <p class="sub">Tocca le stelle per votare. Puoi cambiare il voto quando vuoi.</p>
+  </header>
+
+  <main>
+    <div id="setup-warning" class="banner warn" hidden>
+      Configurazione Firebase mancante: compila <code>firebase-config.js</code>.
+    </div>
+
+    <section id="account" class="banner"></section>
+
+    <div id="machines"></div>
+
+    <button id="refresh" class="link-btn" type="button">↻ Aggiorna i risultati</button>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
