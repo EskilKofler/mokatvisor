@@ -62,7 +62,7 @@ function sheetHtml(cards) {
       <div class="qr">${svg}</div>
       <p class="cta">Valuta le bevande di questa macchinetta</p>
       <p class="url">${esc(url)}</p>
-      <p class="brand">☕ Kaffa · by Eskil Kofler</p>
+      <p class="brand">☕ Kaffa ISILTeP · by Eskil Kofler</p>
     </article>`).join("\n");
 
   return `<!DOCTYPE html>
