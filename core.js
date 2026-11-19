@@ -226,9 +226,8 @@ function renderTopbar(active) {
   brand.href = "./";
   const logo = el("span", "brand-logo", "☕");
   logo.setAttribute("aria-hidden", "true");
-  const text = el("span", "brand-text");
-  text.append(el("span", "brand-name", "Kaffa ISILTeP"), el("span", "brand-by", "by Eskil Kofler"));
-  brand.append(logo, text); // icona, nome e "by": un solo link alla home
+  const name = el("span", "brand-name", "Kaffa ISILTeP");
+  brand.append(logo, name); // icona e nome: un solo link alla home
   const links = el("div", "nav-links");
   for (const n of NAV) {
     const a = el("a", "nav-link", n.label);

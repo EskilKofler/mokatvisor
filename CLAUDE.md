@@ -39,7 +39,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
 - In fondo a ogni pagina: tendina piccola e grigia «Informazioni e privacy» (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
-- Barra in alto: icona ☕ + "Kaffa ISILTeP" + "by Eskil Kofler" (un solo link alla home) e le voci Macchinette / Classifica.
+- Barra in alto: icona ☕ + "Kaffa ISILTeP" (un solo link alla home) e le voci Macchinette / Classifica.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
