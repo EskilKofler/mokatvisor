@@ -1,6 +1,6 @@
 # kaffa-isiltep
 
-*by ISILTEP* — voti delle macchinette della scuola.
+*by Eskil Kofler* — voti delle macchinette della scuola ISILTEP.
 
 Sito statico (HTML + JS) che usa Firebase (Auth anonima + Firestore) e si pubblica gratis su GitHub Pages.
 
@@ -10,9 +10,9 @@ quindi non ci sono account, login (nemmeno con Google), nickname, commenti, foto
 Si salvano solo il voto (da 0 a 5) per ogni bevanda, la data e un codice casuale anonimo.
 Non aggiungere funzioni che raccolgano dati personali o testo libero, né analisi del traffico o pubblicità.
 
-In fondo a ogni pagina c'è la sezione «Informazioni e privacy» (testo e costante `CONTACT` in `core.js`): tienila
-allineata a ciò che il sito fa davvero e **sostituisci `[CONTATTO]` con un contatto reale prima di pubblicare**. La frase su reCAPTCHA compare da
-sola quando App Check è attivo.
+In fondo a ogni pagina c'è la tendina «Informazioni e privacy» (testo e costante `CONTACT`, cioè l'email di contatto,
+in `core.js`): tienila allineata a ciò che il sito fa davvero. La frase su reCAPTCHA compare da sola quando App Check
+è attivo.
 
 ## 1. Crea il progetto Firebase (piano Spark, gratis, niente carta)
 1. https://console.firebase.google.com → **Aggiungi progetto** (Analytics non serve).
@@ -69,20 +69,23 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
-- **Macchinette (home):** solo le 5 card, nell'ordine 6° piano (principale, secondaria), 4° piano (principale,
-  secondaria), 3° piano. L'ordine è `HOME_ORDER` in `app.js`; `machines.js` non cambia.
-- **Classifica:** podio con le 3 migliori bevande (la prima al centro e più alta) ed elenco di tutte le altre con una
-  barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti minimi per entrare in classifica, ora 1) e
-  `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1). L'ordine usa la media corretta
-  (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede sempre la media vera e il numero di voti.
+- **Macchinette (home):** 5 menù chiusi, uno per macchinetta, nell'ordine 6° piano (principale, secondaria), 4° piano
+  (principale, secondaria), 3° piano (`HOME_ORDER` in `app.js`; `machines.js` non cambia). Toccando una macchinetta si
+  apre l'interfaccia completa delle sue bevande: media, stelle, numero di voti e voto. Le bevande ancora senza voti
+  mostrano «Diventa il primo a lasciare una recensione».
+- **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
+  più alta) ed elenco di tutte le altre con una barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti
+  minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta,
+  ora 1). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
+  sempre la media vera e il numero di voti.
 - **Votare:** si tocca una bevanda (in qualsiasi pagina) e si apre un pannello con le stelle (metà sinistra = mezzo
   punto; il chip «Dai 0» per lo zero).
-- **Letture Firestore:** una media costa una lettura. La home e la Classifica ne leggono 15 (`sum` + `count` per
-  bevanda), la vista `?m=` solo 3, più i tuoi voti. Le medie restano in cache nella scheda per 60 secondi, una voce per
+- **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home parte da zero e ne legge 3
+  per ogni menù che apri, la vista `?m=` ne legge 3, la Classifica 15 (e non legge i tuoi voti). Le medie restano in cache nella scheda per 60 secondi, una voce per
   bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il piano Spark ha 50.000 letture al
   giorno: tienine conto con tanti utenti.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
-- **Informazioni e privacy:** sezione fissa in fondo a ogni pagina (vedi sopra); contiene il segnaposto `[CONTATTO]`.
+- **Informazioni e privacy:** tendina piccola e grigia in fondo a ogni pagina (vedi sopra), con l'email di contatto.
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash
