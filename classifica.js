@@ -127,8 +127,8 @@ function renderBoard() {
     const go = el("a", "btn", "Vai alle macchinette");
     go.href = "./";
     inv.append(
-      el("p", "invite-title", "Ancora nessun voto"),
-      el("p", "invite-text", "Sii il primo: scegli una bevanda e dai il tuo voto. La classifica parte da qui."),
+      el("p", "invite-title", "Ancora nessuna recensione"),
+      el("p", "invite-text", "Scegli una bevanda e lascia la prima: la classifica parte da qui."),
       go,
     );
     sec.append(inv, refreshRow());

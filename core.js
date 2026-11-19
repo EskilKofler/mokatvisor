@@ -140,7 +140,7 @@ export function ariaFor(e, st) {
     ? "ancora nessun voto"
     : `${st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`}, ${countText(st)}`;
   return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}. ` +
-    (my === undefined ? "Non l'hai ancora votata. Tocca per votare." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
+    (my === undefined ? "Non l'hai ancora votata. Tocca per lasciare una recensione." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
 }
 
 // Bottone-bevanda: base comune a card, hero, podio e classifica
@@ -697,9 +697,9 @@ function buildSheet() {
 async function refresh() {
   if (!state.user) return;
   const wait = Math.ceil((state.fetchedAt + REFRESH_FORCED_MS - Date.now()) / 1000);
-  if (wait > 0) { toast(`Già aggiornato, riprova tra ${wait} s`); return; }
+  if (wait > 0) { toast(`Già aggiornato! Riprova tra ${wait} s`); return; }
   const ok = await loadStats({ force: true });
-  if (ok) toast("Risultati aggiornati");
+  if (ok) toast("Aggiornato!");
 }
 
 // Ogni pagina chiama start(): page = voce attiva nella barra, sections = cosa disegnare,
@@ -736,7 +736,7 @@ export function start({ page, sections, need, vote: canVote = true }) {
   if (configured) {
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Impossibile collegarsi"); }
+        try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Non riesco a collegarmi. Riprova tra poco."); }
         return;
       }
       if (state.user && state.user.uid !== user.uid) { // utente diverso da prima: azzero lo stato personale
@@ -749,7 +749,7 @@ export function start({ page, sections, need, vote: canVote = true }) {
         await Promise.all([ctx.vote ? loadMine() : null, loadStats()]);
       } catch (e) {
         console.error(e);
-        toast("Errore nel caricamento dei dati");
+        toast("Ops, non riesco a caricare i dati.");
       }
     });
 

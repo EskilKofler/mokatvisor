@@ -27,7 +27,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
   colonne come il pannello reale (`leftCount` per macchinetta in `machines.js`); ogni riquadro (≥ 56 px) è un bottone
   che apre il pannello di voto. Stato per riquadro da `state.mine` (nessuna lettura in più):
   votato = bordo verde continuo; da votare = bordo tratteggiato + ☆. Niente badge con il voto: il voto si vede aprendo il
-  pannello. Senza voti "Nessun voto"; un solo invito in cima se la macchinetta non ha voti. Breve alone
+  pannello. Senza voti "Nessun voto ancora"; un solo invito in cima se la macchinetta non ha voti. Breve alone
   verde dopo un voto (spento con prefers-reduced-motion). Niente "Hai votato X di N".
 - Classifica (`classifica.js`): **sola lettura, niente voto** (`start({ vote: false })`). Podio 2-1-3 ed elenco
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;

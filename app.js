@@ -56,7 +56,7 @@ function drinkTile(e, spot) {
   if (st.pending) {
     b.append(skel("w-60"));
   } else if (st.known && st.n === 0) {
-    b.append(el("span", "tile-sub tile-none", "Nessun voto"));
+    b.append(el("span", "tile-sub tile-none", "Nessun voto ancora"));
   } else if (!st.known) {
     b.append(el("span", "tile-sub", "Voti non disponibili"));
   } else {
@@ -170,7 +170,7 @@ function machineMenu(m) {
 
 function renderMachines() {
   const sec = el("section", "page");
-  sec.append(pageHead("machines-title", "Le macchinette", "Tocca una macchinetta per vedere le bevande e votare."));
+  sec.append(pageHead("machines-title", "Le macchinette", "Scegli una macchinetta e dì la tua."));
   const list = el("div", "menus");
   for (const m of sortedMachines()) list.append(machineMenu(m));
   sec.append(list);
