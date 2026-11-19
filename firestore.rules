@@ -18,8 +18,10 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.machineId is string
         && request.resource.data.drinkId is string
-        && request.resource.data.machineId.matches('^[a-z0-9-]{1,40}$')
-        && request.resource.data.drinkId.matches('^[a-z0-9-]{1,40}$')
+        && request.resource.data.machineId in
+             ['piano3', 'piano4-principale', 'piano4-secondaria',
+              'piano6-principale', 'piano6-secondaria']
+        && request.resource.data.drinkId in ['lungo', 'espresso', 'cappuccino']
         && request.resource.data.drinkKey ==
              request.resource.data.machineId + '_' + request.resource.data.drinkId
         && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey

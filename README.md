@@ -33,6 +33,8 @@ Metti i file in `img/` con il nome dell'id: `piano3.jpg`, `piano4-principale.jpg
 ## Modificare macchinette o bevande
 In cima a `app.js` ci sono gli array `DRINKS` e `MACHINES`. Gli `id` devono usare solo minuscole, numeri e trattini.
 Non cambiare gli id dopo aver raccolto voti.
+Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`):
+se ne aggiungi uno in `app.js`, aggiungilo anche lì e ripubblica le regole, altrimenti il voto viene rifiutato.
 
 ## Sicurezza (promemoria)
 - Le chiavi in `firebase-config.js` sono pubbliche per natura: contano le regole di Firestore.
