@@ -75,14 +75,25 @@ function drinkTile(e, spot) {
 }
 
 // Griglia a due colonne come il pannello reale: le prime `leftCount` bevande a sinistra dall'alto in basso, poi la destra
-function drinksOf(m, prefix) {
-  const grid = el("div", "drink-grid");
-  grid.style.setProperty("--rows", String(m.leftCount ?? Math.ceil(m.drinks.length / 2)));
-  for (const d of m.drinks) {
+function grid(m, drinks, prefix, rows) {
+  const g = el("div", "drink-grid");
+  g.style.setProperty("--rows", String(rows));
+  for (const d of drinks) {
     const key = keyOf(m.id, d.id);
-    grid.append(drinkTile({ key, m, d }, `${prefix}:${key}`));
+    g.append(drinkTile({ key, m, d }, `${prefix}:${key}`));
   }
-  return grid;
+  return g;
+}
+
+// Un solo invito in cima alla macchinetta, quando nessuna sua bevanda ha ancora voti
+const hasNoVotes = (m) => m.drinks.every((d) => { const s = statOf(keyOf(m.id, d.id)); return s.known && s.n === 0; });
+
+// Le bevande di una macchinetta: invito (se serve) + griglia
+function drinksOf(m, prefix) {
+  const box = el("div", "drinks");
+  if (hasNoVotes(m)) box.append(el("p", "machine-invite", "Diventa il primo a lasciare una recensione"));
+  box.append(grid(m, m.drinks, prefix, m.leftCount ?? Math.ceil(m.drinks.length / 2)));
+  return box;
 }
 
 /* ---- Pagina di una macchinetta (?m=) ---- */
