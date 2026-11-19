@@ -17,6 +17,7 @@ import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modi
 /* ------------------------------------------------------------------ */
 /*  IMPOSTAZIONI                                                       */
 /* ------------------------------------------------------------------ */
+const PRIOR_VOTES = 1;           // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
 const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
 const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
 const CONTACT = "eskilkofler@gmail.com"; // a chi scrivere per informazioni o cancellazione dei dati
@@ -119,6 +120,15 @@ export function statOf(key) {
   if (!s) return { pending: !state.settled || state.loading.has(key), known: false, n: 0, avg: null };
   return { pending: false, known: true, n: s.n, avg: s.n ? s.sum / s.n : null };
 }
+
+// Media corretta (bayesiana): chi ha pochi voti viene "tirato" verso la media generale. Serve solo a ordinare
+// (classifica, "Top" delle macchinette): a schermo c'è sempre la media vera.
+export function globalMean() {
+  let total = 0, votes = 0;
+  for (const s of state.stats.values()) { total += s.sum; votes += s.n; }
+  return votes ? total / votes : 3; // media di tutti i voti di tutte le bevande
+}
+export const bayesScore = (s, C) => (s && s.n ? (s.sum + PRIOR_VOTES * C) / (s.n + PRIOR_VOTES) : null);
 
 const countText = (st) => (st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") : "Voti non disponibili");
 

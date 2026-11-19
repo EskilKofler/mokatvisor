@@ -1,6 +1,6 @@
 import {
   start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -18,6 +18,21 @@ function machineStat(m) {
   let sum = 0, n = 0;
   for (const d of m.drinks) { const s = state.stats.get(keyOf(m.id, d.id)); if (s) { sum += s.sum; n += s.n; } }
   return { n, avg: n ? sum / n : null };
+}
+
+// La bevanda migliore di una macchinetta (media corretta; a parità più voti), o null se nessuna ha voti
+function bestDrink(m) {
+  const C = globalMean();
+  let best = null;
+  for (const d of m.drinks) {
+    const s = state.stats.get(keyOf(m.id, d.id));
+    if (!s || !s.n) continue;
+    const score = bayesScore(s, C);
+    if (!best || score > best.score + 1e-9 || (Math.abs(score - best.score) <= 1e-9 && s.n > best.n)) {
+      best = { d, score, n: s.n, avg: s.sum / s.n };
+    }
+  }
+  return best;
 }
 
 // Home: i piani restano in ordine (6°, 4°, 3°); dentro lo stesso piano prima la macchinetta con più recensioni;
@@ -88,6 +103,16 @@ function moreLinks() {
 }
 
 /* ---- Home: un menù per macchinetta, chiuso finché non lo tocchi ---- */
+
+// "Top: Cappuccino ★ 4,6" sotto il nome, anche a menù chiuso
+function topLine(m) {
+  const line = el("span", "mcard-top");
+  if (m.drinks.some((d) => statOf(keyOf(m.id, d.id)).pending)) { line.append(skel("w-80")); return line; }
+  const best = bestDrink(m);
+  if (!best) { line.classList.add("none"); line.textContent = "Ancora nessuna recensione"; return line; }
+  line.append("Top: ", el("b", "", best.d.name), " ", el("span", "tile-star", "★"), ` ${nfAvg.format(best.avg)}`);
+  return line;
+}
 function machineMenu(m) {
   const isOpen = open.has(m.id);
   const card = el("article", `mcard${isOpen ? " open" : ""}`);
@@ -99,11 +124,11 @@ function machineMenu(m) {
   head.setAttribute("aria-expanded", String(isOpen));
   head.setAttribute("aria-controls", `panel-${m.id}`);
   const title = el("span", "mcard-title");
-  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name));
+  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m));
   const chevron = el("span", "chevron");
   chevron.setAttribute("aria-hidden", "true");
   const ms = machineStat(m);
-  const rating = el("span", "mcard-rating", ms.n ? `★ ${nfAvg.format(ms.avg)} · ${votesLabel(ms.n)}` : "");
+  const rating = el("span", "mcard-rating", ms.n ? votesLabel(ms.n) : "");
   head.append(title, rating, chevron);
   card.append(head);
   if (isOpen) {

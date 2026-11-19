@@ -1,32 +1,24 @@
 import {
-  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink,
+  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink, globalMean, bayesScore,
 } from "./core.js";
 
 /* ------------------------------------------------------------------ */
 /*  IMPOSTAZIONI DELLA CLASSIFICA                                      */
 /* ------------------------------------------------------------------ */
 const MIN_VOTES = 1;   // voti minimi perché una bevanda entri nel podio e nella classifica "vera"
-const PRIOR_VOTES = 1; // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
+// (PRIOR_VOTES, il peso della media generale nella media corretta, sta in core.js)
 
 /* ------------------------------------------------------------------ */
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const PLACES = ["Primo", "Secondo", "Terzo"];
 
-// Media corretta (bayesiana): chi ha pochi voti viene "tirato" verso la media generale.
-// Serve solo a ordinare: a schermo c'è sempre la media vera e il numero di voti.
+// Ordina con la media corretta (bayesiana); a schermo c'è sempre la media vera e il numero di voti
 function rankedList() {
-  let total = 0, votes = 0;
-  for (const s of state.stats.values()) { total += s.sum; votes += s.n; }
-  const C = votes ? total / votes : 3; // media di tutti i voti di tutte le bevande
+  const C = globalMean();
   return ENTRIES.map((e) => {
     const st = statOf(e.key);
-    const s = state.stats.get(e.key);
-    return {
-      ...e, ...st,
-      eligible: st.n >= MIN_VOTES,
-      score: s && s.n ? (s.sum + PRIOR_VOTES * C) / (s.n + PRIOR_VOTES) : null,
-    };
+    return { ...e, ...st, eligible: st.n >= MIN_VOTES, score: bayesScore(state.stats.get(e.key), C) };
   });
 }
 
