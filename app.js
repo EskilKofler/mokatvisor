@@ -70,12 +70,12 @@ if (configured) {
 /* ------------------------------ UI ------------------------------ */
 
 let toastTimer;
-function toast(msg) {
+function toast(msg, ms = 1800) {
   const t = $("#toast");
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
 function render() {
@@ -200,7 +200,13 @@ function renderAccount() {
 
 /* ---------------------------- Account --------------------------- */
 
+const OPEN_IN_BROWSER = "Apri il sito nel browser (Chrome o Safari) per accedere con Google";
+// Browser integrati di app (Instagram, WhatsApp, ...): Google vi blocca il login.
+const inWebview = /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|Line\/|MicroMessenger|WhatsApp|; wv\)|(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i
+  .test(navigator.userAgent);
+
 async function linkGoogle() {
+  if (inWebview) { toast(OPEN_IN_BROWSER, 6000); return; }
   const provider = new GoogleAuthProvider();
   try {
     // Collega Google all'utente anonimo: l'uid resta lo stesso e i voti fatti restano validi.
@@ -221,6 +227,8 @@ async function linkGoogle() {
         console.error(e2);
         toast("Non sono riuscito a entrare nel tuo account Google, riprova");
       }
+    } else if (e.code === "auth/popup-blocked") {
+      toast(OPEN_IN_BROWSER, 6000);
     } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
       console.error(e);
       toast("Accesso non riuscito");
