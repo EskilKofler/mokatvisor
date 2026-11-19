@@ -45,16 +45,41 @@ h1, h2, h3, p { margin: 0; }
 }
 .skip:focus { top: 8px; }
 
-/* ----------------------------- Intestazione ---------------------------- */
-.top { padding: calc(14px + env(safe-area-inset-top)) 16px 4px; }
-.top-in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand { display: flex; align-items: center; gap: 12px; }
-.logo {
-  width: 46px; height: 46px; border-radius: 15px; background: var(--espresso);
-  display: grid; place-items: center; font-size: 1.5rem; box-shadow: var(--shadow);
+/* ------------------------- Barra in alto (fissa) ----------------------- */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  padding-top: env(safe-area-inset-top);
+  background: rgba(246, 239, 228, .92); border-bottom: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
-.top h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
-.by { font-size: .85rem; font-weight: 700; color: var(--accent); letter-spacing: .03em; }
+.topbar-in {
+  max-width: 760px; height: 56px; margin: 0 auto; padding: 0 12px 0 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.brand { display: flex; flex-direction: column; justify-content: center; min-height: 44px; min-width: 0; color: var(--ink); text-decoration: none; line-height: 1.05; white-space: nowrap; }
+.brand-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
+.brand-by { font-size: .68rem; font-weight: 700; letter-spacing: .05em; color: var(--accent); }
+.nav-links { display: flex; gap: 2px; flex: none; }
+.nav-link {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 13px; border-radius: 999px;
+  color: var(--muted); font-size: .95rem; font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.nav-link:hover { background: var(--cream); color: var(--ink); }
+.nav-link[aria-current="page"] { background: var(--espresso); color: #fff; }
+@media (max-width: 380px) {
+  .topbar-in { padding: 0 8px 0 12px; gap: 4px; }
+  .brand-name { font-size: 1rem; }
+  .nav-link { padding: 0 9px; font-size: .88rem; }
+}
+/* La barra è fissa: la pagina parte sotto di lei e i salti ad ancora non finiscono nascosti */
+body { padding-top: calc(56px + env(safe-area-inset-top)); }
+html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
+
+/* Titolo di pagina (h1) con il pulsante di aggiornamento a destra */
+.page { margin-top: 20px; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.page-title { font-size: 1.7rem; font-weight: 800; letter-spacing: -.015em; line-height: 1.1; }
+.page-head .section-sub { margin-bottom: 14px; }
 .icon-btn {
   width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer;
   background: var(--paper); color: var(--accent); font-size: 1.5rem; line-height: 1;
@@ -119,7 +144,7 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 56px; }
 .hero { margin-top: 14px; background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .hero-photo { display: block; width: 100%; max-height: 230px; object-fit: cover; }
 .hero-head { padding: 20px 18px 8px; }
-.hero h2 { font-size: 1.9rem; font-weight: 800; line-height: 1.12; letter-spacing: -.015em; margin-top: 2px; }
+.hero-title { font-size: 1.9rem; font-weight: 800; line-height: 1.12; letter-spacing: -.015em; margin-top: 2px; }
 .hero-drinks { display: grid; gap: 12px; padding: 12px 14px 18px; }
 .big-drink {
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
@@ -142,7 +167,8 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 56px; }
   background: var(--star-on) 0 0 / var(--s) var(--s) repeat-x;
 }
 
-.more { margin-top: 12px; }
+.more { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }
+.more .icon-btn { margin-left: auto; }
 .more-link {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px;
   color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 4px;
