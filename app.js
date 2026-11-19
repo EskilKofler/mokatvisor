@@ -41,6 +41,11 @@ if (!configured) $("#setup-warning").hidden = false;
 const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
 if (single) document.title = `${single.name} (${single.floor}) · kaffa-isiltep`;
 
+// Ordine delle card nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
+const HOME_ORDER = ["piano6-principale", "piano6-secondaria", "piano4-principale", "piano4-secondaria", "piano3"];
+const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
+const HOME_MACHINES = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b));
+
 // Tutte le bevande, una per (macchinetta, bevanda)
 const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf(m.id, d.id), m, d })));
 
@@ -217,11 +222,13 @@ function renderHero(m) {
   return sec;
 }
 
-function moreLink() {
+function moreLinks() {
   const p = el("p", "more");
-  const a = el("a", "more-link", "Vedi tutte le macchinette →");
-  a.href = location.pathname; // stessa pagina, senza ?m=
-  p.append(a);
+  const all = el("a", "more-link", "Vedi tutte le macchinette →");
+  all.href = location.pathname; // stessa pagina, senza ?m=
+  const rank = el("a", "more-link", "Vai alla classifica →");
+  rank.href = "classifica.html";
+  p.append(all, rank);
   return p;
 }
 
@@ -365,7 +372,7 @@ function renderMachines() {
   sec.setAttribute("aria-labelledby", "machines-title");
   sec.append(...sectionHead("machines-title", "Le macchinette", "Tocca una bevanda per votarla."));
   const grid = el("div", "machines");
-  for (const m of MACHINES) {
+  for (const m of HOME_MACHINES) {
     const card = el("article", "mcard");
     card.append(photo(m, "mcard-photo"));
     const body = el("div", "mcard-body");
@@ -379,8 +386,8 @@ function renderMachines() {
 }
 
 function sections() {
-  if (single) return [renderHero(single), moreLink(), renderTop3()];
-  return [renderTop3(), renderRanking(), renderMachines()];
+  if (single) return [renderHero(single), moreLinks()];
+  return [renderMachines()];
 }
 
 function renderView() {
@@ -403,6 +410,21 @@ function cacheRead(name) {
 }
 function cacheWrite(name, data, t = Date.now()) {
   try { sessionStorage.setItem(`kaffa:${name}`, JSON.stringify({ t, data })); } catch { /* niente storage: pazienza */ }
+}
+
+// Cache delle medie: una voce per bevanda con la propria ora di lettura, così una pagina che
+// ne usa solo alcune (?m=) e un'altra che le usa tutte condividono ciò che c'è già
+const STATS_CACHE = "kaffa:stats2";
+function statsCacheRead() {
+  try { const o = JSON.parse(sessionStorage.getItem(STATS_CACHE)); return o && typeof o === "object" ? o : {}; }
+  catch { return {}; }
+}
+function statsCacheWrite(keys) {
+  try {
+    const o = statsCacheRead(), t = Date.now();
+    for (const k of keys) { const s = state.stats.get(k); if (s) o[k] = { sum: s.sum, n: s.n, t }; }
+    sessionStorage.setItem(STATS_CACHE, JSON.stringify(o));
+  } catch { /* niente storage: pazienza */ }
 }
 
 async function loadMine() {
@@ -440,37 +462,40 @@ async function fetchStats(entries) {
   return error;
 }
 
-// Ritorna true se i dati sono aggiornati senza errori
+// Le medie che servono a questa pagina: quelle di una macchinetta (?m=) oppure tutte
+const needed = () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES);
+
+// Ritorna true se i dati sono aggiornati senza errori. Usa la cache per le medie ancora fresche (< 60 s)
+// e legge da Firestore solo le altre (con force: tutte).
 async function loadStats({ force = false } = {}) {
   if (!configured || !state.user) return false;
-  if (!force) {
-    const c = cacheRead("stats");
-    if (c) {
-      for (const [k, v] of Object.entries(c.data)) state.stats.set(k, v);
-      state.fetchedAt = c.t;
-      state.settled = true;
-      hideNotice();
-      renderView();
-      return true;
-    }
+  const need = needed();
+  const c = statsCacheRead(), now = Date.now();
+  const fresh = (e) => !force && c[e.key] && typeof c[e.key].n === "number" && now - c[e.key].t < CACHE_MS;
+  let oldest = now;
+  for (const e of need.filter(fresh)) {
+    state.stats.set(e.key, { sum: c[e.key].sum, n: c[e.key].n });
+    oldest = Math.min(oldest, c[e.key].t);
+  }
+  const toFetch = need.filter((e) => !fresh(e));
+  if (!toFetch.length) {
+    state.fetchedAt = oldest;
+    state.settled = true;
+    hideNotice();
+    renderView();
+    return true;
   }
   if (state.fetching) return false;
   state.fetching = true;
   try {
-    // Con ?m= prima le 3 bevande della macchinetta, così si vedono subito; poi le altre
-    const first = single ? ENTRIES.filter((e) => e.m === single) : ENTRIES;
-    let error = await fetchStats(first);
-    if (single) {
-      renderView();
-      if (!error) error = await fetchStats(ENTRIES.filter((e) => e.m !== single));
-    }
+    const error = await fetchStats(toFetch);
     state.settled = true;
-    state.fetchedAt = Date.now();
+    state.fetchedAt = oldest;
     if (error) {
       showNotice(friendlyError(error), () => loadStats({ force: true }));
     } else {
       hideNotice();
-      cacheWrite("stats", Object.fromEntries(state.stats), state.fetchedAt);
+      statsCacheWrite(toFetch.map((e) => e.key));
     }
     renderView();
     return !error;
@@ -648,9 +673,7 @@ async function refreshOne(key) {
   try {
     state.stats.set(key, await fetchStat(key));
     fresh = true;
-    if (ENTRIES.every((x) => state.stats.has(x.key))) {
-      cacheWrite("stats", Object.fromEntries(state.stats), state.fetchedAt || Date.now());
-    }
+    statsCacheWrite([key]);
   } catch (err) {
     console.error(err);
   }
