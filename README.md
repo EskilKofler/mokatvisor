@@ -57,7 +57,8 @@ In `machines.js` ci sono gli array `DRINKS` e `MACHINES` (li usano sia il sito s
 Gli `id` devono usare solo minuscole, numeri e trattini.
 Non cambiare gli id dopo aver raccolto voti.
 Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`):
-se ne aggiungi uno in `machines.js`, aggiungilo anche lì e ripubblica le regole, altrimenti il voto viene rifiutato.
+se aggiungi una macchinetta o una bevanda in `machines.js`, aggiungi l'id anche lì e **ripubblica le regole** nella
+console Firebase, altrimenti il voto viene rifiutato.
 Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
 
 ## QR code per le macchinette
@@ -70,21 +71,25 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
 - **Macchinette (home):** 5 menù chiusi, uno per macchinetta: prima i due del 6° piano, poi i due del 4°, poi il 3°.
-  Dentro lo stesso piano sta sopra la macchinetta con più recensioni (a parità, la principale). Sul menù si vede la
-  media e il numero di voti. L'ordine di partenza è `HOME_ORDER` in `app.js`; `machines.js` non cambia. Toccando una
-  macchinetta si apre l'interfaccia completa delle sue bevande: media, stelle, numero di voti e voto. Le bevande
-  ancora senza voti mostrano «Diventa il primo a lasciare una recensione».
+  Dentro lo stesso piano sta sopra la macchinetta con più recensioni (a parità, la principale). Il menù chiuso mostra
+  la bevanda migliore («Top: Cappuccino ★ 4,6») e il totale dei voti. Toccando una macchinetta si apre la griglia delle
+  sue bevande.
+- **Bevande di una macchinetta:** griglia a due colonne che rispecchia il pannello reale (prima la colonna sinistra
+  dall'alto in basso, poi la destra). Ogni riquadro è un pulsante con il nome e «★ media · N voti»; il tocco apre il
+  pannello di voto. Senza voti: «Diventa il primo a recensire». In `machines.js` una macchinetta può avere un suo elenco
+  `drinks` e `leftCount` (quante bevande stanno a sinistra): ora il 6° piano principale usa le 16 bevande del pannello
+  dalla foto (`PANEL_DRINKS`), le altre le 3 di prima, finché non ci sono le foto vere.
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
   più alta) ed elenco di tutte le altre con una barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti
-  minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta,
-  ora 1). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
+  minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1, in `core.js`). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
   sempre la media vera e il numero di voti.
 - **Votare:** si tocca una bevanda (in qualsiasi pagina) e si apre un pannello con le stelle (metà sinistra = mezzo
   punto; il chip «Dai 0» per lo zero).
-- **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica ne leggono 15
-  (la home per ordinare le macchinette), la vista `?m=` ne legge 3; la Classifica non legge i tuoi voti. Le medie restano in cache nella scheda per 60 secondi, una voce per
-  bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il piano Spark ha 50.000 letture al
-  giorno: tienine conto con tanti utenti.
+- **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica leggono la
+  media di **ogni bevanda di ogni macchinetta** (oggi 28: 16 + 4×3; con 16 bevande per macchinetta saranno 80), la
+  vista `?m=` solo quelle di una macchinetta; la Classifica non legge i tuoi voti. Le medie restano in cache nella
+  scheda per 60 secondi, una voce per bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il
+  piano Spark ha 50.000 letture al giorno: con tante bevande tienine conto.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
 - **Informazioni e privacy:** tendina piccola e grigia in fondo a ogni pagina (vedi sopra), con l'email di contatto.
 
