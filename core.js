@@ -435,7 +435,7 @@ function openSheet(e, spot) {
   $("#sheet-error").hidden = true;
   paintSheet();
   if (typeof sheet.showModal === "function") sheet.showModal(); else sheet.setAttribute("open", "");
-  starsEl.focus({ preventScroll: true });
+  sheet.focus({ preventScroll: true }); // il focus resta sul pannello: sulle stelle comparirebbe un bordo (su iPhone anche al tocco)
 }
 
 function afterClose() {
@@ -635,6 +635,7 @@ function wireSheet() {
 function buildSheet() {
   sheet = el("dialog", "sheet");
   sheet.id = "sheet";
+  sheet.tabIndex = -1; // si può mettere a fuoco da codice, ma non con Tab
   sheet.setAttribute("aria-labelledby", "sheet-title");
   const inner = el("div", "sheet-in");
 
