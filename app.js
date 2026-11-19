@@ -202,8 +202,14 @@ async function linkGoogle() {
       // Questo Google era già stato usato (es. su un altro telefono): entra in quell'account.
       // I voti dati finora da anonimo restano nell'uid anonimo e non vengono spostati.
       const cred = GoogleAuthProvider.credentialFromError(e);
-      await signInWithCredential(auth, cred);
-      toast("Bentornato! Ho ricaricato i tuoi voti");
+      try {
+        if (!cred) throw new Error("credenziale Google mancante");
+        await signInWithCredential(auth, cred);
+        toast("Bentornato! Ho ricaricato i tuoi voti");
+      } catch (e2) {
+        console.error(e2);
+        toast("Non sono riuscito a entrare nel tuo account Google, riprova");
+      }
     } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
       console.error(e);
       toast("Accesso non riuscito");
