@@ -45,6 +45,7 @@ const describe = (r) =>
 
 function podItem(r, i) {
   const b = el("div", `pod p${i + 1}`);
+  b.dataset.drink = r.key;
   b.setAttribute("role", "group");
   b.setAttribute("aria-label", `${PLACES[i]} posto. ${describe(r)}`);
   const medal = el("span", "medal", MEDALS[i]);
@@ -76,6 +77,7 @@ function podEmpty(i, loading) {
 
 function rankRow(r, pos) {
   const b = el("div", `rank-row${r.eligible ? "" : " dim"}`);
+  b.dataset.drink = r.key;
   b.setAttribute("role", "group");
   b.setAttribute("aria-label", `${pos ? `${pos}° posto. ` : ""}${describe(r)}`);
   const p = el("span", "rank-pos", pos ? String(pos) : "–");

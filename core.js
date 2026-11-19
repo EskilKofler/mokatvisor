@@ -47,7 +47,7 @@ export const state = {
   mine: new Map(),     // key -> valore dato da me
   stats: new Map(),    // key -> { sum, n }
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
-  fetching: false,
+  loading: new Set(),  // chiavi delle medie in arrivo da Firestore (mostrano lo scheletro)
   fetchedAt: 0,        // quando sono stati letti (o salvati in cache) i dati attuali
 };
 
@@ -116,7 +116,7 @@ function friendlyError(e) {
 
 export function statOf(key) {
   const s = state.stats.get(key);
-  if (!s) return { pending: !state.settled, known: false, n: 0, avg: null };
+  if (!s) return { pending: !state.settled || state.loading.has(key), known: false, n: 0, avg: null };
   return { pending: false, known: true, n: s.n, avg: s.n ? s.sum / s.n : null };
 }
 
@@ -131,6 +131,9 @@ export function mineLine(key) {
 
 export function ariaFor(e, st) {
   const my = state.mine.get(e.key);
+  if (st.known && st.n === 0) {
+    return `${e.d.name}, ${e.m.name} (${e.m.floor}): ancora nessun voto. Diventa il primo a lasciare una recensione.`;
+  }
   const media = st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`;
   return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}, ${countText(st)}. ` +
     (my === undefined ? "Tocca per votare." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
@@ -280,7 +283,7 @@ function renderInfo() {
   root.append(box);
 }
 
-function renderView() {
+export function renderView() {
   const view = $("#view");
   // Il ridisegno non deve far perdere il focus a chi usa la tastiera
   const had = document.activeElement?.closest?.("#view") ? document.activeElement.dataset.spot : null;
@@ -353,8 +356,8 @@ async function fetchStats(entries) {
 }
 
 // Ritorna true se i dati sono aggiornati senza errori. Usa la cache per le medie ancora fresche (< 60 s)
-// e legge da Firestore solo le altre (con force: tutte).
-async function loadStats({ force = false } = {}) {
+// e legge da Firestore solo le altre (con force: tutte). Le medie già in arrivo non vengono richieste due volte.
+export async function loadStats({ force = false } = {}) {
   if (!configured || !state.user) return false;
   const need = ctx.need();
   const c = statsCacheRead(), now = Date.now();
@@ -364,31 +367,33 @@ async function loadStats({ force = false } = {}) {
     state.stats.set(e.key, { sum: c[e.key].sum, n: c[e.key].n });
     oldest = Math.min(oldest, c[e.key].t);
   }
-  const toFetch = need.filter((e) => !fresh(e));
+  const toFetch = need.filter((e) => !fresh(e) && !state.loading.has(e.key));
   if (!toFetch.length) {
+    if (need.some((e) => state.loading.has(e.key))) return false; // già in arrivo: a fine caricamento si ridisegna
     state.fetchedAt = oldest;
     state.settled = true;
     hideNotice();
     renderView();
     return true;
   }
-  if (state.fetching) return false;
-  state.fetching = true;
+  for (const e of toFetch) state.loading.add(e.key);
+  renderView(); // mostra subito gli scheletri
+  let error;
   try {
-    const error = await fetchStats(toFetch);
-    state.settled = true;
-    state.fetchedAt = oldest;
-    if (error) {
-      showNotice(friendlyError(error), () => loadStats({ force: true }));
-    } else {
-      hideNotice();
-      statsCacheWrite(toFetch.map((e) => e.key));
-    }
-    renderView();
-    return !error;
+    error = await fetchStats(toFetch);
   } finally {
-    state.fetching = false;
+    for (const e of toFetch) state.loading.delete(e.key);
   }
+  state.settled = true;
+  state.fetchedAt = oldest;
+  if (error) {
+    showNotice(friendlyError(error), () => loadStats({ force: true }));
+  } else {
+    hideNotice();
+    statsCacheWrite(toFetch.map((e) => e.key));
+  }
+  renderView();
+  return !error;
 }
 
 /* ----------------------------- Voto ----------------------------- */
