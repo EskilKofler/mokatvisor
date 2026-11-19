@@ -332,7 +332,11 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
   background: var(--star-on) 0 0 / var(--vs) var(--vs) repeat-x;
 }
 .sheet-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
-.sheet-label { font-size: 1.75rem; font-weight: 800; letter-spacing: -.01em; min-height: 1.3em; }
+.sheet-readout { min-width: 0; }
+.sheet-numline { display: flex; align-items: baseline; margin: 0; line-height: 1; }
+.sheet-number { min-width: 2.4ch; font-size: 3rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sheet-of { font-size: 1.1rem; font-weight: 700; color: var(--muted); white-space: pre; }
+.sheet-label { margin-top: 2px; font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; min-height: 1.3em; color: var(--accent); }
 .chip {
   flex: none; min-height: 44px; min-width: 76px; padding: 0 18px; border: 0; border-radius: 999px;
   background: var(--cream); color: var(--accent); font-weight: 800; cursor: pointer;

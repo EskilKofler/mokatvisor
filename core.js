@@ -393,22 +393,23 @@ export async function loadStats({ force = false } = {}) {
 /* ----------------------------- Voto ----------------------------- */
 
 // Un'etichetta per ogni mezzo punto: indice = voto * 2
-const LABELS = ["Imbevibile", "Pessimo", "Male", "Mah", "Meh", "Così così", "Ok", "Carino", "Buono", "Ottimo", "Top!"];
+const LABELS = ["Meglio l'acqua", "Ahia", "Proprio no", "Può migliorare", "Così così", "Quasi ci siamo", "Va bene", "Niente male", "Buono!", "Ottimo!", "Top!"];
 let sheet, starsEl; // creati da buildSheet()
 let vote = null; // { e, spot, value, prev, saving } mentre il pannello è aperto
 const reducedMotion = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
 function paintSheet() {
   const v = vote.value;
-  const label = v == null ? "Tocca le stelle" : LABELS[v * 2];
+  const label = v == null ? "Quante stelle?" : LABELS[v * 2];
   $("#sheet-fill").style.width = `${((v ?? 0) / 5) * 100}%`;
   $("#sheet-label").textContent = label;
+  $("#sheet-number").textContent = v == null ? "–" : nfAvg.format(v); // il valore scelto, in grande (anche 4,5)
   starsEl.setAttribute("aria-valuenow", String(v ?? 0));
   starsEl.setAttribute("aria-valuetext", v == null ? "Nessun voto" : `${nfVote.format(v)} stelle: ${label}`);
   $("#sheet-zero").setAttribute("aria-pressed", String(v === 0));
   const save = $("#sheet-save");
   save.disabled = vote.saving || v == null || v === vote.prev; // niente da salvare se non è cambiato
-  save.textContent = vote.saving ? "Salvo…" : vote.prev == null ? "Salva voto" : "Aggiorna voto";
+  save.textContent = vote.saving ? "Invio…" : vote.prev == null ? "Lascia recensione" : "Aggiorna recensione";
 }
 
 function setVote(v) {
@@ -426,8 +427,8 @@ function openSheet(e, spot) {
   $("#sheet-title").textContent = e.d.name;
   $("#sheet-sub").textContent = e.m.name;
   $("#sheet-prev").textContent = prev == null
-    ? "Non hai ancora votato questa bevanda."
-    : `Il tuo voto precedente: ${nfVote.format(prev)} ★`;
+    ? "Sarà la tua prima recensione."
+    : `La tua recensione di ora: ${nfVote.format(prev)} ★`;
   $("#sheet-error").hidden = true;
   paintSheet();
   if (typeof sheet.showModal === "function") sheet.showModal(); else sheet.setAttribute("open", "");
@@ -568,7 +569,7 @@ async function refreshOne(key) {
 
 async function submitVote() {
   if (!vote || vote.saving || vote.value == null || vote.value === vote.prev) return;
-  const { e, value, spot } = vote;
+  const { e, value, spot, prev } = vote;
   vote.saving = true;
   $("#sheet-error").hidden = true;
   paintSheet();
@@ -577,13 +578,13 @@ async function submitVote() {
   vote.saving = false;
   if (!ok) {
     const err = $("#sheet-error");
-    err.textContent = "Non sono riuscito a salvare il voto. Controlla la connessione e riprova.";
+    err.textContent = "Ops, non è partita. Controlla la connessione e riprova.";
     err.hidden = false;
     paintSheet();
     return;
   }
   closeSheet();
-  toast(`${e.d.name}: ${nfVote.format(value)} ★ salvato`);
+  toast(prev == null ? `Grazie! ${nfVote.format(value)} ★ a ${e.d.name}` : `Recensione aggiornata: ${nfVote.format(value)} ★`);
   state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo bordo
   renderView();
   setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso
@@ -660,19 +661,26 @@ function buildSheet() {
   starsEl.append(fill);
 
   const row = el("div", "sheet-row");
-  const label = el("p", "sheet-label", "Tocca le stelle");
+  const readout = el("div", "sheet-readout");
+  const numLine = el("p", "sheet-numline");
+  numLine.setAttribute("aria-hidden", "true"); // il valore è già letto dall'etichetta e dalle stelle
+  const num = el("span", "sheet-number", "–");
+  num.id = "sheet-number";
+  numLine.append(num, el("span", "sheet-of", " / 5"));
+  const label = el("p", "sheet-label", "Quante stelle?");
   label.id = "sheet-label";
   label.setAttribute("aria-live", "polite");
-  const zero = el("button", "chip", "Dai 0");
+  readout.append(numLine, label);
+  const zero = el("button", "chip", "Zero");
   zero.id = "sheet-zero";
   zero.type = "button";
   zero.setAttribute("aria-pressed", "false");
   zero.setAttribute("aria-label", "Dai zero stelle");
-  row.append(label, zero);
+  row.append(readout, zero);
 
   const prev = el("p", "sheet-prev"); prev.id = "sheet-prev";
   const err = el("p", "sheet-error"); err.id = "sheet-error"; err.setAttribute("role", "alert"); err.hidden = true;
-  const save = el("button", "btn block", "Salva voto");
+  const save = el("button", "btn block", "Lascia recensione");
   save.id = "sheet-save";
   save.type = "button";
   save.disabled = true;
