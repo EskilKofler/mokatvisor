@@ -51,8 +51,19 @@ Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
 
 ## QR code per le macchinette
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m=<id>`
-(es. `?m=piano3`): in alto c'è quella macchinetta, già aperta, e sotto le altre, chiuse (si aprono toccando il nome).
-Con `?m=` mancante o non valido sono tutte chiuse. Le medie si leggono solo per le macchinette aperte.
+(es. `?m=piano3`): mostra quella macchinetta in grande, con le sue bevande e le medie, poi il link
+«Vedi tutte le macchinette» e la Top 3. Senza `?m=` (o con un id non valido) si vede la home.
+
+## Com'è fatto il sito
+- **Home:** Top 3 di sempre (podio), Classifica di tutte le bevande, poi le card delle macchinette.
+- **Votare:** si tocca una bevanda e si apre un pannello con le stelle (metà sinistra = mezzo punto; il chip «Dai 0» per lo zero).
+- **Classifica:** in cima a `app.js` ci sono `MIN_VOTES` (voti minimi per entrare in podio, ora 3) e `PRIOR_VOTES`
+  (peso della media generale nella media corretta). L'ordine usa la media corretta (bayesiana): 3 voti da 5 non
+  battono 40 voti da 4,8. A schermo si vede sempre la media vera e il numero di voti.
+- **Letture Firestore:** ogni caricamento legge 15 medie (`sum` + `count` per bevanda) più i tuoi voti. I risultati
+  restano in cache nella scheda per 60 secondi e dopo un voto si rilegge solo quella bevanda. Il piano Spark ha
+  50.000 letture al giorno: tienine conto con tanti utenti.
+- **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash

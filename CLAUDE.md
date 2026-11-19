@@ -12,9 +12,12 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP ("ka
 ## Struttura
 - `index.html`, `style.css`, `app.js` (modulo ES, Firebase JS SDK da gstatic, nessun build step)
 - `machines.js`: elenco macchinette e bevande, condiviso da `app.js` e da `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
-- `?m=<id>`: quella macchinetta in alto e aperta, le altre sotto in `<details>` chiusi (id non valido → tutte chiuse).
-  Media e n° voti sempre visibili per bevanda; le stelle compaiono col pulsante «Recensisci».
-  Le medie si caricano solo per le macchinette aperte (3 aggregazioni ciascuna) per restare nella quota Spark.
+- Home: Top 3 (podio), Classifica, Le macchinette. `?m=<id>`: macchinetta in grande + link "Vedi tutte" + Top 3
+  (id non valido → home). Ogni bevanda è un bottone che apre il pannello di voto (`<dialog>`).
+- Classifica: `MIN_VOTES` e `PRIOR_VOTES` in cima ad `app.js`; ordinamento con media bayesiana, a schermo la media vera.
+- Dati: `sum` + `count` per bevanda con `getAggregateFromServer` (15 letture per caricamento), cache `sessionStorage` 60 s.
+  Dopo un voto si rilegge solo quella bevanda. Attenzione alla quota Spark (50k letture/giorno).
+- Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
 - Collezione `ratings`, doc id = `<uid>_<machineId>_<drinkId>`
