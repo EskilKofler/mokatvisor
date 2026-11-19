@@ -1,6 +1,6 @@
 import {
   start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, progressLine, votedCount,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, votedCount,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -49,13 +49,13 @@ const entriesOf = (m) => ENTRIES.filter((e) => e.m === m);
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
-/* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto ----
-   Votata: sfondo pieno, bordo continuo e badge "✓ 4,5". Da votare: bordo tratteggiato e ☆. Non solo colore: icona + testo. */
+/* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto (mostra il mio voto) ----
+   Votata: bordo verde continuo. Da votare: bordo tratteggiato e ☆ (la forma del bordo distingue anche senza colore). */
 function drinkTile(e, spot) {
   const st = statOf(e.key);
-  const mine = state.mine.get(e.key);
+  const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
-  const b = drinkButton(e, spot, `tile${knows ? (mine !== undefined ? " is-voted" : " is-todo") : ""}`);
+  const b = drinkButton(e, spot, `tile${knows ? (voted ? " is-voted" : " is-todo") : ""}`);
   b.append(el("span", "tile-name", e.d.name));
   if (st.pending) {
     b.append(skel("w-60"));
@@ -64,27 +64,25 @@ function drinkTile(e, spot) {
   } else if (!st.known) {
     b.append(el("span", "tile-sub", "Voti non disponibili"));
   } else {
-    // La media di tutti: ben visibile e separata dal badge del mio voto (.score e .avg-num: animazioni dopo un voto)
+    // La media di tutti (.score e .avg-num: ci pensano le animazioni dopo un voto)
     const sub = el("span", "tile-sub score");
     sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
     b.append(sub);
   }
-  if (knows) {
-    const badge = el("span", mine !== undefined ? "tile-badge" : "tile-badge todo", mine !== undefined ? `✓ ${nfVote.format(mine)}` : "☆");
-    badge.setAttribute("aria-hidden", "true"); // il testo per gli screen reader è nell'aria-label del riquadro
-    // Appena votata: il badge "salta fuori". Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
-    // da dove era (delay negativo), così non si interrompe né riparte da capo.
-    const pop = state.pop;
-    if (mine !== undefined && pop && pop.key === e.key) {
-      const elapsed = performance.now() - pop.at;
-      if (elapsed < 600) {
-        b.classList.add("just-voted");
-        badge.classList.add("pop");
-        badge.style.animationDelay = `-${Math.round(elapsed)}ms`;
-        b.style.animationDelay = `-${Math.round(elapsed)}ms`;
-      }
+  if (knows && !voted) {
+    const star = el("span", "tile-badge todo", "☆");
+    star.setAttribute("aria-hidden", "true"); // il testo per gli screen reader è nell'aria-label del riquadro
+    b.append(star);
+  }
+  // Appena votata: breve alone verde. Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
+  // da dove era (delay negativo), così non si interrompe né riparte da capo.
+  const pop = state.pop;
+  if (voted && pop && pop.key === e.key) {
+    const elapsed = performance.now() - pop.at;
+    if (elapsed < 800) {
+      b.classList.add("just-voted");
+      b.style.animationDelay = `-${Math.round(elapsed)}ms`;
     }
-    b.append(badge);
   }
   return b;
 }
@@ -143,7 +141,7 @@ function renderHero(m) {
   const head = el("div", "hero-head");
   const h = el("h1", "hero-title", m.name);
   h.id = "hero-title";
-  head.append(el("p", "eyebrow", m.floor), h, progressLine(entriesOf(m)));
+  head.append(el("p", "eyebrow", m.floor), h);
   sec.append(head, drinksOf(m, "hero"));
   return sec;
 }
@@ -180,7 +178,7 @@ function machineMenu(m) {
   head.setAttribute("aria-expanded", String(isOpen));
   head.setAttribute("aria-controls", `panel-${m.id}`);
   const title = el("span", "mcard-title");
-  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m), progressLine(entriesOf(m)));
+  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m));
   const chevron = el("span", "chevron");
   chevron.setAttribute("aria-hidden", "true");
   const ms = machineStat(m);

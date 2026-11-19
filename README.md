@@ -76,10 +76,11 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   sue bevande.
 - **Bevande di una macchinetta:** griglia a due colonne che rispecchia il pannello reale (prima la colonna sinistra
   dall'alto in basso, poi la destra). Ogni riquadro è un pulsante con il nome e «★ media · N voti»; il tocco apre il
-  pannello di voto. Quelli che hai già votato hanno sfondo pieno, bordo continuo e un badge «✓ 3,5»; quelli da votare
-  hanno il bordo tratteggiato e una ☆. Senza voti: «Nessun voto»; se nessuna bevanda della macchinetta ha voti compare
-  un solo invito in cima. Sopra la griglia c'è il filtro «Da votare», e nell'intestazione di ogni macchinetta «Hai votato
-  X di N» con una barretta (nella Classifica il totale generale). In `machines.js` una macchinetta può avere un suo elenco
+  pannello di voto. Quelli che hai già votato hanno il bordo verde; quelli
+  da votare il bordo tratteggiato e una ☆. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
+  voto precedente». Senza voti: «Nessun voto»; se nessuna bevanda della macchinetta ha voti compare un solo invito in
+  cima. Sopra la griglia c'è il filtro «Da votare».
+  In `machines.js` una macchinetta può avere un suo elenco
   `drinks` e `leftCount` (quante bevande stanno a sinistra): ora il 6° piano principale usa le 16 bevande del pannello
   dalla foto (`PANEL_DRINKS`), le altre le 3 di prima, finché non ci sono le foto vere.
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
@@ -90,7 +91,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   punto; il chip «Dai 0» per lo zero).
 - **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica leggono la
   media di **ogni bevanda di ogni macchinetta** (oggi 28: 16 + 4×3; con 16 bevande per macchinetta saranno 80), la
-  vista `?m=` solo quelle di una macchinetta; i tuoi voti si leggono una sola volta con `loadMine` (anche in Classifica, per il totale «Hai votato X di N»), e restano in cache. Le medie restano in cache nella
+  vista `?m=` solo quelle di una macchinetta; i tuoi voti (per colorare i riquadri) si leggono una sola volta con `loadMine` nelle pagine dove si vota; la Classifica non li legge. Le medie restano in cache nella
   scheda per 60 secondi, una voce per bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il
   piano Spark ha 50.000 letture al giorno: con tante bevande tienine conto.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.

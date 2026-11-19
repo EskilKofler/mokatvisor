@@ -46,7 +46,7 @@ export const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf
 export const state = {
   user: null,
   mine: new Map(),     // key -> valore dato da me
-  pop: null,           // { key, at }: bevanda appena votata, per l'animazione del badge
+  pop: null,           // { key, at }: bevanda appena votata, per l'animazione del riquadro
   mineLoaded: false,   // true quando so cosa ho già votato (prima i riquadri restano neutri)
   stats: new Map(),    // key -> { sum, n }
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
@@ -55,7 +55,7 @@ export const state = {
 };
 
 // Cosa disegna e quali medie serve alla pagina corrente (impostato da start())
-const ctx = { sections: () => [], need: () => ENTRIES, vote: true, mine: true };
+const ctx = { sections: () => [], need: () => ENTRIES, vote: true };
 
 let auth, db;
 if (configured) {
@@ -193,20 +193,6 @@ export function refreshButton() {
 
 // Quante delle bevande indicate l'utente ha già votato (da state.mine: nessuna lettura in più)
 export const votedCount = (entries) => entries.filter((e) => state.mine.has(e.key)).length;
-
-// "Hai votato 3 di 16" con una barretta sottile di avanzamento; segnaposto finché non so cosa ho votato
-export function progressLine(entries) {
-  const box = el("span", "progress");
-  if (!state.mineLoaded) { box.append(skel("w-60")); return box; }
-  const done = votedCount(entries), total = entries.length;
-  const bar = el("span", "progress-bar");
-  bar.setAttribute("aria-hidden", "true"); // il numero è già nel testo
-  const fill = document.createElement("i");
-  fill.style.width = `${total ? (done / total) * 100 : 0}%`;
-  bar.append(fill);
-  box.append(el("span", "progress-text", `Hai votato ${done} di ${total}`), bar);
-  return box;
-}
 
 // Piccolo link grigio "Aggiorna i risultati" (per le pagine senza titolo con ↻)
 export function refreshLink() {
@@ -602,7 +588,7 @@ async function submitVote() {
   }
   closeSheet();
   toast(`${e.d.name}: ${nfVote.format(value)} ★ salvato`);
-  state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo badge
+  state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo bordo
   renderView();
   setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso
   refreshOne(e.key);
@@ -714,11 +700,9 @@ async function refresh() {
 // Ogni pagina chiama start(): page = voce attiva nella barra, sections = cosa disegnare,
 // need = quali medie servono (di default tutte)
 // vote = false: pagina di sola lettura (niente pannello di voto, bevande non cliccabili, non legge i voti dell'utente)
-// mine = true: carica anche i voti dell'utente (di default solo nelle pagine dove si vota)
-export function start({ page, sections, need, vote: canVote = true, mine: wantMine = canVote }) {
+export function start({ page, sections, need, vote: canVote = true }) {
   ctx.sections = sections;
   ctx.vote = canVote;
-  ctx.mine = wantMine;
   if (need) ctx.need = need;
   if (!configured) $("#setup-warning").hidden = false;
   renderTopbar(page);
@@ -750,7 +734,7 @@ export function start({ page, sections, need, vote: canVote = true, mine: wantMi
       }
       state.user = user;
       try {
-        await Promise.all([ctx.mine ? loadMine() : null, loadStats()]);
+        await Promise.all([ctx.vote ? loadMine() : null, loadStats()]);
       } catch (e) {
         console.error(e);
         toast("Errore nel caricamento dei dati");

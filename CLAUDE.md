@@ -25,11 +25,10 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
   `HOME_ORDER`). Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
   le macchinette" e "Vai alla classifica" (id non valido → home). Le bevande di una macchinetta sono una griglia a due
   colonne come il pannello reale (`leftCount` per macchinetta in `machines.js`); ogni riquadro (≥ 56 px) è un bottone
-  che apre il pannello di voto. Stato per riquadro da `state.mine` (nessuna lettura in più): votato = sfondo pieno + bordo
-  continuo + badge "✓ voto"; da votare = tratteggiato + ☆ (icona e testo, non solo colore). Senza voti "Nessun voto"; un solo
-  invito in cima se la macchinetta non ha voti. Filtro "Da votare", "Hai votato X di N" nell'intestazione, animazione "pop"
-  del badge dopo un voto (spenta con prefers-reduced-motion). Se aggiungi id in `machines.js` aggiorna
-  `firestore.rules` e dì all'utente di ripubblicarle.
+  che apre il pannello di voto. Stato per riquadro da `state.mine` (nessuna lettura in più):
+  votato = bordo verde continuo; da votare = bordo tratteggiato + ☆. Niente badge con il voto: il voto si vede aprendo il
+  pannello. Senza voti "Nessun voto"; un solo invito in cima se la macchinetta non ha voti. Filtro "Da votare"; breve alone
+  verde dopo un voto (spento con prefers-reduced-motion). Niente "Hai votato X di N".
 - Classifica (`classifica.js`): **sola lettura, niente voto** (`start({ vote: false })`). Podio 2-1-3 ed elenco
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).

@@ -1,5 +1,5 @@
 import {
-  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink, globalMean, bayesScore, progressLine,
+  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink, globalMean, bayesScore,
 } from "./core.js";
 
 /* ------------------------------------------------------------------ */
@@ -108,9 +108,6 @@ function renderBoard() {
   const h1 = el("h1", "sr-only", "Classifica");
   h1.id = "rank-title";
   sec.append(h1);
-  const mineLine = el("p", "rank-progress"); // totale generale: quante bevande ho votato
-  mineLine.append(progressLine(ENTRIES));
-  sec.append(mineLine);
 
   // Dati in arrivo: scheletri
   if (allPending()) {
@@ -155,4 +152,4 @@ function renderBoard() {
   return sec;
 }
 
-start({ page: "rank", vote: false, mine: true, sections: () => [renderBoard()] });
+start({ page: "rank", vote: false, sections: () => [renderBoard()] });
