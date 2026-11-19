@@ -41,6 +41,29 @@
     <section id="account" class="account"></section>
   </main>
 
+  <!-- Pannello di voto: sale dal basso sul telefono, finestra centrata sul computer -->
+  <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+    <div class="sheet-in">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <button id="sheet-close" class="icon-btn sheet-close" type="button" aria-label="Chiudi">✕</button>
+      <p id="sheet-eyebrow" class="eyebrow"></p>
+      <h2 id="sheet-title" class="sheet-title"></h2>
+      <p id="sheet-sub" class="sheet-sub"></p>
+
+      <div id="sheet-stars" class="vstars" role="slider" tabindex="0"
+           aria-label="Il tuo voto, da 0 a 5 stelle" aria-valuemin="0" aria-valuemax="5" aria-valuestep="0.5"
+           aria-valuenow="0" aria-valuetext="Nessun voto"><i id="sheet-fill"></i></div>
+
+      <div class="sheet-row">
+        <p id="sheet-label" class="sheet-label" aria-live="polite">Tocca le stelle</p>
+        <button id="sheet-zero" class="chip" type="button" aria-pressed="false" aria-label="Dai zero stelle">Dai 0</button>
+      </div>
+      <p id="sheet-prev" class="sheet-prev"></p>
+      <p id="sheet-error" class="sheet-error" role="alert" hidden></p>
+      <button id="sheet-save" class="btn block" type="button" disabled>Salva voto</button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script type="module" src="app.js"></script>

@@ -480,6 +480,171 @@ async function loadStats({ force = false } = {}) {
   }
 }
 
+/* ----------------------------- Voto ----------------------------- */
+
+// Un'etichetta per ogni mezzo punto: indice = voto * 2
+const LABELS = ["Imbevibile", "Pessimo", "Male", "Mah", "Meh", "Così così", "Ok", "Carino", "Buono", "Ottimo", "Top!"];
+const sheet = $("#sheet");
+const starsEl = $("#sheet-stars");
+let vote = null; // { e, spot, value, prev, saving } mentre il pannello è aperto
+const reducedMotion = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+function paintSheet() {
+  const v = vote.value;
+  const label = v == null ? "Tocca le stelle" : LABELS[v * 2];
+  $("#sheet-fill").style.width = `${((v ?? 0) / 5) * 100}%`;
+  $("#sheet-label").textContent = label;
+  starsEl.setAttribute("aria-valuenow", String(v ?? 0));
+  starsEl.setAttribute("aria-valuetext", v == null ? "Nessun voto" : `${nfVote.format(v)} stelle: ${label}`);
+  $("#sheet-zero").setAttribute("aria-pressed", String(v === 0));
+  const save = $("#sheet-save");
+  save.disabled = vote.saving || v == null || v === vote.prev; // niente da salvare se non è cambiato
+  save.textContent = vote.saving ? "Salvo…" : vote.prev == null ? "Salva voto" : "Aggiorna voto";
+}
+
+function setVote(v) {
+  if (!vote || vote.saving) return;
+  vote.value = v;
+  $("#sheet-error").hidden = true;
+  paintSheet();
+}
+
+function openSheet(e, spot) {
+  if (!state.user) { toast("Un attimo, ti sto collegando…"); return; }
+  const prev = state.mine.get(e.key) ?? null;
+  vote = { e, spot, value: prev, prev, saving: false };
+  $("#sheet-eyebrow").textContent = e.m.floor;
+  $("#sheet-title").textContent = e.d.name;
+  $("#sheet-sub").textContent = e.m.name;
+  $("#sheet-prev").textContent = prev == null
+    ? "Non hai ancora votato questa bevanda."
+    : `Il tuo voto precedente: ${nfVote.format(prev)} ★`;
+  $("#sheet-error").hidden = true;
+  paintSheet();
+  if (typeof sheet.showModal === "function") sheet.showModal(); else sheet.setAttribute("open", "");
+  starsEl.focus({ preventScroll: true });
+}
+
+function afterClose() {
+  const spot = vote?.spot;
+  vote = null;
+  // Il ridisegno può aver sostituito il bottone: rimetto il focus dove era
+  if (spot) $("#view").querySelector(`[data-spot="${spot}"]`)?.focus({ preventScroll: true });
+}
+
+function finishClose() {
+  sheet.classList.remove("closing");
+  if (typeof sheet.close === "function") sheet.close(); else sheet.removeAttribute("open");
+  afterClose();
+}
+
+function closeSheet(now = false) {
+  if (!sheet.open || vote?.saving) return;
+  if (now || reducedMotion()) { finishClose(); return; }
+  sheet.classList.add("closing");
+  setTimeout(finishClose, 200); // = durata dell'animazione di chiusura
+}
+
+async function saveRating(e, value) {
+  if (!state.user) return false;
+  const uid = state.user.uid;
+  try {
+    await setDoc(doc(db, "ratings", `${uid}_${e.key}`), {
+      uid,
+      machineId: e.m.id,
+      drinkId: e.d.id,
+      drinkKey: e.key,
+      value,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+  if (state.user?.uid === uid) {
+    state.mine.set(e.key, value);
+    cacheWrite(`mine:${uid}`, Object.fromEntries(state.mine));
+  }
+  return true;
+}
+
+// Dopo un voto rileggo solo la media di quella bevanda (1 aggregazione)
+async function refreshOne(key) {
+  try {
+    state.stats.set(key, await fetchStat(key));
+    if (ENTRIES.every((x) => state.stats.has(x.key))) {
+      cacheWrite("stats", Object.fromEntries(state.stats), state.fetchedAt || Date.now());
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  renderView();
+}
+
+async function submitVote() {
+  if (!vote || vote.saving || vote.value == null || vote.value === vote.prev) return;
+  const { e, value } = vote;
+  vote.saving = true;
+  $("#sheet-error").hidden = true;
+  paintSheet();
+  const ok = await saveRating(e, value);
+  if (!vote) return; // il pannello è stato chiuso nel frattempo (cambio account)
+  vote.saving = false;
+  if (!ok) {
+    const err = $("#sheet-error");
+    err.textContent = "Non sono riuscito a salvare il voto. Controlla la connessione e riprova.";
+    err.hidden = false;
+    paintSheet();
+    return;
+  }
+  closeSheet();
+  toast(`${e.d.name}: ${nfVote.format(value)} ★ salvato`);
+  renderView();
+  refreshOne(e.key);
+}
+
+function valueAt(x) {
+  const r = starsEl.getBoundingClientRect();
+  const v = Math.ceil(((x - r.left) / r.width) * 10) / 2; // metà sinistra di una stella = mezzo punto
+  return Math.min(5, Math.max(0.5, v));
+}
+
+// Tocco/trascinamento sulle stelle
+let dragging = false;
+starsEl.addEventListener("pointerdown", (ev) => {
+  dragging = true;
+  starsEl.setPointerCapture?.(ev.pointerId);
+  setVote(valueAt(ev.clientX));
+});
+starsEl.addEventListener("pointermove", (ev) => { if (dragging) setVote(valueAt(ev.clientX)); });
+for (const t of ["pointerup", "pointercancel"]) starsEl.addEventListener(t, () => { dragging = false; });
+
+// Tastiera: frecce ±0.5 (senza voto parte da 0.5), Home = 0, End = 5, Invio = salva
+starsEl.addEventListener("keydown", (ev) => {
+  if (!vote) return;
+  const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[ev.key];
+  if (step) {
+    ev.preventDefault();
+    setVote(vote.value == null ? 0.5 : Math.min(5, Math.max(0, vote.value + step)));
+  } else if (ev.key === "Home") { ev.preventDefault(); setVote(0); }
+  else if (ev.key === "End") { ev.preventDefault(); setVote(5); }
+  else if (ev.key === "Enter") { ev.preventDefault(); submitVote(); }
+});
+
+$("#sheet-zero").addEventListener("click", () => setVote(0));
+$("#sheet-save").addEventListener("click", submitVote);
+$("#sheet-close").addEventListener("click", () => closeSheet());
+sheet.addEventListener("cancel", (ev) => { ev.preventDefault(); closeSheet(); }); // tasto Esc
+sheet.addEventListener("click", (ev) => { if (ev.target === sheet) closeSheet(); }); // tocco sullo sfondo
+
+// Tocco su una bevanda (card, hero, podio, classifica) → pannello di voto
+$("#view").addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-key]");
+  if (!b) return;
+  const e = ENTRIES.find((x) => x.key === b.dataset.key);
+  if (e) openSheet(e, b.dataset.spot);
+});
+
 function renderAccount() {
   const box = $("#account");
   box.replaceChildren();
@@ -548,7 +713,10 @@ if (configured) {
       try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Impossibile collegarsi"); }
       return;
     }
-    if (state.user && state.user.uid !== user.uid) state.mine = new Map(); // altro account: i voti vecchi non valgono
+    if (state.user && state.user.uid !== user.uid) { // altro account: i voti vecchi non valgono
+      state.mine = new Map();
+      closeSheet(true);
+    }
     state.user = user;
     renderAccount();
     try {

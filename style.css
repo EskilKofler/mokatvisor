@@ -247,6 +247,64 @@ button.pod:active { filter: brightness(.96); }
 .rank-row.few .bar i { background: #cbb9a1; }
 .rank-row.few .rank-pos { background: transparent; color: var(--muted); }
 /* @@podio */
+/* ---------------------------- Pannello di voto ------------------------- */
+/* Non impostare display su .sheet: il browser nasconde il <dialog> chiuso proprio con display:none */
+.sheet {
+  position: fixed; inset: auto 0 0 0; margin: 0 auto; padding: 0;
+  width: 100%; max-width: 560px; max-height: calc(100dvh - 16px); overflow: auto;
+  border: 0; border-radius: 28px 28px 0 0;
+  background: var(--paper); color: var(--ink);
+  box-shadow: 0 -12px 40px rgba(40, 20, 5, .3);
+}
+.sheet::backdrop { background: rgba(43, 29, 20, .55); }
+.sheet-in { position: relative; padding: 10px 22px calc(24px + env(safe-area-inset-bottom)); }
+.sheet-grip { width: 46px; height: 5px; border-radius: 99px; background: #d9c8b0; margin: 0 auto 14px; }
+.sheet-close { position: absolute; top: 12px; right: 14px; width: 44px; height: 44px; font-size: 1.1rem; background: var(--cream); box-shadow: none; }
+.sheet-title { font-size: 1.9rem; font-weight: 800; line-height: 1.12; letter-spacing: -.015em; margin: 2px 40px 0 0; }
+.sheet-sub { color: var(--muted); }
+
+/* Stelle grandi: mai sotto i 48 px, anche su schermi da 320 px */
+.vstars {
+  --vs: clamp(48px, calc((100vw - 48px) / 5), 60px);
+  position: relative; width: calc(var(--vs) * 5); height: var(--vs); margin: 22px auto 8px;
+  background: var(--star-off) 0 0 / var(--vs) var(--vs) repeat-x;
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; border-radius: 6px;
+}
+.vstars i {
+  position: absolute; inset: 0 auto 0 0; width: 0; pointer-events: none;
+  background: var(--star-on) 0 0 / var(--vs) var(--vs) repeat-x;
+}
+.sheet-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.sheet-label { font-size: 1.75rem; font-weight: 800; letter-spacing: -.01em; min-height: 1.3em; }
+.chip {
+  flex: none; min-height: 44px; min-width: 76px; padding: 0 18px; border: 0; border-radius: 999px;
+  background: var(--cream); color: var(--accent); font-weight: 800; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.sheet-prev { color: var(--muted); font-size: .95rem; margin-top: 2px; }
+.sheet-error { background: var(--warn-bg); color: var(--warn-ink); padding: 10px 14px; border-radius: 12px; margin-top: 12px; }
+.btn.block { width: 100%; min-height: 58px; font-size: 1.12rem; margin-top: 18px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+html:has(.sheet[open]) { overflow: hidden; } /* la pagina sotto non scorre */
+
+.sheet[open] { animation: sheet-up .3s cubic-bezier(.2, .8, .2, 1); }
+.sheet[open]::backdrop { animation: fade-in .3s ease; }
+.sheet.closing { animation: sheet-down .2s ease-in forwards; }
+.sheet.closing::backdrop { animation: fade-out .2s ease-in forwards; }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-down { to { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+
+@media (min-width: 720px) {
+  .sheet { inset: 0; margin: auto; border-radius: 28px; max-height: 92vh; }
+  .sheet-grip { display: none; }
+  .sheet-in { padding-top: 26px; }
+  .sheet[open] { animation: pop .24s cubic-bezier(.2, .8, .2, 1); }
+  .sheet.closing { animation: pop-out .18s ease-in forwards; }
+  @keyframes pop { from { transform: scale(.94); opacity: 0; } }
+  @keyframes pop-out { to { transform: scale(.96); opacity: 0; } }
+}
 /* @@sheet */
 /* @@animazioni */
 
