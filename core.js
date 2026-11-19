@@ -122,13 +122,6 @@ export function statOf(key) {
 
 const countText = (st) => (st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") : "Voti non disponibili");
 
-export function mineLine(key) {
-  const my = state.mine.get(key);
-  return my === undefined
-    ? el("span", "drink-you cta", "Tocca per votare")
-    : el("span", "drink-you", `Il tuo voto: ${nfVote.format(my)} ★`);
-}
-
 export function ariaFor(e, st) {
   const my = state.mine.get(e.key);
   if (st.known && st.n === 0) {
@@ -164,16 +157,6 @@ export function scoreBlock(st) {
   if (st.pending) { box.append(skel("w-40 tall"), skel("w-40")); return box; }
   box.append(scoreNum(st.avg), el("span", "score-n", st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") : "–"));
   return box;
-}
-
-// Stelle di sola lettura: riempimento proporzionale alla media
-export function meter(avg) {
-  const m = el("span", "meter");
-  m.setAttribute("aria-hidden", "true");
-  const i = document.createElement("i");
-  i.style.width = `${((avg ?? 0) / 5) * 100}%`;
-  m.append(i);
-  return m;
 }
 
 export function photo(m, cls) {
@@ -502,7 +485,7 @@ function animateStat(key, old, now) {
   for (const b of $("#view").querySelectorAll(`[data-key="${key}"]`)) {
     const num = b.querySelector(".avg-num");
     if (num && now.avg != null) countUp(num, old.avg ?? 0, now.avg);
-    for (const bar of b.querySelectorAll(".bar i, .meter i")) {
+    for (const bar of b.querySelectorAll(".bar i")) {
       const target = bar.style.width;
       bar.style.transition = "none"; // riparto dalla larghezza vecchia, poi lascio fare al CSS
       bar.style.width = `${((old.avg ?? 0) / 5) * 100}%`;

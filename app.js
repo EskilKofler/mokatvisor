@@ -1,6 +1,6 @@
 import {
-  start, $, el, keyOf, ENTRIES, statOf, drinkButton, mineLine, skel, scoreBlock, meter, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, votesLabel,
+  start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -31,34 +31,37 @@ function sortedMachines() {
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
-/* ---- Bevanda: media, stelle e numero di voti; senza voti, un invito a lasciare la prima recensione ---- */
-function bigDrink(e, spot) {
+/* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto ---- */
+function drinkTile(e, spot) {
   const st = statOf(e.key);
   const empty = st.known && st.n === 0;
-  const b = drinkButton(e, spot, `big-drink${empty ? " is-empty" : ""}`);
-  const main = el("span", "big-main");
-  main.append(el("span", "drink-name", e.d.name));
-  if (empty) main.append(el("span", "drink-first", "Diventa il primo a lasciare una recensione"));
-  else main.append(st.pending ? skel("w-80") : meter(st.avg), mineLine(e.key));
-  const num = el("span", "big-num");
-  if (empty) {
-    const star = el("span", "drink-plus", "☆");
-    star.setAttribute("aria-hidden", "true");
-    num.append(star);
+  const b = drinkButton(e, spot, `tile${empty ? " is-empty" : ""}`);
+  b.append(el("span", "tile-name", e.d.name));
+  if (st.pending) {
+    b.append(skel("w-60"));
+  } else if (empty) {
+    b.append(el("span", "tile-sub tile-first", "Diventa il primo a recensire"));
+  } else if (!st.known) {
+    b.append(el("span", "tile-sub", "Voti non disponibili"));
   } else {
-    num.append(scoreBlock(st));
+    const sub = el("span", "tile-sub score"); // .score e .avg-num: ci pensano le animazioni dopo un voto
+    sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
+    b.append(sub);
   }
-  b.append(main, num);
+  const mine = state.mine.get(e.key);
+  if (mine !== undefined) b.append(el("span", "tile-mine", `Tuo voto ${nfVote.format(mine)}`));
   return b;
 }
 
+// Griglia a due colonne come il pannello reale: le prime `leftCount` bevande a sinistra dall'alto in basso, poi la destra
 function drinksOf(m, prefix) {
-  const list = el("div", "hero-drinks");
+  const grid = el("div", "drink-grid");
+  grid.style.setProperty("--rows", String(m.leftCount ?? Math.ceil(m.drinks.length / 2)));
   for (const d of m.drinks) {
     const key = keyOf(m.id, d.id);
-    list.append(bigDrink({ key, m, d }, `${prefix}:${key}`));
+    grid.append(drinkTile({ key, m, d }, `${prefix}:${key}`));
   }
-  return list;
+  return grid;
 }
 
 /* ---- Pagina di una macchinetta (?m=) ---- */
