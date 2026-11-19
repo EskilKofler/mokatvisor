@@ -8,10 +8,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
 import {
   getFirestore, collection, doc, setDoc, getDocs, query, where,
-  serverTimestamp, getAggregateFromServer, average, count,
+  serverTimestamp, getAggregateFromServer, sum, count,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { firebaseConfig, appCheckSiteKey } from "./firebase-config.js";
 import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modificali lì
+
+/* ------------------------------------------------------------------ */
+/*  IMPOSTAZIONI                                                       */
+/* ------------------------------------------------------------------ */
+const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
+const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
+
+/* ------------------------------------------------------------------ */
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, cls = "", text = "") => {
@@ -21,31 +29,28 @@ const el = (tag, cls = "", text = "") => {
   return e;
 };
 const keyOf = (machineId, drinkId) => `${machineId}_${drinkId}`;
-const fmt = (n, dec = 0) =>
-  n.toLocaleString("it-IT", { minimumFractionDigits: dec, maximumFractionDigits: dec === 0 ? 1 : dec });
-
-// ?m=<id>: quella macchinetta in alto e aperta, le altre sotto chiuse (id mancante o non valido → tutte chiuse)
-const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
+const nfAvg = new Intl.NumberFormat("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const nfVote = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+const votesLabel = (n) => `${n} ${n === 1 ? "voto" : "voti"}`;
 
 const configured = !String(firebaseConfig.apiKey).startsWith("INCOLLA");
 if (!configured) $("#setup-warning").hidden = false;
 
+// ?m=<id>: quella macchinetta in primo piano (id mancante o non valido → home)
+const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
+if (single) document.title = `${single.name} (${single.floor}) · kaffa-isiltep`;
+
+// Tutte le bevande, una per (macchinetta, bevanda)
+const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf(m.id, d.id), m, d })));
+
 const state = {
   user: null,
-  mine: new Map(),   // key -> valore dato da me
-  stats: new Map(),  // key -> { avg, n }
-  rows: new Map(),   // key -> elementi DOM della riga
+  mine: new Map(),     // key -> valore dato da me
+  stats: new Map(),    // key -> { sum, n }
+  settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
+  fetching: false,
+  fetchedAt: 0,        // quando sono stati letti (o salvati in cache) i dati attuali
 };
-
-const openMachines = new Set(); // macchinette aperte: solo di queste carichiamo le medie
-const statsAt = new Map();      // machineId -> ora dell'ultimo caricamento delle medie
-
-// Salvataggi da tastiera in attesa (key -> timer), annullabili se cambia l'account
-const kbTimers = new Map();
-function cancelPendingKeyboardSaves() {
-  for (const t of kbTimers.values()) clearTimeout(t);
-  kbTimers.clear();
-}
 
 let auth, db;
 if (configured) {
@@ -76,154 +81,270 @@ function toast(msg, ms = 1800) {
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
-// Vista singola: titolo della pagina e intestazione con il nome della macchinetta
-function applySingleHeader(m) {
-  document.title = `${m.name} (${m.floor}) · kaffa-isiltep`;
-  $(".top h1").textContent = `☕ ${m.name}`;
-  $(".top .by").textContent = `${m.floor} · kaffa-isiltep by ISILTEP`;
+function showNotice(msg, onRetry) {
+  const n = $("#notice");
+  n.replaceChildren(el("span", "", msg));
+  if (onRetry) {
+    const b = el("button", "btn small ghost", "Riprova");
+    b.type = "button";
+    b.addEventListener("click", onRetry);
+    n.append(b);
+  }
+  n.hidden = false;
 }
+const hideNotice = () => { $("#notice").hidden = true; };
 
-// Macchinetta aperta/chiusa: le medie si leggono solo per quelle aperte (risparmia letture Firestore)
-function onMachineToggle(m, isOpen) {
-  if (!isOpen) { openMachines.delete(m.id); return; }
-  openMachines.add(m.id);
-  // Se le ho lette meno di 60 s fa non rileggo
-  if (state.user && Date.now() - (statsAt.get(m.id) ?? 0) > REFRESH_GAP_MS) {
-    loadMachineStats(m).catch(console.error);
+// Messaggi comprensibili per chi vota; il dettaglio tecnico resta in console.
+function friendlyError(e) {
+  switch (e?.code) {
+    case "permission-denied":
+      return "Al momento non riesco a leggere i voti. Riprova tra poco.";
+    case "failed-precondition":
+      return "Le classifiche sono ancora in preparazione. Riprova tra qualche minuto.";
+    case "unavailable":
+    case "deadline-exceeded":
+      return "Sembra che la connessione non vada. Controlla la rete e riprova.";
+    default:
+      return "Qualcosa è andato storto nel caricare i voti. Riprova.";
   }
 }
 
-function buildDrink(m, d) {
-  const key = keyOf(m.id, d.id);
-  const row = el("div", "drink");
+/* ---- Stato dei dati di una bevanda ---- */
 
-  // Media e numero di voti di tutti, sempre visibili; "Recensisci" apre le stelle
-  const avgEl = el("div", "avg", "…");
-  const mine = el("div", "mine");
-  const info = el("div", "drink-info");
-  info.append(avgEl, mine);
-  const btn = el("button", "btn review", "Recensisci");
-  btn.type = "button";
-  const top = el("div", "drink-top");
-  top.append(info, btn);
-
-  const voteRow = el("div", "vote-row");
-  voteRow.hidden = true;
-  const stars = el("div", "stars");
-  stars.tabIndex = 0;
-  stars.setAttribute("role", "slider");
-  stars.setAttribute("aria-label", `Il tuo voto per ${d.name}`);
-  stars.setAttribute("aria-valuemin", "0");
-  stars.setAttribute("aria-valuemax", "5");
-  stars.setAttribute("aria-valuestep", "0.5");
-  const fill = el("div", "fill");
-  stars.append(fill);
-
-  const zero = el("button", "zero", "0");
-  zero.type = "button";
-  zero.title = "Dai 0 stelle";
-  voteRow.append(stars, zero);
-
-  row.append(el("div", "drink-name", d.name), top, voteRow);
-  state.rows.set(key, { avgEl, fill, mine, stars, btn, voteRow });
-
-  btn.addEventListener("click", () => {
-    voteRow.hidden = !voteRow.hidden;
-    updateRow(key);
-  });
-
-  // Tap: metà sinistra della stella = mezzo punto, metà destra = punto intero
-  stars.addEventListener("click", (e) => {
-    const r = stars.getBoundingClientRect();
-    let v = Math.ceil(((e.clientX - r.left) / r.width) * 10) / 2;
-    v = Math.min(5, Math.max(0.5, v));
-    saveRating(m, d, v);
-  });
-  zero.addEventListener("click", () => saveRating(m, d, 0));
-
-  // Tastiera (con piccolo ritardo per non fare una scrittura a ogni pressione)
-  stars.addEventListener("keydown", (e) => {
-    const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
-    if (!step) return;
-    e.preventDefault();
-    const cur = state.mine.get(key);
-    // Senza voto, qualsiasi freccia parte da 0.5 (lo 0 si dà solo col bottone "0")
-    const next = cur == null ? 0.5 : Math.min(5, Math.max(0, cur + step));
-    state.mine.set(key, next);
-    updateRow(key);
-    clearTimeout(kbTimers.get(key));
-    kbTimers.set(key, setTimeout(() => {
-      kbTimers.delete(key);
-      saveRating(m, d, next);
-    }, 700));
-  });
-
-  updateRow(key);
-  return row;
+function statOf(key) {
+  const s = state.stats.get(key);
+  if (!s) return { pending: !state.settled, known: false, n: 0, avg: null };
+  return { pending: false, known: true, n: s.n, avg: s.n ? s.sum / s.n : null };
 }
 
-// La macchinetta di ?m= è una card sempre aperta (piano e nome sono già nell'intestazione);
-// le altre sono <details> chiusi: le bevande compaiono solo toccando il nome.
-function buildMachine(m, focus) {
-  const card = el(focus ? "section" : "details", "card");
-  if (!focus) {
-    const head = el("summary", "card-head");
-    head.append(el("span", "floor", m.floor), el("h2", "", m.name));
-    card.append(head);
-    card.addEventListener("toggle", () => onMachineToggle(m, card.open));
-  }
+const countText = (st) => (st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") : "Voti non disponibili");
 
-  const img = el("img", "photo");
+function mineLine(key) {
+  const my = state.mine.get(key);
+  return my === undefined
+    ? el("span", "drink-you cta", "Tocca per votare")
+    : el("span", "drink-you", `Il tuo voto: ${nfVote.format(my)} ★`);
+}
+
+function ariaFor(e, st) {
+  const my = state.mine.get(e.key);
+  const media = st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`;
+  return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}, ${countText(st)}. ` +
+    (my === undefined ? "Tocca per votare." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
+}
+
+// Bottone-bevanda: base comune a card, hero (e più avanti podio e classifica)
+function drinkButton(e, spot, cls) {
+  const b = el("button", cls);
+  b.type = "button";
+  b.dataset.key = e.key;   // quale bevanda apre
+  b.dataset.spot = spot;   // dove si trova (per rimettere il focus dopo il ridisegno)
+  b.setAttribute("aria-label", ariaFor(e, statOf(e.key)));
+  return b;
+}
+
+const skel = (w) => el("span", `skel ${w}`, " ");
+
+function scoreNum(avg) {
+  const s = el("span", "score");
+  if (avg == null) { s.append(el("span", "avg-num dim", "–")); return s; }
+  s.append(el("span", "avg-num", nfAvg.format(avg)), el("span", "avg-star", "★"));
+  return s;
+}
+
+// Stelle di sola lettura: riempimento proporzionale alla media
+function meter(avg) {
+  const m = el("span", "meter");
+  m.setAttribute("aria-hidden", "true");
+  const i = document.createElement("i");
+  i.style.width = `${((avg ?? 0) / 5) * 100}%`;
+  m.append(i);
+  return m;
+}
+
+function photo(m, cls) {
+  const img = el("img", cls);
   img.src = `img/${m.id}.jpg`;
   img.alt = `Foto: ${m.name}, ${m.floor}`;
   img.loading = "lazy";
-  img.onerror = () => img.remove();
-  card.append(img);
-
-  for (const d of m.drinks) card.append(buildDrink(m, d));
-  return card;
+  img.onerror = () => img.remove(); // se la foto non c'è, semplicemente non appare
+  return img;
 }
 
-function render() {
-  const root = $("#machines");
-  root.innerHTML = "";
-  state.rows.clear();
-  openMachines.clear();
-
-  if (single) {
-    openMachines.add(single.id);
-    root.append(buildMachine(single, true));
-    root.append(el("h2", "others-title", "Altre macchinette"));
-  }
-  for (const m of MACHINES) {
-    if (m !== single) root.append(buildMachine(m, false));
-  }
+/* ---- Riga bevanda dentro la card di una macchinetta ---- */
+function drinkRow(e, spot) {
+  const st = statOf(e.key);
+  const b = drinkButton(e, spot, "drink");
+  const main = el("span", "drink-main");
+  main.append(el("span", "drink-name", e.d.name));
+  main.append(st.pending ? skel("w-60") : el("span", "drink-meta", countText(st)));
+  main.append(mineLine(e.key));
+  b.append(main, st.pending ? skel("w-40 tall") : scoreNum(st.avg));
+  return b;
 }
 
-function updateRow(key) {
-  const r = state.rows.get(key);
-  if (!r) return;
-
-  const s = state.stats.get(key);
-  r.avgEl.replaceChildren();
-  if (!s) {
-    r.avgEl.textContent = "…";
-  } else if (s.n === 0) {
-    r.avgEl.textContent = "Nessun voto";
+/* ---- Bevanda in grande (vista ?m=) ---- */
+function bigDrink(e, spot) {
+  const st = statOf(e.key);
+  const b = drinkButton(e, spot, "big-drink");
+  const main = el("span", "big-main");
+  main.append(el("span", "drink-name", e.d.name));
+  if (st.pending) {
+    main.append(skel("w-80"));
   } else {
-    const b = el("b", "", `★ ${fmt(s.avg, 1)}`);
-    r.avgEl.append(b, ` · ${s.n} ${s.n === 1 ? "voto" : "voti"}`);
+    const row = el("span", "big-meta");
+    row.append(meter(st.avg), el("span", "", countText(st)));
+    main.append(row);
   }
+  main.append(mineLine(e.key));
+  const num = el("span", "big-num");
+  if (st.pending) num.append(skel("w-60 tall"));
+  else num.append(scoreNum(st.avg));
+  b.append(main, num);
+  return b;
+}
 
-  const my = state.mine.get(key);
-  r.fill.style.width = `${((my ?? 0) / 5) * 100}%`;
-  r.stars.setAttribute("aria-valuenow", String(my ?? 0));
-  r.mine.textContent = my == null ? "Non ancora votato" : `Il tuo voto: ${fmt(my)}`;
+function renderHero(m) {
+  const sec = el("section", "hero");
+  sec.setAttribute("aria-labelledby", "hero-title");
+  sec.append(photo(m, "hero-photo"));
+  const head = el("div", "hero-head");
+  const h = el("h2", "", m.name);
+  h.id = "hero-title";
+  head.append(el("p", "eyebrow", m.floor), h);
+  const list = el("div", "hero-drinks");
+  for (const d of m.drinks) list.append(bigDrink({ key: keyOf(m.id, d.id), m, d }, `hero:${keyOf(m.id, d.id)}`));
+  sec.append(head, list);
+  return sec;
+}
 
-  const open = !r.voteRow.hidden;
-  r.btn.textContent = open ? "Chiudi" : my == null ? "Recensisci" : "Modifica voto";
-  r.btn.classList.toggle("ghost", open);
-  r.btn.setAttribute("aria-expanded", String(open));
+function moreLink() {
+  const p = el("p", "more");
+  const a = el("a", "more-link", "Vedi tutte le macchinette →");
+  a.href = location.pathname; // stessa pagina, senza ?m=
+  p.append(a);
+  return p;
+}
+
+function renderMachines() {
+  const sec = el("section", "section");
+  sec.setAttribute("aria-labelledby", "machines-title");
+  const h = el("h2", "section-title", "Le macchinette");
+  h.id = "machines-title";
+  sec.append(h, el("p", "section-sub", "Tocca una bevanda per votarla."));
+  const grid = el("div", "machines");
+  for (const m of MACHINES) {
+    const card = el("article", "mcard");
+    card.append(photo(m, "mcard-photo"));
+    const body = el("div", "mcard-body");
+    body.append(el("p", "eyebrow", m.floor), el("h3", "", m.name));
+    for (const d of m.drinks) body.append(drinkRow({ key: keyOf(m.id, d.id), m, d }, `card:${keyOf(m.id, d.id)}`));
+    card.append(body);
+    grid.append(card);
+  }
+  sec.append(grid);
+  return sec;
+}
+
+function sections() {
+  if (single) return [renderHero(single), moreLink()];
+  return [renderMachines()];
+}
+
+function renderView() {
+  const view = $("#view");
+  // Il ridisegno non deve far perdere il focus a chi usa la tastiera
+  const had = document.activeElement?.closest?.("#view") ? document.activeElement.dataset.spot : null;
+  view.replaceChildren(...sections());
+  view.setAttribute("aria-busy", String(!state.settled));
+  if (had) view.querySelector(`[data-spot="${had}"]`)?.focus({ preventScroll: true });
+}
+
+/* ----------------------------- Dati ----------------------------- */
+
+// Cache per sessione (sessionStorage): evita di rileggere Firestore a ogni apertura/ritorno sulla scheda
+function cacheRead(name) {
+  try {
+    const o = JSON.parse(sessionStorage.getItem(`kaffa:${name}`));
+    return o && Date.now() - o.t < CACHE_MS ? o : null;
+  } catch { return null; }
+}
+function cacheWrite(name, data, t = Date.now()) {
+  try { sessionStorage.setItem(`kaffa:${name}`, JSON.stringify({ t, data })); } catch { /* niente storage: pazienza */ }
+}
+
+async function loadMine() {
+  const name = `mine:${state.user.uid}`;
+  let data = cacheRead(name)?.data;
+  if (!data) {
+    const snap = await getDocs(query(collection(db, "ratings"), where("uid", "==", state.user.uid)));
+    data = {};
+    snap.forEach((d) => { const { drinkKey, value } = d.data(); data[drinkKey] = value; });
+    cacheWrite(name, data);
+  }
+  state.mine = new Map(Object.entries(data));
+  renderView();
+}
+
+// Somma e numero dei voti di una bevanda (1 aggregazione = 1 lettura)
+async function fetchStat(key) {
+  const q = query(collection(db, "ratings"), where("drinkKey", "==", key));
+  const res = await getAggregateFromServer(q, { total: sum("value"), n: count() });
+  const { total, n } = res.data();
+  return { sum: total ?? 0, n };
+}
+
+// Ritorna il primo errore incontrato (o null)
+async function fetchStats(entries) {
+  let error = null;
+  const results = await Promise.allSettled(entries.map((e) => fetchStat(e.key)));
+  results.forEach((r, i) => {
+    if (r.status === "fulfilled") state.stats.set(entries[i].key, r.value);
+    else {
+      if (!error) console.error(entries[i].key, r.reason); // un solo log per tentativo (di solito la causa è la stessa)
+      error ??= r.reason;
+    }
+  });
+  return error;
+}
+
+// Ritorna true se i dati sono aggiornati senza errori
+async function loadStats({ force = false } = {}) {
+  if (!configured || !state.user) return false;
+  if (!force) {
+    const c = cacheRead("stats");
+    if (c) {
+      for (const [k, v] of Object.entries(c.data)) state.stats.set(k, v);
+      state.fetchedAt = c.t;
+      state.settled = true;
+      hideNotice();
+      renderView();
+      return true;
+    }
+  }
+  if (state.fetching) return false;
+  state.fetching = true;
+  try {
+    // Con ?m= prima le 3 bevande della macchinetta, così si vedono subito; poi le altre
+    const first = single ? ENTRIES.filter((e) => e.m === single) : ENTRIES;
+    let error = await fetchStats(first);
+    if (single) {
+      renderView();
+      if (!error) error = await fetchStats(ENTRIES.filter((e) => e.m !== single));
+    }
+    state.settled = true;
+    state.fetchedAt = Date.now();
+    if (error) {
+      showNotice(friendlyError(error), () => loadStats({ force: true }));
+    } else {
+      hideNotice();
+      cacheWrite("stats", Object.fromEntries(state.stats), state.fetchedAt);
+    }
+    renderView();
+    return !error;
+  } finally {
+    state.fetching = false;
+  }
 }
 
 function renderAccount() {
@@ -283,83 +404,10 @@ async function linkGoogle() {
   }
 }
 
-/* ----------------------------- Dati ----------------------------- */
-
-async function loadMine() {
-  const snap = await getDocs(query(collection(db, "ratings"), where("uid", "==", state.user.uid)));
-  state.mine.clear();
-  snap.forEach((d) => {
-    const { drinkKey, value } = d.data();
-    state.mine.set(drinkKey, value);
-  });
-  for (const key of state.rows.keys()) updateRow(key);
-}
-
-async function loadStat(key) {
-  const q = query(collection(db, "ratings"), where("drinkKey", "==", key));
-  const res = await getAggregateFromServer(q, { avg: average("value"), n: count() });
-  const { avg, n } = res.data();
-  state.stats.set(key, { avg: avg ?? 0, n });
-  updateRow(key);
-}
-
-let lastStatsLoad = 0;
-const REFRESH_GAP_MS = 60_000;        // minimo tra due refresh automatici
-const REFRESH_GAP_FORCED_MS = 10_000; // minimo col pulsante "Aggiorna"
-
-async function loadMachineStats(m) {
-  statsAt.set(m.id, Date.now());
-  await Promise.all(m.drinks.map((d) => {
-    const k = keyOf(m.id, d.id);
-    return loadStat(k).catch((e) => console.error(k, e));
-  }));
-}
-
-// Carica le medie delle sole macchinette aperte (3 aggregazioni ciascuna)
-async function loadAllStats() {
-  lastStatsLoad = Date.now();
-  await Promise.all(MACHINES.filter((m) => openMachines.has(m.id)).map(loadMachineStats));
-}
-
-// Ricarica le medie delle macchinette aperte solo se è passato abbastanza tempo (risparmia letture Firestore).
-// Ritorna 0 se ha aggiornato, altrimenti i secondi da aspettare.
-async function refreshStats({ force = false } = {}) {
-  const gap = force ? REFRESH_GAP_FORCED_MS : REFRESH_GAP_MS;
-  const wait = lastStatsLoad + gap - Date.now();
-  if (wait > 0) return Math.ceil(wait / 1000);
-  await loadAllStats();
-  return 0;
-}
-
-async function saveRating(machine, drink, value) {
-  if (!state.user) return;
-  const key = keyOf(machine.id, drink.id);
-  const prev = state.mine.get(key);
-  state.mine.set(key, value);
-  updateRow(key);
-  try {
-    await setDoc(doc(db, "ratings", `${state.user.uid}_${key}`), {
-      uid: state.user.uid,
-      machineId: machine.id,
-      drinkId: drink.id,
-      drinkKey: key,
-      value,
-      updatedAt: serverTimestamp(),
-    });
-    toast(`${drink.name}: ${fmt(value)} ★ salvato`);
-    loadStat(key).catch(console.error);
-  } catch (e) {
-    console.error(e);
-    if (prev === undefined) state.mine.delete(key); else state.mine.set(key, prev);
-    updateRow(key);
-    toast("Errore nel salvataggio, riprova");
-  }
-}
 
 /* ------------------------------ Avvio --------------------------- */
 
-if (single) applySingleHeader(single);
-render();
+renderView();
 
 if (configured) {
   onAuthStateChanged(auth, async (user) => {
@@ -367,23 +415,28 @@ if (configured) {
       try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Impossibile collegarsi"); }
       return;
     }
-    if (state.user && state.user.uid !== user.uid) cancelPendingKeyboardSaves();
+    if (state.user && state.user.uid !== user.uid) state.mine = new Map(); // altro account: i voti vecchi non valgono
     state.user = user;
     renderAccount();
     try {
-      await Promise.all([loadMine(), loadAllStats()]);
+      await Promise.all([loadMine(), loadStats()]);
     } catch (e) {
       console.error(e);
       toast("Errore nel caricamento dei dati");
     }
   });
 
+  // Pulsante ↻: aggiorna saltando la cache, ma non più di una volta ogni 10 s
   $("#refresh").addEventListener("click", async () => {
-    const wait = await refreshStats({ force: true });
-    toast(wait ? `Già aggiornato, riprova tra ${wait} s` : "Risultati aggiornati");
+    if (!state.user) return;
+    const wait = Math.ceil((state.fetchedAt + REFRESH_FORCED_MS - Date.now()) / 1000);
+    if (wait > 0) { toast(`Già aggiornato, riprova tra ${wait} s`); return; }
+    const ok = await loadStats({ force: true });
+    if (ok) toast("Risultati aggiornati");
   });
 
+  // Tornando sulla scheda: aggiorna solo se la cache (60 s) è scaduta
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && state.user) refreshStats().catch(console.error);
+    if (document.visibilityState === "visible" && state.user) loadStats().catch(console.error);
   });
 }

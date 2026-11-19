@@ -2,27 +2,43 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>kaffa-isiltep</title>
+  <meta name="description" content="Vota le bevande delle macchinette di ISILTEP e scopri quali sono le più apprezzate.">
+  <meta name="theme-color" content="#5a3319">
+  <meta name="color-scheme" content="light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="kaffa-isiltep">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☕%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip" href="#main">Vai ai contenuti</a>
+
   <header class="top">
-    <h1>☕ kaffa-isiltep</h1>
-    <p class="by">by ISILTEP</p>
-    <p class="sub">Premi «Recensisci» per votare. Puoi cambiare il voto quando vuoi.</p>
+    <div class="top-in">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">☕</span>
+        <div>
+          <h1>kaffa-isiltep</h1>
+          <p class="by">by ISILTEP</p>
+        </div>
+      </div>
+      <button id="refresh" class="icon-btn" type="button" aria-label="Aggiorna i risultati" title="Aggiorna i risultati">↻</button>
+    </div>
   </header>
 
-  <main>
-    <div id="setup-warning" class="banner warn" hidden>
+  <main id="main">
+    <div id="setup-warning" class="notice warn" hidden>
       Configurazione Firebase mancante: compila <code>firebase-config.js</code>.
     </div>
+    <div id="notice" class="notice" role="alert" hidden></div>
 
-    <section id="account" class="banner"></section>
+    <div id="view" aria-busy="true"></div>
 
-    <div id="machines"></div>
-
-    <button id="refresh" class="link-btn" type="button">↻ Aggiorna i risultati</button>
+    <section id="account" class="account"></section>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
