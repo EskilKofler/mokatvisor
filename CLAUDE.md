@@ -15,16 +15,21 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP ("ka
 - Quota Spark Firestore: 50k letture/giorno, 20k scritture/giorno: attenzione a ogni lettura aggiunta.
 
 ## Struttura
-- `index.html`, `style.css`, `app.js` (modulo ES, Firebase JS SDK da gstatic, nessun build step)
-- `machines.js`: elenco macchinette e bevande, condiviso da `app.js` e da `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
-- Home: Top 3 (podio), Classifica, Le macchinette. `?m=<id>`: macchinetta in grande + link "Vedi tutte" + Top 3
-  (id non valido → home). Ogni bevanda è un bottone che apre il pannello di voto (`<dialog>`).
-- Classifica: `MIN_VOTES` e `PRIOR_VOTES` in cima ad `app.js`; ordinamento con media bayesiana, a schermo la media vera.
-- Dati: `sum` + `count` per bevanda con `getAggregateFromServer` (15 letture per caricamento), cache `sessionStorage` 60 s.
-  Dopo un voto si rilegge solo quella bevanda. Attenzione alla quota Spark (50k letture/giorno).
-- In fondo a ogni pagina: sezione `#info` «Informazioni e privacy» (HTML statico in `index.html`, sempre visibile).
-  Contiene il segnaposto `[CONTATTO]` (da compilare con l'utente prima di pubblicare); la frase su reCAPTCHA appare
-  solo se App Check è attivo. Se cambia ciò che il sito raccoglie o usa, aggiornarla.
+- Pagine: `index.html` (Macchinette: home e `?m=`, logica in `app.js`) e `classifica.html` (logica in `classifica.js`);
+  gusci HTML minimi, stile in `style.css`. Moduli ES, Firebase JS SDK da gstatic, nessun build step.
+- `core.js`: codice comune a tutte le pagine (Firebase/App Check, accesso anonimo, cache, pannello di voto, animazioni,
+  barra in alto, informativa). Ogni pagina chiama `start({ page, sections, need })`. **Non duplicare** codice tra pagine:
+  se serve a entrambe va in `core.js`.
+- `machines.js`: elenco macchinette e bevande, condiviso da `app.js`, `core.js` e `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
+- Home: solo le 5 card nell'ordine `HOME_ORDER` (6°, 4°, 3° piano). `?m=<id>`: macchinetta in grande + link "Vedi tutte
+  le macchinette" e "Vai alla classifica" (id non valido → home). Ogni bevanda è un bottone che apre il pannello di voto.
+- Classifica (`classifica.js`): podio 2-1-3 ed elenco minimale. `MIN_VOTES` (1) e `PRIOR_VOTES` (1) in cima al file;
+  media bayesiana per ordinare, a parità più voti prima; a schermo la media vera e il numero di voti.
+- Dati: `sum` + `count` per bevanda con `getAggregateFromServer`; home e classifica 15 letture, `?m=` 3. Cache
+  `sessionStorage` 60 s per bevanda. Dopo un voto si rilegge solo quella bevanda. Attenzione alla quota Spark (50k letture/giorno).
+- In fondo a ogni pagina: sezione `#info` «Informazioni e privacy», costruita da `core.js` (testo e costante `CONTACT`),
+  sempre visibile. Contiene il segnaposto `[CONTATTO]` (da compilare con l'utente prima di pubblicare); la frase su
+  reCAPTCHA appare solo se App Check è attivo. Se cambia ciò che il sito raccoglie o usa, aggiornarla.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase

@@ -10,8 +10,8 @@ quindi non ci sono account, login (nemmeno con Google), nickname, commenti, foto
 Si salvano solo il voto (da 0 a 5) per ogni bevanda, la data e un codice casuale anonimo.
 Non aggiungere funzioni che raccolgano dati personali o testo libero, né analisi del traffico o pubblicità.
 
-In fondo a ogni pagina c'è la sezione «Informazioni e privacy» (in `index.html`): tienila allineata a ciò che il sito
-fa davvero e **sostituisci `[CONTATTO]` con un contatto reale prima di pubblicare**. La frase su reCAPTCHA compare da
+In fondo a ogni pagina c'è la sezione «Informazioni e privacy» (testo e costante `CONTACT` in `core.js`): tienila
+allineata a ciò che il sito fa davvero e **sostituisci `[CONTATTO]` con un contatto reale prima di pubblicare**. La frase su reCAPTCHA compare da
 sola quando App Check è attivo.
 
 ## 1. Crea il progetto Firebase (piano Spark, gratis, niente carta)
@@ -62,18 +62,25 @@ Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
 
 ## QR code per le macchinette
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m=<id>`
-(es. `?m=piano3`): mostra quella macchinetta in grande, con le sue bevande e le medie, poi il link
-«Vedi tutte le macchinette» e la Top 3. Senza `?m=` (o con un id non valido) si vede la home.
+(es. `?m=piano3`): mostra quella macchinetta in grande, con le sue bevande e le medie, poi i link
+«Vedi tutte le macchinette» e «Vai alla classifica». Senza `?m=` (o con un id non valido) si vede la home.
 
 ## Com'è fatto il sito
-- **Home:** Top 3 di sempre (podio), Classifica di tutte le bevande, poi le card delle macchinette.
-- **Votare:** si tocca una bevanda e si apre un pannello con le stelle (metà sinistra = mezzo punto; il chip «Dai 0» per lo zero).
-- **Classifica:** in cima a `app.js` ci sono `MIN_VOTES` (voti minimi per entrare in podio, ora 3) e `PRIOR_VOTES`
-  (peso della media generale nella media corretta). L'ordine usa la media corretta (bayesiana): 3 voti da 5 non
-  battono 40 voti da 4,8. A schermo si vede sempre la media vera e il numero di voti.
-- **Letture Firestore:** ogni caricamento legge 15 medie (`sum` + `count` per bevanda) più i tuoi voti. I risultati
-  restano in cache nella scheda per 60 secondi e dopo un voto si rilegge solo quella bevanda. Il piano Spark ha
-  50.000 letture al giorno: tienine conto con tanti utenti.
+- **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
+  il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
+  barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
+- **Macchinette (home):** solo le 5 card, nell'ordine 6° piano (principale, secondaria), 4° piano (principale,
+  secondaria), 3° piano. L'ordine è `HOME_ORDER` in `app.js`; `machines.js` non cambia.
+- **Classifica:** podio con le 3 migliori bevande (la prima al centro e più alta) ed elenco di tutte le altre con una
+  barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti minimi per entrare in classifica, ora 1) e
+  `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1). L'ordine usa la media corretta
+  (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede sempre la media vera e il numero di voti.
+- **Votare:** si tocca una bevanda (in qualsiasi pagina) e si apre un pannello con le stelle (metà sinistra = mezzo
+  punto; il chip «Dai 0» per lo zero).
+- **Letture Firestore:** una media costa una lettura. La home e la Classifica ne leggono 15 (`sum` + `count` per
+  bevanda), la vista `?m=` solo 3, più i tuoi voti. Le medie restano in cache nella scheda per 60 secondi, una voce per
+  bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il piano Spark ha 50.000 letture al
+  giorno: tienine conto con tanti utenti.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
 - **Informazioni e privacy:** sezione fissa in fondo a ogni pagina (vedi sopra); contiene il segnaposto `[CONTATTO]`.
 
