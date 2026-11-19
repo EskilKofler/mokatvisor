@@ -229,12 +229,11 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
   display: flex; flex-direction: column; align-items: center; justify-content: space-between;
   gap: 12px; min-width: 0; padding: 18px 4px 14px; border: 0; border-radius: var(--radius-sm);
   background: var(--tint); box-shadow: inset 0 0 0 1.5px var(--line), inset 0 3px 0 var(--edge);
-  text-align: center; cursor: pointer;
+  text-align: center;
 }
 .pod.p1 { grid-area: p1; min-height: 15.5rem; }
 .pod.p2 { grid-area: p2; min-height: 13.5rem; --edge: #aaa097; --tint: #f9f6f3; }
 .pod.p3 { grid-area: p3; min-height: 12rem; --edge: #c98f58; --tint: #fcf1e5; }
-button.pod:active { filter: brightness(.97); }
 .pod-top { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .medal { font-size: 1.9rem; line-height: 1; }
 .p1 .medal { font-size: 2.4rem; }
@@ -244,7 +243,7 @@ button.pod:active { filter: brightness(.97); }
 .pod .avg-num { font-size: 1.5rem; }
 .pod.p1 .avg-num { font-size: 1.95rem; }
 .pod-n { font-size: .76rem; color: var(--muted); }
-.pod.empty { background: transparent; box-shadow: none; border: 1.5px dashed #cdbba3; justify-content: center; cursor: default; }
+.pod.empty { background: transparent; box-shadow: none; border: 1.5px dashed #cdbba3; justify-content: center; }
 .pod.empty .medal { opacity: .4; filter: grayscale(1); }
 .pod.empty .pod-name { color: var(--muted); }
 
@@ -253,9 +252,8 @@ button.pod:active { filter: brightness(.97); }
 .rank li:not(:last-child) { border-bottom: 1px solid var(--line); }
 .rank-row {
   display: grid; grid-template-columns: 2rem 1fr auto; align-items: center; column-gap: 12px; row-gap: 12px;
-  width: 100%; padding: 20px 6px 18px; border: 0; background: transparent; text-align: left; cursor: pointer;
+  width: 100%; padding: 20px 6px 18px; text-align: left;
 }
-.rank-row:active { background: var(--cream); }
 .rank-pos { font-size: 1rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .rank-top { display: flex; flex-direction: column; gap: 1px; min-width: 0; line-height: 1.25; }
 .rank-where { font-size: .8rem; color: var(--muted); }
@@ -263,7 +261,13 @@ button.pod:active { filter: brightness(.97); }
 .rank-row .bar { grid-column: 2 / -1; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: inherit; background: var(--caramel); }
 .rank-row.dim .drink-name { color: var(--muted); font-weight: 600; }
-.rank-row.ghost { cursor: default; border-bottom: 1px solid var(--line); }
+.rank-row.ghost { border-bottom: 1px solid var(--line); }
+
+/* "Aggiorna" discreto in fondo alla classifica; testo solo per screen reader */
+.refresh-row { margin-top: 28px; text-align: center; }
+.refresh-link { min-height: 44px; padding: 0 14px; border: 0; background: none; color: var(--gray); font-size: .85rem; font-weight: 600; cursor: pointer; }
+.refresh-link:hover { color: var(--ink); text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Nessun voto ancora */
 .invite { padding: 56px 12px; text-align: center; }

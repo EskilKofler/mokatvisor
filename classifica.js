@@ -1,5 +1,5 @@
 import {
-  start, el, ENTRIES, state, statOf, drinkButton, skel, scoreNum, scoreBlock, ariaFor, votesLabel, pageHead,
+  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink,
 } from "./core.js";
 
 /* ------------------------------------------------------------------ */
@@ -37,11 +37,16 @@ const byScore = (a, b) =>
   group(a) - group(b) || r6(b.score) - r6(a.score) || b.n - a.n || a.key.localeCompare(b.key);
 const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
+// Frase di lettura per gli screen reader: la pagina mostra soltanto, non si vota da qui
+const describe = (r) =>
+  `${r.d.name}, ${r.m.name} (${r.m.floor}): ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
+
 /* ---- Podio ---- */
 
 function podItem(r, i) {
-  const b = drinkButton(r, `top:${r.key}`, `pod p${i + 1}`);
-  b.setAttribute("aria-label", `${PLACES[i]} posto. ${ariaFor(r, r)}`);
+  const b = el("div", `pod p${i + 1}`);
+  b.setAttribute("role", "group");
+  b.setAttribute("aria-label", `${PLACES[i]} posto. ${describe(r)}`);
   const medal = el("span", "medal", MEDALS[i]);
   medal.setAttribute("aria-hidden", "true");
   const where = el("span", "pod-where");
@@ -70,8 +75,9 @@ function podEmpty(i, loading) {
 /* ---- Elenco: dal 4° posto in giù ---- */
 
 function rankRow(r, pos) {
-  const b = drinkButton(r, `rank:${r.key}`, `rank-row${r.eligible ? "" : " dim"}`);
-  b.setAttribute("aria-label", `${pos ? `${pos}° posto. ` : ""}${ariaFor(r, r)}`);
+  const b = el("div", `rank-row${r.eligible ? "" : " dim"}`);
+  b.setAttribute("role", "group");
+  b.setAttribute("aria-label", `${pos ? `${pos}° posto. ` : ""}${describe(r)}`);
   const p = el("span", "rank-pos", pos ? String(pos) : "–");
   p.setAttribute("aria-hidden", "true");
   const name = el("span", "rank-top");
@@ -94,9 +100,20 @@ function ghostRow() {
 
 /* ---- Pagina ---- */
 
+// "↻ Aggiorna i risultati" piccolo e grigio in fondo alla pagina
+function refreshRow() {
+  const p = el("p", "refresh-row");
+  p.append(refreshLink());
+  return p;
+}
+
 function renderBoard() {
   const sec = el("section", "page");
-  sec.append(pageHead("rank-title", "Classifica", "Le bevande più apprezzate, dalla prima all'ultima."));
+  sec.setAttribute("aria-labelledby", "rank-title");
+  // Il titolo non si vede, ma resta per chi usa uno screen reader
+  const h1 = el("h1", "sr-only", "Classifica");
+  h1.id = "rank-title";
+  sec.append(h1);
 
   // Dati in arrivo: scheletri
   if (allPending()) {
@@ -120,7 +137,7 @@ function renderBoard() {
       el("p", "invite-text", "Sii il primo: scegli una bevanda e dai il tuo voto. La classifica parte da qui."),
       go,
     );
-    sec.append(inv);
+    sec.append(inv, refreshRow());
     return sec;
   }
 
@@ -137,7 +154,8 @@ function renderBoard() {
   });
   sec.append(pod);
   if (ol.children.length) sec.append(ol);
+  sec.append(refreshRow());
   return sec;
 }
 
-start({ page: "rank", sections: () => [renderBoard()] });
+start({ page: "rank", vote: false, sections: () => [renderBoard()] });

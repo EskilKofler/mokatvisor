@@ -52,7 +52,7 @@ export const state = {
 };
 
 // Cosa disegna e quali medie serve alla pagina corrente (impostato da start())
-const ctx = { sections: () => [], need: () => ENTRIES };
+const ctx = { sections: () => [], need: () => ENTRIES, vote: true };
 
 let auth, db;
 if (configured) {
@@ -191,6 +191,14 @@ export function refreshButton() {
   b.dataset.refresh = "";
   b.setAttribute("aria-label", "Aggiorna i risultati");
   b.title = "Aggiorna i risultati";
+  return b;
+}
+
+// Piccolo link grigio "Aggiorna i risultati" (per le pagine senza titolo con ↻)
+export function refreshLink() {
+  const b = el("button", "refresh-link", "↻ Aggiorna i risultati");
+  b.type = "button";
+  b.dataset.refresh = "";
   return b;
 }
 
@@ -441,7 +449,7 @@ function finishClose() {
 }
 
 function closeSheet(now = false) {
-  if (!sheet.open || vote?.saving) return;
+  if (!sheet?.open || vote?.saving) return; // sheet non esiste nelle pagine senza voto
   if (now || reducedMotion()) { finishClose(); return; }
   sheet.classList.add("closing");
   setTimeout(finishClose, 200); // = durata dell'animazione di chiusura
@@ -687,21 +695,24 @@ async function refresh() {
 
 // Ogni pagina chiama start(): page = voce attiva nella barra, sections = cosa disegnare,
 // need = quali medie servono (di default tutte)
-export function start({ page, sections, need }) {
+// vote = false: pagina di sola lettura (niente pannello di voto, bevande non cliccabili, non legge i voti dell'utente)
+export function start({ page, sections, need, vote: canVote = true }) {
   ctx.sections = sections;
+  ctx.vote = canVote;
   if (need) ctx.need = need;
   if (!configured) $("#setup-warning").hidden = false;
   renderTopbar(page);
   renderInfo();
-  buildSheet();
-
-  // Tocco su una bevanda (card, hero, podio, classifica) → pannello di voto
-  $("#view").addEventListener("click", (ev) => {
-    const b = ev.target.closest("[data-key]");
-    if (!b) return;
-    const e = ENTRIES.find((x) => x.key === b.dataset.key);
-    if (e) openSheet(e, b.dataset.spot);
-  });
+  if (canVote) {
+    buildSheet();
+    // Tocco su una bevanda → pannello di voto
+    $("#view").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-key]");
+      if (!b) return;
+      const e = ENTRIES.find((x) => x.key === b.dataset.key);
+      if (e) openSheet(e, b.dataset.spot);
+    });
+  }
   document.addEventListener("click", (ev) => { if (ev.target.closest("[data-refresh]")) refresh(); });
 
   renderView();
@@ -718,7 +729,7 @@ export function start({ page, sections, need }) {
       }
       state.user = user;
       try {
-        await Promise.all([loadMine(), loadStats()]);
+        await Promise.all([ctx.vote ? loadMine() : null, loadStats()]);
       } catch (e) {
         console.error(e);
         toast("Errore nel caricamento dei dati");
