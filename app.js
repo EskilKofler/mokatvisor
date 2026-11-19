@@ -72,6 +72,18 @@ function drinkTile(e, spot) {
   if (knows) {
     const badge = el("span", mine !== undefined ? "tile-badge" : "tile-badge todo", mine !== undefined ? `✓ ${nfVote.format(mine)}` : "☆");
     badge.setAttribute("aria-hidden", "true"); // il testo per gli screen reader è nell'aria-label del riquadro
+    // Appena votata: il badge "salta fuori". Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
+    // da dove era (delay negativo), così non si interrompe né riparte da capo.
+    const pop = state.pop;
+    if (mine !== undefined && pop && pop.key === e.key) {
+      const elapsed = performance.now() - pop.at;
+      if (elapsed < 600) {
+        b.classList.add("just-voted");
+        badge.classList.add("pop");
+        badge.style.animationDelay = `-${Math.round(elapsed)}ms`;
+        b.style.animationDelay = `-${Math.round(elapsed)}ms`;
+      }
+    }
     b.append(badge);
   }
   return b;

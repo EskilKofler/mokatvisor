@@ -46,6 +46,7 @@ export const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf
 export const state = {
   user: null,
   mine: new Map(),     // key -> valore dato da me
+  pop: null,           // { key, at }: bevanda appena votata, per l'animazione del badge
   mineLoaded: false,   // true quando so cosa ho già votato (prima i riquadri restano neutri)
   stats: new Map(),    // key -> { sum, n }
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
@@ -601,6 +602,7 @@ async function submitVote() {
   }
   closeSheet();
   toast(`${e.d.name}: ${nfVote.format(value)} ★ salvato`);
+  state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo badge
   renderView();
   setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso
   refreshOne(e.key);
