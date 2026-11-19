@@ -16,3 +16,6 @@ firebase-debug.log*
 .env.*
 node_modules/
 *.log
+
+# QR generati (dipendono dall indirizzo finale: rigenerali, non committarli)
+qr/

@@ -11,29 +11,7 @@ import {
   serverTimestamp, getAggregateFromServer, average, count,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { firebaseConfig, appCheckSiteKey } from "./firebase-config.js";
-
-/* ------------------------------------------------------------------ */
-/*  DATI: modifica qui macchinette e bevande                           */
-/*  (id: solo minuscole, numeri e trattini; non cambiarli dopo che     */
-/*  sono stati raccolti voti, altrimenti i voti vecchi si "staccano")  */
-/* ------------------------------------------------------------------ */
-const DRINKS = [
-  { id: "lungo", name: "Caffè lungo" },
-  { id: "espresso", name: "Caffè espresso" },
-  { id: "cappuccino", name: "Cappuccino" },
-];
-
-const MACHINES = [
-  { id: "piano3", floor: "3° piano", name: "Macchinetta del terzo piano", drinks: DRINKS },
-  { id: "piano4-principale", floor: "4° piano", name: "Caffè Torretta principale", drinks: DRINKS },
-  { id: "piano4-secondaria", floor: "4° piano", name: "Caffè Torretta secondaria", drinks: DRINKS },
-  { id: "piano6-principale", floor: "6° piano", name: "Caffè Torretta principale", drinks: DRINKS },
-  { id: "piano6-secondaria", floor: "6° piano", name: "Caffè Torretta secondaria", drinks: DRINKS },
-];
-// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/piano3.jpg).
-// Se il file non c'è, la foto semplicemente non appare.
-
-/* ------------------------------------------------------------------ */
+import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modificali lì
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, cls = "", text = "") => {
