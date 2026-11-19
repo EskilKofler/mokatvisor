@@ -20,14 +20,13 @@ function machineStat(m) {
   return { n, avg: n ? sum / n : null };
 }
 
-// Home: dalla macchinetta con la media più alta a quella con la più bassa; senza voti in fondo;
-// a parità più voti, poi l'ordine di prima
+// Home: i piani restano in ordine (6°, 4°, 3°); dentro lo stesso piano prima la macchinetta con più recensioni;
+// a parità l'ordine di prima (principale, poi secondaria)
+const floorOf = (m) => parseInt(m.floor, 10); // "6° piano" → 6
 function sortedMachines() {
   const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
-  return [...FALLBACK_ORDER].sort((a, b) => {
-    const x = st.get(a.id), y = st.get(b.id);
-    return (y.avg ?? -1) - (x.avg ?? -1) || y.n - x.n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b);
-  });
+  return [...FALLBACK_ORDER].sort((a, b) =>
+    floorOf(b) - floorOf(a) || st.get(b.id).n - st.get(a.id).n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b));
 }
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette

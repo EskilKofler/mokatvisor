@@ -21,7 +21,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
   barra in alto, informativa). Ogni pagina chiama `start({ page, sections, need })`. **Non duplicare** codice tra pagine:
   se serve a entrambe va in `core.js`.
 - `machines.js`: elenco macchinette e bevande, condiviso da `app.js`, `core.js` e `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
-- Home: 5 menù chiusi (uno per macchinetta) ordinati per media di tutti i voti, dalla più alta alla più bassa (`HOME_ORDER` solo come ordine di partenza/parità); toccandone uno si apre l'interfaccia
+- Home: 5 menù chiusi (uno per macchinetta): piani in ordine 6°, 4°, 3°; nello stesso piano più recensioni prima (poi `HOME_ORDER`); toccandone uno si apre l'interfaccia
   delle bevande con il voto. `?m=<id>`: macchinetta già aperta + link "Vedi tutte le macchinette" e "Vai alla classifica"
   (id non valido → home). Ogni bevanda è un bottone che apre il pannello di voto. Senza voti: "Diventa il primo a
   lasciare una recensione".

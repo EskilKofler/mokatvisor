@@ -69,11 +69,11 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
-- **Macchinette (home):** 5 menù chiusi, uno per macchinetta, ordinati dalla media più alta alla più bassa (media di
-  tutti i voti delle sue bevande, mostrata sul menù; senza voti in fondo; `HOME_ORDER` in `app.js` fa da ordine di
-  partenza e di parità; `machines.js` non cambia). Toccando una macchinetta si
-  apre l'interfaccia completa delle sue bevande: media, stelle, numero di voti e voto. Le bevande ancora senza voti
-  mostrano «Diventa il primo a lasciare una recensione».
+- **Macchinette (home):** 5 menù chiusi, uno per macchinetta: prima i due del 6° piano, poi i due del 4°, poi il 3°.
+  Dentro lo stesso piano sta sopra la macchinetta con più recensioni (a parità, la principale). Sul menù si vede la
+  media e il numero di voti. L'ordine di partenza è `HOME_ORDER` in `app.js`; `machines.js` non cambia. Toccando una
+  macchinetta si apre l'interfaccia completa delle sue bevande: media, stelle, numero di voti e voto. Le bevande
+  ancora senza voti mostrano «Diventa il primo a lasciare una recensione».
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
   più alta) ed elenco di tutte le altre con una barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti
   minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta,
