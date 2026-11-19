@@ -400,21 +400,23 @@ const reducedMotion = () => !!window.matchMedia?.("(prefers-reduced-motion: redu
 
 function paintSheet() {
   const v = vote.value;
-  const label = v == null ? "Quante stelle?" : LABELS[v * 2];
-  $("#sheet-fill").style.width = `${((v ?? 0) / 5) * 100}%`;
+  const fresh = vote.prev == null && !vote.touched; // nuova recensione ancora intatta: parte da 0,0
+  const label = fresh ? "Quante stelle?" : LABELS[v * 2];
+  $("#sheet-fill").style.width = `${(v / 5) * 100}%`;
   $("#sheet-label").textContent = label;
-  $("#sheet-number").textContent = v == null ? "–" : nfAvg.format(v); // il valore scelto, in grande (anche 4,5)
-  starsEl.setAttribute("aria-valuenow", String(v ?? 0));
-  starsEl.setAttribute("aria-valuetext", v == null ? "Nessun voto" : `${nfVote.format(v)} stelle: ${label}`);
-  $("#sheet-zero").setAttribute("aria-pressed", String(v === 0));
+  $("#sheet-number").textContent = nfAvg.format(v); // il valore scelto, in grande (anche 4,5)
+  starsEl.setAttribute("aria-valuenow", String(v));
+  starsEl.setAttribute("aria-valuetext", fresh ? "Nessuna stella ancora" : `${nfVote.format(v)} stelle: ${label}`);
   const save = $("#sheet-save");
-  save.disabled = vote.saving || v == null || v === vote.prev; // niente da salvare se non è cambiato
+  // spento finché non tocchi le stelle (così non parte uno zero per sbaglio) o se il voto non è cambiato
+  save.disabled = vote.saving || fresh || v === vote.prev;
   save.textContent = vote.saving ? "Invio…" : vote.prev == null ? "Lascia recensione" : "Aggiorna recensione";
 }
 
 function setVote(v) {
   if (!vote || vote.saving) return;
   vote.value = v;
+  vote.touched = true;
   $("#sheet-error").hidden = true;
   paintSheet();
 }
@@ -422,7 +424,7 @@ function setVote(v) {
 function openSheet(e, spot) {
   if (!state.user) { toast("Un attimo, ti sto collegando…"); return; }
   const prev = state.mine.get(e.key) ?? null;
-  vote = { e, spot, value: prev, prev, saving: false };
+  vote = { e, spot, value: prev ?? 0, prev, saving: false, touched: false }; // una nuova recensione parte da 0,0
   $("#sheet-eyebrow").textContent = e.m.floor;
   $("#sheet-title").textContent = e.d.name;
   $("#sheet-sub").textContent = e.m.name;
@@ -568,7 +570,7 @@ async function refreshOne(key) {
 }
 
 async function submitVote() {
-  if (!vote || vote.saving || vote.value == null || vote.value === vote.prev) return;
+  if (!vote || vote.saving || (vote.prev == null && !vote.touched) || vote.value === vote.prev) return;
   const { e, value, spot, prev } = vote;
   vote.saving = true;
   $("#sheet-error").hidden = true;
@@ -593,6 +595,7 @@ async function submitVote() {
 
 function valueAt(x) {
   const r = starsEl.getBoundingClientRect();
+  if (x - r.left <= 4) return 0; // trascinando fino al bordo sinistro (o oltre) si dà zero
   const v = Math.ceil(((x - r.left) / r.width) * 10) / 2; // metà sinistra di una stella = mezzo punto
   return Math.min(5, Math.max(0.5, v));
 }
@@ -609,19 +612,19 @@ function wireSheet() {
   starsEl.addEventListener("pointermove", (ev) => { if (dragging) setVote(valueAt(ev.clientX)); });
   for (const t of ["pointerup", "pointercancel"]) starsEl.addEventListener(t, () => { dragging = false; });
 
-  // Tastiera: frecce ±0.5 (senza voto parte da 0.5), Home = 0, End = 5, Invio = salva
+  // Tastiera: frecce ±0.5 (la prima freccia di una nuova recensione parte da 0.5), Home = 0, End = 5, Invio = lascia la recensione
   starsEl.addEventListener("keydown", (ev) => {
     if (!vote) return;
     const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[ev.key];
     if (step) {
       ev.preventDefault();
-      setVote(vote.value == null ? 0.5 : Math.min(5, Math.max(0, vote.value + step)));
+      const intact = vote.prev == null && !vote.touched;
+      setVote(intact ? 0.5 : Math.min(5, Math.max(0, vote.value + step)));
     } else if (ev.key === "Home") { ev.preventDefault(); setVote(0); }
     else if (ev.key === "End") { ev.preventDefault(); setVote(5); }
     else if (ev.key === "Enter") { ev.preventDefault(); submitVote(); }
   });
 
-  $("#sheet-zero").addEventListener("click", () => setVote(0));
   $("#sheet-save").addEventListener("click", submitVote);
   $("#sheet-close").addEventListener("click", () => closeSheet());
   sheet.addEventListener("cancel", (ev) => { ev.preventDefault(); closeSheet(); }); // tasto Esc
@@ -664,19 +667,14 @@ function buildSheet() {
   const readout = el("div", "sheet-readout");
   const numLine = el("p", "sheet-numline");
   numLine.setAttribute("aria-hidden", "true"); // il valore è già letto dall'etichetta e dalle stelle
-  const num = el("span", "sheet-number", "–");
+  const num = el("span", "sheet-number", "0,0");
   num.id = "sheet-number";
   numLine.append(num, el("span", "sheet-of", " / 5"));
   const label = el("p", "sheet-label", "Quante stelle?");
   label.id = "sheet-label";
   label.setAttribute("aria-live", "polite");
   readout.append(numLine, label);
-  const zero = el("button", "chip", "Zero");
-  zero.id = "sheet-zero";
-  zero.type = "button";
-  zero.setAttribute("aria-pressed", "false");
-  zero.setAttribute("aria-label", "Dai zero stelle");
-  row.append(readout, zero);
+  row.append(readout);
 
   const prev = el("p", "sheet-prev"); prev.id = "sheet-prev";
   const err = el("p", "sheet-error"); err.id = "sheet-error"; err.setAttribute("role", "alert"); err.hidden = true;

@@ -88,7 +88,8 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1, in `core.js`). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
   sempre la media vera e il numero di voti.
 - **Votare:** si tocca una bevanda (in qualsiasi pagina) e si apre un pannello con le stelle (metà sinistra = mezzo
-  punto; il chip «Dai 0» per lo zero).
+  punto; una nuova recensione parte da 0,0 e il pulsante «Lascia recensione» resta spento finché non tocchi le stelle;
+  per dare zero si trascina il dito fino al bordo sinistro delle stelle, da tastiera ← o Home).
 - **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica leggono la
   media di **ogni bevanda di ogni macchinetta** (oggi 28: 16 + 4×3; con 16 bevande per macchinetta saranno 80), la
   vista `?m=` solo quelle di una macchinetta; i tuoi voti (per colorare i riquadri) si leggono una sola volta con `loadMine` nelle pagine dove si vota; la Classifica non li legge. Le medie restano in cache nella
