@@ -4,10 +4,13 @@ import {
   GoogleAuthProvider, linkWithPopup, signInWithCredential,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
+  initializeAppCheck, ReCaptchaV3Provider,
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
+import {
   getFirestore, collection, doc, setDoc, getDocs, query, where,
   serverTimestamp, getAggregateFromServer, average, count,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig, appCheckSiteKey } from "./firebase-config.js";
 
 /* ------------------------------------------------------------------ */
 /*  DATI: modifica qui macchinette e bevande                           */
@@ -63,6 +66,17 @@ function cancelPendingKeyboardSaves() {
 let auth, db;
 if (configured) {
   const app = initializeApp(firebaseConfig);
+  // App Check va inizializzato prima di Auth e Firestore. Saltato se la chiave è ancora un segnaposto.
+  if (!String(appCheckSiteKey).startsWith("INCOLLA")) {
+    // In locale stampa in console un token di debug da registrare in Firebase → App Check → Gestisci token di debug
+    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(appCheckSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
   auth = getAuth(app);
   db = getFirestore(app);
 }

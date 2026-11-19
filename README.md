@@ -15,6 +15,17 @@ Sito statico (HTML + JS) che usa Firebase (Auth anonima + Firestore) e si pubbli
 7. **Firestore → Indici → Composti → Aggiungi**: collezione `ratings`, campi `drinkKey` (crescente) e `value` (crescente).
    In alternativa apri il sito: l'errore in console del browser contiene un link che crea l'indice con un clic.
 
+## App Check (consigliato, gratis)
+Blocca script e bot che usano la tua config pubblica per esaurire la quota di Firestore.
+1. Registra una chiave **reCAPTCHA v3** su https://www.google.com/recaptcha/admin/create
+   (tipo *reCAPTCHA v3*, domini: `IL_TUO_UTENTE.github.io` e `localhost`).
+2. Firebase → **App Check → App → la tua app web → reCAPTCHA** → incolla la **chiave segreta**.
+3. Incolla la **chiave del sito** in `firebase-config.js` (`appCheckSiteKey`).
+4. Pubblica il sito e controlla in App Check → **Richieste** che risultino "verificate".
+5. Solo dopo, in App Check → **Cloud Firestore** (e Authentication) → **Applica** (enforce).
+6. Prove in locale con l'enforcement attivo: apri `localhost`, copia il *debug token* stampato in console
+   e registralo in App Check → ⋮ → **Gestisci token di debug**.
+
 ## 2. Prova in locale
 ```bash
 python3 -m http.server 8000

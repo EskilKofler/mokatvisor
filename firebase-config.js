@@ -9,3 +9,7 @@ export const firebaseConfig = {
   messagingSenderId: "INCOLLA_QUI",
   appId: "INCOLLA_QUI",
 };
+
+// App Check (reCAPTCHA v3): incolla qui la "chiave del sito" (site key), NON la chiave segreta.
+// Dove prenderla: vedi README, sezione "App Check". Lascia INCOLLA_QUI per disattivarlo.
+export const appCheckSiteKey = "INCOLLA_QUI";
