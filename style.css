@@ -158,11 +158,6 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 56px; }
 .skel.w-80 { width: 80%; max-width: 220px; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-/* -------------------------------- Account ------------------------------ */
-.account { margin-top: 32px; background: var(--cream); border-radius: var(--radius-sm); padding: 16px; font-size: .95rem; }
-.account:empty { display: none; }
-.account .btn { margin-top: 12px; }
-
 /* --------------------------------- Toast ------------------------------- */
 .toast {
   position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom));

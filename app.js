@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInAnonymously,
-  GoogleAuthProvider, linkWithPopup, signInWithCredential,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   initializeAppCheck, ReCaptchaV3Provider,
@@ -666,7 +665,7 @@ async function submitVote() {
   $("#sheet-error").hidden = true;
   paintSheet();
   const ok = await saveRating(e, value);
-  if (!vote) return; // il pannello è stato chiuso nel frattempo (cambio account)
+  if (!vote) return; // il pannello è stato chiuso nel frattempo (utente cambiato)
   vote.saving = false;
   if (!ok) {
     const err = $("#sheet-error");
@@ -724,64 +723,6 @@ $("#view").addEventListener("click", (ev) => {
   if (e) openSheet(e, b.dataset.spot);
 });
 
-function renderAccount() {
-  const box = $("#account");
-  box.replaceChildren();
-  const u = state.user;
-  if (!u) return;
-
-  const google = u.providerData.find((p) => p.providerId === "google.com");
-  if (google) {
-    box.append(`Accesso effettuato con Google${google.email ? ` (${google.email})` : ""}. I tuoi voti ti seguono su qualsiasi dispositivo.`);
-  } else {
-    box.append("Stai votando in modo anonimo: i tuoi voti sono salvati su questo telefono. Se cambi telefono o cancelli i dati del browser non li ritroverai. Vuoi tenerli al sicuro?");
-    box.append(document.createElement("br"));
-    const btn = el("button", "btn", "Accedi con Google");
-    btn.type = "button";
-    btn.addEventListener("click", linkGoogle);
-    box.append(btn);
-  }
-}
-
-/* ---------------------------- Account --------------------------- */
-
-const OPEN_IN_BROWSER = "Apri il sito nel browser (Chrome o Safari) per accedere con Google";
-// Browser integrati di app (Instagram, WhatsApp, ...): Google vi blocca il login.
-const inWebview = /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|Line\/|MicroMessenger|WhatsApp|; wv\)|(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i
-  .test(navigator.userAgent);
-
-async function linkGoogle() {
-  if (inWebview) { toast(OPEN_IN_BROWSER, 6000); return; }
-  const provider = new GoogleAuthProvider();
-  try {
-    // Collega Google all'utente anonimo: l'uid resta lo stesso e i voti fatti restano validi.
-    await linkWithPopup(auth.currentUser, provider);
-    state.user = auth.currentUser;
-    renderAccount();
-    toast("Account collegato");
-  } catch (e) {
-    if (e.code === "auth/credential-already-in-use") {
-      // Questo Google era già stato usato (es. su un altro telefono): entra in quell'account.
-      // I voti dati finora da anonimo restano nell'uid anonimo e non vengono spostati.
-      const cred = GoogleAuthProvider.credentialFromError(e);
-      try {
-        if (!cred) throw new Error("credenziale Google mancante");
-        await signInWithCredential(auth, cred);
-        toast("Bentornato! Ho ricaricato i tuoi voti");
-      } catch (e2) {
-        console.error(e2);
-        toast("Non sono riuscito a entrare nel tuo account Google, riprova");
-      }
-    } else if (e.code === "auth/popup-blocked") {
-      toast(OPEN_IN_BROWSER, 6000);
-    } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
-      console.error(e);
-      toast("Accesso non riuscito");
-    }
-  }
-}
-
-
 /* ------------------------------ Avvio --------------------------- */
 
 renderView();
@@ -792,12 +733,11 @@ if (configured) {
       try { await signInAnonymously(auth); } catch (e) { console.error(e); toast("Impossibile collegarsi"); }
       return;
     }
-    if (state.user && state.user.uid !== user.uid) { // altro account: i voti vecchi non valgono
+    if (state.user && state.user.uid !== user.uid) { // utente diverso da prima: azzero lo stato personale
       state.mine = new Map();
       closeSheet(true);
     }
     state.user = user;
-    renderAccount();
     try {
       await Promise.all([loadMine(), loadStats()]);
     } catch (e) {
