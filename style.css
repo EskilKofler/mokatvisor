@@ -33,6 +33,7 @@ main { max-width: 640px; margin: 0 auto; padding: 8px 16px 40px; }
   font-size: .92rem;
 }
 .banner.warn { background: #fde2e0; }
+#account:empty { display: none; }
 .banner button { margin-top: 8px; }
 
 .card {
@@ -50,14 +51,14 @@ main { max-width: 640px; margin: 0 auto; padding: 8px 16px 40px; }
 .card h2 { margin: 0; font-size: 1.15rem; }
 .photo { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; margin: 8px 0 4px; }
 
-.drink { padding: 12px 0; border-top: 1px solid var(--line); }
-.drink:first-of-type { border-top: 0; }
+.drink { padding: 12px 0; }
+.drink + .drink { border-top: 1px solid var(--line); }
 .drink-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .drink-name { font-weight: 650; }
 .avg { color: var(--muted); font-size: .9rem; white-space: nowrap; }
 .avg b { color: var(--ink); }
 
-.vote-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.vote-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
 
 .stars {
   position: relative;
