@@ -15,8 +15,8 @@ import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modi
 /* ------------------------------------------------------------------ */
 /*  IMPOSTAZIONI                                                       */
 /* ------------------------------------------------------------------ */
-const MIN_VOTES = 3;              // voti minimi perché una bevanda entri nel podio e nella classifica "vera"
-const PRIOR_VOTES = 5;            // peso della media generale nella media corretta (bayesiana)
+const MIN_VOTES = 1;              // voti minimi perché una bevanda entri nel podio e nella classifica "vera"
+const PRIOR_VOTES = 1;            // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
 const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
 const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
 
@@ -153,6 +153,14 @@ function scoreNum(avg) {
   return s;
 }
 
+// Media e numero di voti, sempre vicini
+function scoreBlock(st) {
+  const box = el("span", "score-box");
+  if (st.pending) { box.append(skel("w-40 tall"), skel("w-40")); return box; }
+  box.append(scoreNum(st.avg), el("span", "score-n", st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") : "–"));
+  return box;
+}
+
 // Stelle di sola lettura: riempimento proporzionale alla media
 function meter(avg) {
   const m = el("span", "meter");
@@ -177,10 +185,8 @@ function drinkRow(e, spot) {
   const st = statOf(e.key);
   const b = drinkButton(e, spot, "drink");
   const main = el("span", "drink-main");
-  main.append(el("span", "drink-name", e.d.name));
-  main.append(st.pending ? skel("w-60") : el("span", "drink-meta", countText(st)));
-  main.append(mineLine(e.key));
-  b.append(main, st.pending ? skel("w-40 tall") : scoreNum(st.avg));
+  main.append(el("span", "drink-name", e.d.name), mineLine(e.key));
+  b.append(main, scoreBlock(st));
   return b;
 }
 
@@ -190,17 +196,9 @@ function bigDrink(e, spot) {
   const b = drinkButton(e, spot, "big-drink");
   const main = el("span", "big-main");
   main.append(el("span", "drink-name", e.d.name));
-  if (st.pending) {
-    main.append(skel("w-80"));
-  } else {
-    const row = el("span", "big-meta");
-    row.append(meter(st.avg), el("span", "", countText(st)));
-    main.append(row);
-  }
-  main.append(mineLine(e.key));
+  main.append(st.pending ? skel("w-80") : meter(st.avg), mineLine(e.key));
   const num = el("span", "big-num");
-  if (st.pending) num.append(skel("w-60 tall"));
-  else num.append(scoreNum(st.avg));
+  num.append(scoreBlock(st));
   b.append(main, num);
   return b;
 }
@@ -255,8 +253,10 @@ function rankedList() {
 }
 
 const group = (r) => (r.eligible ? 0 : r.n ? 1 : 2); // classifica vera, pochi voti, nessun voto
+const r6 = (x) => Math.round((x ?? -1) * 1e6); // a 6 decimali: niente falsi pareggi per errori di virgola mobile
+// Ordine: punteggio corretto; a parità, più voti; poi ordine fisso
 const byScore = (a, b) =>
-  group(a) - group(b) || (b.score ?? -1) - (a.score ?? -1) || b.n - a.n || a.key.localeCompare(b.key);
+  group(a) - group(b) || r6(b.score) - r6(a.score) || b.n - a.n || a.key.localeCompare(b.key);
 const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
 function podItem(r, i) {
@@ -279,7 +279,7 @@ function podEmpty(i, loading) {
   medal.setAttribute("aria-hidden", "true");
   const body = el("span", "pod-body");
   if (loading) body.append(skel("w-80"), skel("w-60"));
-  else body.append(el("span", "pod-name", "Posto libero"), el("span", "pod-where", `Servono ${MIN_VOTES} voti`));
+  else body.append(el("span", "pod-name", "Posto libero"), el("span", "pod-where", "Vota per portarla qui"));
   d.append(medal, body);
   return d;
 }
@@ -287,7 +287,7 @@ function podEmpty(i, loading) {
 function renderTop3() {
   const sec = el("section", "section");
   sec.setAttribute("aria-labelledby", "top3-title");
-  sec.append(...sectionHead("top3-title", "🏆 Top 3 di sempre", `Contano le bevande con almeno ${MIN_VOTES} voti.`));
+  sec.append(...sectionHead("top3-title", "🏆 Top 3 di sempre", MIN_VOTES > 1 ? `Contano le bevande con almeno ${MIN_VOTES} voti.` : "Basta anche un solo voto per entrare."));
   const pod = el("div", "podium");
   if (allPending()) {
     for (let i = 0; i < 3; i++) pod.append(podEmpty(i, true));
@@ -300,7 +300,7 @@ function renderTop3() {
     inv.append(
       el("p", "invite-emoji", "🏆"),
       el("p", "invite-title", "Il podio è ancora vuoto"),
-      el("p", "invite-text", `Servono almeno ${MIN_VOTES} voti per bevanda. Scegli la tua preferita e dai il primo voto!`),
+      el("p", "invite-text", "Scegli la tua bevanda preferita e dai il primo voto: il podio parte da qui!"),
     );
     sec.append(inv);
     return sec;
@@ -323,8 +323,8 @@ function rankRow(r, pos) {
   const fill = document.createElement("i");
   fill.style.width = `${((r.avg ?? 0) / 5) * 100}%`;
   bar.append(fill);
-  main.append(top, bar, el("span", "rank-meta", r.n ? votesLabel(r.n) : "Nessun voto"));
-  b.append(p, main, scoreNum(r.avg));
+  main.append(top, bar);
+  b.append(p, main, scoreBlock(r));
   return b;
 }
 
