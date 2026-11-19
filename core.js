@@ -191,9 +191,6 @@ export function refreshButton() {
   return b;
 }
 
-// Quante delle bevande indicate l'utente ha già votato (da state.mine: nessuna lettura in più)
-export const votedCount = (entries) => entries.filter((e) => state.mine.has(e.key)).length;
-
 // Piccolo link grigio "Aggiorna i risultati" (per le pagine senza titolo con ↻)
 export function refreshLink() {
   const b = el("button", "refresh-link", "↻ Aggiorna i risultati");
@@ -719,6 +716,13 @@ export function start({ page, sections, need, vote: canVote = true }) {
     });
   }
   document.addEventListener("click", (ev) => { if (ev.target.closest("[data-refresh]")) refresh(); });
+
+  // Anello di focus solo per chi usa la tastiera: con tocco o mouse (anche quando il focus torna da solo al riquadro
+  // dopo un voto) non deve comparire nessun contorno
+  const html = document.documentElement;
+  html.dataset.input = "pointer";
+  addEventListener("keydown", (ev) => { if (ev.key === "Tab" || ev.key.startsWith("Arrow")) html.dataset.input = "keyboard"; }, true);
+  addEventListener("pointerdown", () => { html.dataset.input = "pointer"; }, true);
 
   renderView();
 

@@ -79,7 +79,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   pannello di voto. Quelli che hai già votato hanno il bordo verde; quelli
   da votare il bordo tratteggiato e una ☆. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
   voto precedente». Senza voti: «Nessun voto»; se nessuna bevanda della macchinetta ha voti compare un solo invito in
-  cima. Sopra la griglia c'è il filtro «Da votare».
+  cima.
   In `machines.js` una macchinetta può avere un suo elenco
   `drinks` e `leftCount` (quante bevande stanno a sinistra): ora il 6° piano principale usa le 16 bevande del pannello
   dalla foto (`PANEL_DRINKS`), le altre le 3 di prima, finché non ci sono le foto vere.
