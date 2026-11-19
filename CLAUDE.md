@@ -21,15 +21,14 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
   barra in alto, informativa). Ogni pagina chiama `start({ page, sections, need })`. **Non duplicare** codice tra pagine:
   se serve a entrambe va in `core.js`.
 - `machines.js`: elenco macchinette e bevande, condiviso da `app.js`, `core.js` e `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
-- Home: 5 menù chiusi (uno per macchinetta, ordine `HOME_ORDER`: 6°, 4°, 3° piano); toccandone uno si apre l'interfaccia
+- Home: 5 menù chiusi (uno per macchinetta) ordinati per media di tutti i voti, dalla più alta alla più bassa (`HOME_ORDER` solo come ordine di partenza/parità); toccandone uno si apre l'interfaccia
   delle bevande con il voto. `?m=<id>`: macchinetta già aperta + link "Vedi tutte le macchinette" e "Vai alla classifica"
   (id non valido → home). Ogni bevanda è un bottone che apre il pannello di voto. Senza voti: "Diventa il primo a
   lasciare una recensione".
 - Classifica (`classifica.js`): **sola lettura, niente voto** (`start({ vote: false })`). Podio 2-1-3 ed elenco
   minimale. `MIN_VOTES` (1) e `PRIOR_VOTES` (1) in cima al file; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).
-- Dati: `sum` + `count` per bevanda con `getAggregateFromServer`. Home: solo le medie dei menù aperti (parte da 0
-  letture); `?m=` 3; classifica 15. Cache `sessionStorage` 60 s per bevanda. Dopo un voto si rilegge solo quella
+- Dati: `sum` + `count` per bevanda con `getAggregateFromServer`. Home e classifica 15; `?m=` 3. Cache `sessionStorage` 60 s per bevanda. Dopo un voto si rilegge solo quella
   bevanda. Attenzione alla quota Spark (50k letture/giorno).
 - In fondo a ogni pagina: tendina piccola e grigia «Informazioni e privacy» (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.

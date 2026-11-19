@@ -1,6 +1,6 @@
 import {
   start, $, el, keyOf, ENTRIES, statOf, drinkButton, mineLine, skel, scoreBlock, meter, photo,
-  pageHead, refreshButton, renderView, loadStats,
+  pageHead, refreshButton, renderView, state, nfAvg, votesLabel,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -11,7 +11,24 @@ if (single) document.title = `${single.name} (${single.floor}) · Kaffa ISILTeP`
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
 const HOME_ORDER = ["piano6-principale", "piano6-secondaria", "piano4-principale", "piano4-secondaria", "piano3"];
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
-const HOME_MACHINES = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b));
+const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b)); // finché le medie non arrivano
+
+// Voti di una macchinetta: somma e numero su tutte le sue bevande
+function machineStat(m) {
+  let sum = 0, n = 0;
+  for (const d of m.drinks) { const s = state.stats.get(keyOf(m.id, d.id)); if (s) { sum += s.sum; n += s.n; } }
+  return { n, avg: n ? sum / n : null };
+}
+
+// Home: dalla macchinetta con la media più alta a quella con la più bassa; senza voti in fondo;
+// a parità più voti, poi l'ordine di prima
+function sortedMachines() {
+  const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
+  return [...FALLBACK_ORDER].sort((a, b) => {
+    const x = st.get(a.id), y = st.get(b.id);
+    return (y.avg ?? -1) - (x.avg ?? -1) || y.n - x.n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b);
+  });
+}
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
@@ -83,7 +100,9 @@ function machineMenu(m) {
   title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name));
   const chevron = el("span", "chevron");
   chevron.setAttribute("aria-hidden", "true");
-  head.append(title, chevron);
+  const ms = machineStat(m);
+  const rating = el("span", "mcard-rating", ms.n ? `★ ${nfAvg.format(ms.avg)} · ${votesLabel(ms.n)}` : "");
+  head.append(title, rating, chevron);
   card.append(head);
   if (isOpen) {
     const panel = el("div", "mcard-panel");
@@ -100,7 +119,7 @@ function renderMachines() {
   const sec = el("section", "page");
   sec.append(pageHead("machines-title", "Le macchinette", "Tocca una macchinetta per vedere le bevande e votare."));
   const list = el("div", "menus");
-  for (const m of HOME_MACHINES) list.append(machineMenu(m));
+  for (const m of sortedMachines()) list.append(machineMenu(m));
   sec.append(list);
   return sec;
 }
@@ -108,17 +127,15 @@ function renderMachines() {
 start({
   page: "home",
   sections: () => (single ? [renderHero(single), moreLinks()] : [renderMachines()]),
-  // ?m=: le 3 medie della macchinetta. Home: solo quelle dei menù aperti (all'inizio nessuna lettura)
-  need: () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES.filter((e) => open.has(e.m.id))),
+  // ?m=: le 3 medie della macchinetta. Home: tutte (servono a ordinare le macchinette)
+  need: () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES),
 });
 
-// Tocco su un menù: apre/chiude e, aprendo, legge le medie di quella macchinetta
+// Tocco su un menù: apre/chiude
 $("#view").addEventListener("click", (ev) => {
   const head = ev.target.closest("[data-menu]");
   if (!head) return;
   const id = head.dataset.menu;
-  const opening = !open.has(id);
-  if (opening) open.add(id); else open.delete(id);
+  if (open.has(id)) open.delete(id); else open.add(id);
   renderView();
-  if (opening) loadStats().catch(console.error);
 });

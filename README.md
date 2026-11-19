@@ -69,8 +69,9 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
-- **Macchinette (home):** 5 menù chiusi, uno per macchinetta, nell'ordine 6° piano (principale, secondaria), 4° piano
-  (principale, secondaria), 3° piano (`HOME_ORDER` in `app.js`; `machines.js` non cambia). Toccando una macchinetta si
+- **Macchinette (home):** 5 menù chiusi, uno per macchinetta, ordinati dalla media più alta alla più bassa (media di
+  tutti i voti delle sue bevande, mostrata sul menù; senza voti in fondo; `HOME_ORDER` in `app.js` fa da ordine di
+  partenza e di parità; `machines.js` non cambia). Toccando una macchinetta si
   apre l'interfaccia completa delle sue bevande: media, stelle, numero di voti e voto. Le bevande ancora senza voti
   mostrano «Diventa il primo a lasciare una recensione».
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
@@ -80,8 +81,8 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   sempre la media vera e il numero di voti.
 - **Votare:** si tocca una bevanda (in qualsiasi pagina) e si apre un pannello con le stelle (metà sinistra = mezzo
   punto; il chip «Dai 0» per lo zero).
-- **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home parte da zero e ne legge 3
-  per ogni menù che apri, la vista `?m=` ne legge 3, la Classifica 15 (e non legge i tuoi voti). Le medie restano in cache nella scheda per 60 secondi, una voce per
+- **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica ne leggono 15
+  (la home per ordinare le macchinette), la vista `?m=` ne legge 3; la Classifica non legge i tuoi voti. Le medie restano in cache nella scheda per 60 secondi, una voce per
   bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il piano Spark ha 50.000 letture al
   giorno: tienine conto con tanti utenti.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.

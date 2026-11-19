@@ -133,6 +133,7 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 }
 .mcard-head:active { background: var(--cream); }
 .mcard-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mcard-rating { margin-left: auto; font-size: .85rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
 .mcard-name { font-size: 1.15rem; font-weight: 800; line-height: 1.2; }
 .chevron {
   flex: none; width: 10px; height: 10px; margin: 0 4px 3px 0; transition: transform .2s;
