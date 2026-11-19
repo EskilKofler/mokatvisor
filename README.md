@@ -51,7 +51,8 @@ Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
 
 ## QR code per le macchinette
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m=<id>`
-(es. `?m=piano3`). Con `?m=` mancante o non valido si vede la lista completa.
+(es. `?m=piano3`): in alto c'è quella macchinetta, già aperta, e sotto le altre, chiuse (si aprono toccando il nome).
+Con `?m=` mancante o non valido sono tutte chiuse. Le medie si leggono solo per le macchinette aperte.
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash

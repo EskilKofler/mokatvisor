@@ -24,9 +24,8 @@ const keyOf = (machineId, drinkId) => `${machineId}_${drinkId}`;
 const fmt = (n, dec = 0) =>
   n.toLocaleString("it-IT", { minimumFractionDigits: dec, maximumFractionDigits: dec === 0 ? 1 : dec });
 
-// Vista singola: ?m=<id> mostra solo quella macchinetta (id mancante o non valido → lista completa)
+// ?m=<id>: quella macchinetta in alto e aperta, le altre sotto chiuse (id mancante o non valido → tutte chiuse)
 const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
-const visibleMachines = single ? [single] : MACHINES;
 
 const configured = !String(firebaseConfig.apiKey).startsWith("INCOLLA");
 if (!configured) $("#setup-warning").hidden = false;
@@ -37,6 +36,9 @@ const state = {
   stats: new Map(),  // key -> { avg, n }
   rows: new Map(),   // key -> elementi DOM della riga
 };
+
+const openMachines = new Set(); // macchinette aperte: solo di queste carichiamo le medie
+const statsAt = new Map();      // machineId -> ora dell'ultimo caricamento delle medie
 
 // Salvataggi da tastiera in attesa (key -> timer), annullabili se cambia l'account
 const kbTimers = new Map();
@@ -81,91 +83,120 @@ function applySingleHeader(m) {
   $(".top .by").textContent = `${m.floor} · kaffa-isiltep by ISILTEP`;
 }
 
+// Macchinetta aperta/chiusa: le medie si leggono solo per quelle aperte (risparmia letture Firestore)
+function onMachineToggle(m, isOpen) {
+  if (!isOpen) { openMachines.delete(m.id); return; }
+  openMachines.add(m.id);
+  // Se le ho lette meno di 60 s fa non rileggo
+  if (state.user && Date.now() - (statsAt.get(m.id) ?? 0) > REFRESH_GAP_MS) {
+    loadMachineStats(m).catch(console.error);
+  }
+}
+
+function buildDrink(m, d) {
+  const key = keyOf(m.id, d.id);
+  const row = el("div", "drink");
+
+  // Media e numero di voti di tutti, sempre visibili; "Recensisci" apre le stelle
+  const avgEl = el("div", "avg", "…");
+  const mine = el("div", "mine");
+  const info = el("div", "drink-info");
+  info.append(avgEl, mine);
+  const btn = el("button", "btn review", "Recensisci");
+  btn.type = "button";
+  const top = el("div", "drink-top");
+  top.append(info, btn);
+
+  const voteRow = el("div", "vote-row");
+  voteRow.hidden = true;
+  const stars = el("div", "stars");
+  stars.tabIndex = 0;
+  stars.setAttribute("role", "slider");
+  stars.setAttribute("aria-label", `Il tuo voto per ${d.name}`);
+  stars.setAttribute("aria-valuemin", "0");
+  stars.setAttribute("aria-valuemax", "5");
+  stars.setAttribute("aria-valuestep", "0.5");
+  const fill = el("div", "fill");
+  stars.append(fill);
+
+  const zero = el("button", "zero", "0");
+  zero.type = "button";
+  zero.title = "Dai 0 stelle";
+  voteRow.append(stars, zero);
+
+  row.append(el("div", "drink-name", d.name), top, voteRow);
+  state.rows.set(key, { avgEl, fill, mine, stars, btn, voteRow });
+
+  btn.addEventListener("click", () => {
+    voteRow.hidden = !voteRow.hidden;
+    updateRow(key);
+  });
+
+  // Tap: metà sinistra della stella = mezzo punto, metà destra = punto intero
+  stars.addEventListener("click", (e) => {
+    const r = stars.getBoundingClientRect();
+    let v = Math.ceil(((e.clientX - r.left) / r.width) * 10) / 2;
+    v = Math.min(5, Math.max(0.5, v));
+    saveRating(m, d, v);
+  });
+  zero.addEventListener("click", () => saveRating(m, d, 0));
+
+  // Tastiera (con piccolo ritardo per non fare una scrittura a ogni pressione)
+  stars.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const cur = state.mine.get(key);
+    // Senza voto, qualsiasi freccia parte da 0.5 (lo 0 si dà solo col bottone "0")
+    const next = cur == null ? 0.5 : Math.min(5, Math.max(0, cur + step));
+    state.mine.set(key, next);
+    updateRow(key);
+    clearTimeout(kbTimers.get(key));
+    kbTimers.set(key, setTimeout(() => {
+      kbTimers.delete(key);
+      saveRating(m, d, next);
+    }, 700));
+  });
+
+  updateRow(key);
+  return row;
+}
+
+// La macchinetta di ?m= è una card sempre aperta (piano e nome sono già nell'intestazione);
+// le altre sono <details> chiusi: le bevande compaiono solo toccando il nome.
+function buildMachine(m, focus) {
+  const card = el(focus ? "section" : "details", "card");
+  if (!focus) {
+    const head = el("summary", "card-head");
+    head.append(el("span", "floor", m.floor), el("h2", "", m.name));
+    card.append(head);
+    card.addEventListener("toggle", () => onMachineToggle(m, card.open));
+  }
+
+  const img = el("img", "photo");
+  img.src = `img/${m.id}.jpg`;
+  img.alt = `Foto: ${m.name}, ${m.floor}`;
+  img.loading = "lazy";
+  img.onerror = () => img.remove();
+  card.append(img);
+
+  for (const d of m.drinks) card.append(buildDrink(m, d));
+  return card;
+}
+
 function render() {
   const root = $("#machines");
   root.innerHTML = "";
   state.rows.clear();
+  openMachines.clear();
 
   if (single) {
-    const back = el("a", "back", "← Tutte le macchinette");
-    back.href = location.pathname; // stessa pagina, senza ?m=
-    root.append(back);
+    openMachines.add(single.id);
+    root.append(buildMachine(single, true));
+    root.append(el("h2", "others-title", "Altre macchinette"));
   }
-
-  for (const m of visibleMachines) {
-    const card = el("section", "card");
-    if (!single) { // nella vista singola piano e nome sono già nell'intestazione
-      const head = el("div", "card-head");
-      head.append(el("span", "floor", m.floor), el("h2", "", m.name));
-      card.append(head);
-    }
-
-    const img = el("img", "photo");
-    img.src = `img/${m.id}.jpg`;
-    img.alt = `Foto: ${m.name}, ${m.floor}`;
-    img.loading = "lazy";
-    img.onerror = () => img.remove();
-    card.append(img);
-
-    for (const d of m.drinks) {
-      const key = keyOf(m.id, d.id);
-      const row = el("div", "drink");
-
-      const top = el("div", "drink-top");
-      const avgEl = el("span", "avg", "…");
-      top.append(el("span", "drink-name", d.name), avgEl);
-
-      const voteRow = el("div", "vote-row");
-      const stars = el("div", "stars");
-      stars.tabIndex = 0;
-      stars.setAttribute("role", "slider");
-      stars.setAttribute("aria-label", `Il tuo voto per ${d.name}`);
-      stars.setAttribute("aria-valuemin", "0");
-      stars.setAttribute("aria-valuemax", "5");
-      stars.setAttribute("aria-valuestep", "0.5");
-      const fill = el("div", "fill");
-      stars.append(fill);
-
-      const zero = el("button", "zero", "0");
-      zero.type = "button";
-      zero.title = "Dai 0 stelle";
-      const mine = el("span", "mine");
-
-      voteRow.append(stars, zero, mine);
-      row.append(top, voteRow);
-      card.append(row);
-
-      state.rows.set(key, { avgEl, fill, mine, stars });
-
-      // Tap: metà sinistra della stella = mezzo punto, metà destra = punto intero
-      stars.addEventListener("click", (e) => {
-        const r = stars.getBoundingClientRect();
-        let v = Math.ceil(((e.clientX - r.left) / r.width) * 10) / 2;
-        v = Math.min(5, Math.max(0.5, v));
-        saveRating(m, d, v);
-      });
-      zero.addEventListener("click", () => saveRating(m, d, 0));
-
-      // Tastiera (con piccolo ritardo per non fare una scrittura a ogni pressione)
-      stars.addEventListener("keydown", (e) => {
-        const step = { ArrowRight: 0.5, ArrowUp: 0.5, ArrowLeft: -0.5, ArrowDown: -0.5 }[e.key];
-        if (!step) return;
-        e.preventDefault();
-        const cur = state.mine.get(key);
-        // Senza voto, qualsiasi freccia parte da 0.5 (lo 0 si dà solo col bottone "0")
-        const next = cur == null ? 0.5 : Math.min(5, Math.max(0, cur + step));
-        state.mine.set(key, next);
-        updateRow(key);
-        clearTimeout(kbTimers.get(key));
-        kbTimers.set(key, setTimeout(() => {
-          kbTimers.delete(key);
-          saveRating(m, d, next);
-        }, 700));
-      });
-
-      updateRow(key);
-    }
-    root.append(card);
+  for (const m of MACHINES) {
+    if (m !== single) root.append(buildMachine(m, false));
   }
 }
 
@@ -188,6 +219,11 @@ function updateRow(key) {
   r.fill.style.width = `${((my ?? 0) / 5) * 100}%`;
   r.stars.setAttribute("aria-valuenow", String(my ?? 0));
   r.mine.textContent = my == null ? "Non ancora votato" : `Il tuo voto: ${fmt(my)}`;
+
+  const open = !r.voteRow.hidden;
+  r.btn.textContent = open ? "Chiudi" : my == null ? "Recensisci" : "Modifica voto";
+  r.btn.classList.toggle("ghost", open);
+  r.btn.setAttribute("aria-expanded", String(open));
 }
 
 function renderAccount() {
@@ -271,13 +307,21 @@ let lastStatsLoad = 0;
 const REFRESH_GAP_MS = 60_000;        // minimo tra due refresh automatici
 const REFRESH_GAP_FORCED_MS = 10_000; // minimo col pulsante "Aggiorna"
 
-async function loadAllStats() {
-  lastStatsLoad = Date.now();
-  const keys = [...state.rows.keys()];
-  await Promise.all(keys.map((k) => loadStat(k).catch((e) => console.error(k, e))));
+async function loadMachineStats(m) {
+  statsAt.set(m.id, Date.now());
+  await Promise.all(m.drinks.map((d) => {
+    const k = keyOf(m.id, d.id);
+    return loadStat(k).catch((e) => console.error(k, e));
+  }));
 }
 
-// Ricarica tutte le medie solo se è passato abbastanza tempo (risparmia letture Firestore).
+// Carica le medie delle sole macchinette aperte (3 aggregazioni ciascuna)
+async function loadAllStats() {
+  lastStatsLoad = Date.now();
+  await Promise.all(MACHINES.filter((m) => openMachines.has(m.id)).map(loadMachineStats));
+}
+
+// Ricarica le medie delle macchinette aperte solo se è passato abbastanza tempo (risparmia letture Firestore).
 // Ritorna 0 se ha aggiornato, altrimenti i secondi da aspettare.
 async function refreshStats({ force = false } = {}) {
   const gap = force ? REFRESH_GAP_FORCED_MS : REFRESH_GAP_MS;
