@@ -1,6 +1,6 @@
 import {
   start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, progressLine,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, progressLine, votedCount,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -91,11 +91,35 @@ function grid(m, drinks, prefix, rows) {
 // Un solo invito in cima alla macchinetta, quando nessuna sua bevanda ha ancora voti
 const hasNoVotes = (m) => m.drinks.every((d) => { const s = statOf(keyOf(m.id, d.id)); return s.known && s.n === 0; });
 
-// Le bevande di una macchinetta: invito (se serve) + griglia
+const todoOnly = new Set(); // macchinette con il filtro "Da votare" attivo
+
+// Chip "Da votare · N": attivato, nasconde le bevande che ho già votato
+function filterBar(m) {
+  const on = todoOnly.has(m.id);
+  const remaining = m.drinks.length - votedCount(entriesOf(m));
+  const bar = el("div", "filter-bar");
+  const chip = el("button", "chip-filter", `${on ? "✓ " : ""}Da votare · ${remaining}`);
+  chip.type = "button";
+  chip.dataset.todo = m.id;
+  chip.dataset.spot = `todo:${m.id}`;
+  chip.setAttribute("aria-pressed", String(on));
+  bar.append(chip);
+  return bar;
+}
+
+// Le bevande di una macchinetta: invito (se serve), filtro e griglia
 function drinksOf(m, prefix) {
   const box = el("div", "drinks");
   if (hasNoVotes(m)) box.append(el("p", "machine-invite", "Diventa il primo a lasciare una recensione"));
-  box.append(grid(m, m.drinks, prefix, m.leftCount ?? Math.ceil(m.drinks.length / 2)));
+  if (state.mineLoaded) box.append(filterBar(m)); // senza sapere cosa ho votato il filtro non ha senso
+  const only = state.mineLoaded && todoOnly.has(m.id);
+  const list = only ? m.drinks.filter((d) => !state.mine.has(keyOf(m.id, d.id))) : m.drinks;
+  if (only && !list.length) {
+    box.append(el("p", "all-done", "Hai votato tutte le bevande di questa macchinetta."));
+  } else {
+    // filtrate: due colonne bilanciate; altrimenti la divisione del pannello reale (leftCount)
+    box.append(grid(m, list, prefix, only ? Math.ceil(list.length / 2) : (m.leftCount ?? Math.ceil(m.drinks.length / 2))));
+  }
   return box;
 }
 
@@ -176,6 +200,15 @@ start({
   sections: () => (single ? [renderHero(single), moreLinks()] : [renderMachines()]),
   // ?m=: le 3 medie della macchinetta. Home: tutte (servono a ordinare le macchinette)
   need: () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES),
+});
+
+// Chip "Da votare": attiva/disattiva il filtro di quella macchinetta
+$("#view").addEventListener("click", (ev) => {
+  const chip = ev.target.closest("[data-todo]");
+  if (!chip) return;
+  const id = chip.dataset.todo;
+  if (todoOnly.has(id)) todoOnly.delete(id); else todoOnly.add(id);
+  renderView();
 });
 
 // Tocco su un menù: apre/chiude
