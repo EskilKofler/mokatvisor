@@ -11,6 +11,8 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP ("ka
 
 ## Struttura
 - `index.html`, `style.css`, `app.js` (modulo ES, Firebase JS SDK da gstatic, nessun build step)
+- `machines.js`: elenco macchinette e bevande, condiviso da `app.js` e da `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git)
+- Vista singola: `?m=<id>` mostra una sola macchinetta (id non valido → lista completa)
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
 - Collezione `ratings`, doc id = `<uid>_<machineId>_<drinkId>`

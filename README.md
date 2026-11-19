@@ -42,10 +42,30 @@ Metti i file in `img/` con il nome dell'id: `piano3.jpg`, `piano4-principale.jpg
 `piano6-principale.jpg`, `piano6-secondaria.jpg`. Comprimi le foto (max ~200 KB l'una).
 
 ## Modificare macchinette o bevande
-In cima a `app.js` ci sono gli array `DRINKS` e `MACHINES`. Gli `id` devono usare solo minuscole, numeri e trattini.
+In `machines.js` ci sono gli array `DRINKS` e `MACHINES` (li usano sia il sito sia lo script dei QR).
+Gli `id` devono usare solo minuscole, numeri e trattini.
 Non cambiare gli id dopo aver raccolto voti.
 Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`):
-se ne aggiungi uno in `app.js`, aggiungilo anche lì e ripubblica le regole, altrimenti il voto viene rifiutato.
+se ne aggiungi uno in `machines.js`, aggiungilo anche lì e ripubblica le regole, altrimenti il voto viene rifiutato.
+Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
+
+## QR code per le macchinette
+Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m=<id>`
+(es. `?m=piano3`). Con `?m=` mancante o non valido si vede la lista completa.
+
+Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
+```bash
+node scripts/make-qr.mjs https://TUOUTENTE.github.io/kaffa-isiltep/
+# oppure: npm run qr -- https://TUOUTENTE.github.io/kaffa-isiltep/
+```
+L'indirizzo base è obbligatorio (non è scritto nel codice). Nella cartella `qr/` trovi, per ogni macchinetta,
+`<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: un foglio A4 con 5 cartellini
+(piano, nome, QR, scritta e indirizzo in chiaro). Aprilo nel browser e stampa in A4, scala 100%, senza intestazioni.
+
+**Stampa i QR solo con l'indirizzo definitivo.** Il QR contiene l'indirizzo scritto nel momento in cui lo generi:
+se poi cambi nome del repository, utente GitHub o dominio, i cartellini già attaccati non funzionano più.
+Prima di stampare: pubblica il sito, apri a mano `.../?m=piano3` per controllare, poi genera e stampa.
+La cartella `qr/` è in `.gitignore`: i file si rigenerano quando serve.
 
 ## Sicurezza (promemoria)
 - Le chiavi in `firebase-config.js` sono pubbliche per natura: contano le regole di Firestore.
