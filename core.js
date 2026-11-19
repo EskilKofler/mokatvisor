@@ -19,7 +19,7 @@ import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modi
 /* ------------------------------------------------------------------ */
 const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
 const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
-const CONTACT = "[CONTATTO]";     // a chi scrivere per informazioni o cancellazione dei dati (da compilare)
+const CONTACT = "eskilkofler@gmail.com"; // a chi scrivere per informazioni o cancellazione dei dati
 
 /* ------------------------------------------------------------------ */
 
@@ -219,7 +219,11 @@ function renderTopbar(active) {
   nav.setAttribute("aria-label", "Principale");
   const brand = el("a", "brand");
   brand.href = "./";
-  brand.append(el("span", "brand-name", "kaffa-isiltep"), el("span", "brand-by", "by ISILTEP"));
+  const logo = el("span", "brand-logo", "☕");
+  logo.setAttribute("aria-hidden", "true");
+  const text = el("span", "brand-text");
+  text.append(el("span", "brand-name", "Kaffa ISILTeP"), el("span", "brand-by", "by Eskil Kofler"));
+  brand.append(logo, text); // icona, nome e "by": un solo link alla home
   const links = el("div", "nav-links");
   for (const n of NAV) {
     const a = el("a", "nav-link", n.label);
@@ -243,23 +247,29 @@ function infoItems() {
     ["A cosa serve il codice.", "Collega i tuoi voti a questo browser, così puoi vedere e cambiare quello che hai dato. Non possiamo risalire a chi sei."],
     ["Cosa si vede.", "Tutti vedono le medie e il numero di voti. Il sito non mostra i voti delle singole persone."],
     ["Servizi usati.", `${servizi} Come ogni sito, questi servizi possono registrare tecnicamente l'indirizzo IP. Non usiamo pubblicità né analisi del traffico.`],
-    ["Informazioni e cancellazione dei dati.", `Per chiedere informazioni o la cancellazione dei dati: ${CONTACT}`],
+    ["Informazioni e cancellazione dei dati.", "Per chiedere informazioni o la cancellazione dei dati:", CONTACT],
   ];
 }
 
+// Menù a tendina piccolo e grigio, chiuso di default (<details> nativo: tastiera e screen reader funzionano da soli)
 function renderInfo() {
-  const sec = $("#info");
-  sec.replaceChildren();
-  sec.setAttribute("aria-labelledby", "info-title");
-  const h = el("h2", "", "Informazioni e privacy");
-  h.id = "info-title";
+  const root = $("#info");
+  root.replaceChildren();
+  const box = el("details", "info-box");
+  box.append(el("summary", "", "Informazioni e privacy"));
   const ul = el("ul");
-  for (const [lead, text] of infoItems()) {
+  for (const [lead, text, contact] of infoItems()) {
     const li = el("li");
     li.append(el("strong", "", lead), ` ${text}`);
+    if (contact) {
+      const a = el("a", "", contact);
+      a.href = `mailto:${contact}`;
+      li.append(" ", a);
+    }
     ul.append(li);
   }
-  sec.append(h, ul);
+  box.append(ul);
+  root.append(box);
 }
 
 function renderView() {
