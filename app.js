@@ -46,6 +46,10 @@ const keyOf = (machineId, drinkId) => `${machineId}_${drinkId}`;
 const fmt = (n, dec = 0) =>
   n.toLocaleString("it-IT", { minimumFractionDigits: dec, maximumFractionDigits: dec === 0 ? 1 : dec });
 
+// Vista singola: ?m=<id> mostra solo quella macchinetta (id mancante o non valido → lista completa)
+const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
+const visibleMachines = single ? [single] : MACHINES;
+
 const configured = !String(firebaseConfig.apiKey).startsWith("INCOLLA");
 if (!configured) $("#setup-warning").hidden = false;
 
@@ -92,16 +96,31 @@ function toast(msg, ms = 1800) {
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
+// Vista singola: titolo della pagina e intestazione con il nome della macchinetta
+function applySingleHeader(m) {
+  document.title = `${m.name} (${m.floor}) · kaffa-isiltep`;
+  $(".top h1").textContent = `☕ ${m.name}`;
+  $(".top .by").textContent = `${m.floor} · kaffa-isiltep by ISILTEP`;
+}
+
 function render() {
   const root = $("#machines");
   root.innerHTML = "";
   state.rows.clear();
 
-  for (const m of MACHINES) {
+  if (single) {
+    const back = el("a", "back", "← Tutte le macchinette");
+    back.href = location.pathname; // stessa pagina, senza ?m=
+    root.append(back);
+  }
+
+  for (const m of visibleMachines) {
     const card = el("section", "card");
-    const head = el("div", "card-head");
-    head.append(el("span", "floor", m.floor), el("h2", "", m.name));
-    card.append(head);
+    if (!single) { // nella vista singola piano e nome sono già nell'intestazione
+      const head = el("div", "card-head");
+      head.append(el("span", "floor", m.floor), el("h2", "", m.name));
+      card.append(head);
+    }
 
     const img = el("img", "photo");
     img.src = `img/${m.id}.jpg`;
@@ -317,6 +336,7 @@ async function saveRating(machine, drink, value) {
 
 /* ------------------------------ Avvio --------------------------- */
 
+if (single) applySingleHeader(single);
 render();
 
 if (configured) {
