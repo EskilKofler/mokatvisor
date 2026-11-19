@@ -568,10 +568,87 @@ async function saveRating(e, value) {
   return true;
 }
 
+/* ---- Animazioni (tutte spente con prefers-reduced-motion) ---- */
+
+// Il numero scorre dal valore vecchio a quello nuovo
+function countUp(node, from, to, ms = 700) {
+  const t0 = performance.now();
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / ms);
+    node.textContent = nfAvg.format(from + (to - from) * (1 - (1 - p) ** 3)); // ease-out
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// Dopo un voto: media, barre e stelle di quella bevanda passano dal vecchio al nuovo valore
+function animateStat(key, old, now) {
+  if (reducedMotion() || (old.avg === now.avg && old.n === now.n)) return;
+  for (const b of $("#view").querySelectorAll(`[data-key="${key}"]`)) {
+    const num = b.querySelector(".avg-num");
+    if (num && now.avg != null) countUp(num, old.avg ?? 0, now.avg);
+    for (const bar of b.querySelectorAll(".bar i, .meter i")) {
+      const target = bar.style.width;
+      bar.style.transition = "none"; // riparto dalla larghezza vecchia, poi lascio fare al CSS
+      bar.style.width = `${((old.avg ?? 0) / 5) * 100}%`;
+      void bar.offsetWidth;
+      bar.style.transition = "";
+      bar.style.width = target;
+    }
+    const score = b.querySelector(".score");
+    if (score) {
+      score.classList.add("bump");
+      setTimeout(() => score.classList.remove("bump"), 700);
+    }
+  }
+}
+
+// Coriandoli leggeri: pezzetti colorati che escono da (x, y), salgono e ricadono
+const CONFETTI_COLORS = ["#f0a91e", "#c47a2c", "#7a431f", "#e9c58b", "#d9534f", "#4f9d69"];
+function confetti(x, y, count) {
+  if (reducedMotion() || !document.body.animate) return;
+  let layer = $("#confetti");
+  if (!layer) {
+    layer = el("div", "confetti-layer");
+    layer.id = "confetti";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.append(layer);
+  }
+  for (let i = 0; i < count; i++) {
+    const p = el("i", "confetto");
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+    p.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    layer.append(p);
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9; // ventaglio verso l'alto
+    const speed = 90 + Math.random() * 150;
+    const dx = Math.cos(ang) * speed, up = Math.sin(ang) * speed;
+    const fall = 150 + Math.random() * 170;
+    const rot = (Math.random() - 0.5) * 720;
+    p.animate([
+      { transform: "translate(0, 0) rotate(0deg)", opacity: 1 },
+      { transform: `translate(${dx * 0.7}px, ${up}px) rotate(${rot / 2}deg)`, opacity: 1, offset: 0.4 },
+      { transform: `translate(${dx}px, ${up + fall}px) rotate(${rot}deg)`, opacity: 0 },
+    ], { duration: 1000 + Math.random() * 500, easing: "cubic-bezier(.2, .6, .4, 1)", fill: "forwards" })
+      .onfinish = () => p.remove();
+  }
+}
+
+// Festeggia il voto salvato: coriandoli dalla riga votata (+ vibrazione dove esiste)
+function celebrate(spot, value) {
+  navigator.vibrate?.([14, 50, 22]);
+  const row = spot && $("#view").querySelector(`[data-spot="${spot}"]`);
+  const r = row?.getBoundingClientRect();
+  confetti(r ? r.left + r.width / 2 : innerWidth / 2, r ? r.top + r.height / 2 : innerHeight * 0.6, Math.round(16 + value * 4));
+}
+
 // Dopo un voto rileggo solo la media di quella bevanda (1 aggregazione)
 async function refreshOne(key) {
+  const old = statOf(key);
+  let fresh = false;
   try {
     state.stats.set(key, await fetchStat(key));
+    fresh = true;
     if (ENTRIES.every((x) => state.stats.has(x.key))) {
       cacheWrite("stats", Object.fromEntries(state.stats), state.fetchedAt || Date.now());
     }
@@ -579,11 +656,12 @@ async function refreshOne(key) {
     console.error(err);
   }
   renderView();
+  if (fresh) animateStat(key, old, statOf(key));
 }
 
 async function submitVote() {
   if (!vote || vote.saving || vote.value == null || vote.value === vote.prev) return;
-  const { e, value } = vote;
+  const { e, value, spot } = vote;
   vote.saving = true;
   $("#sheet-error").hidden = true;
   paintSheet();
@@ -600,6 +678,7 @@ async function submitVote() {
   closeSheet();
   toast(`${e.d.name}: ${nfVote.format(value)} ★ salvato`);
   renderView();
+  setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso
   refreshOne(e.key);
 }
 

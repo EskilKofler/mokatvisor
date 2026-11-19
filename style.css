@@ -246,7 +246,6 @@ button.pod:active { filter: brightness(.96); }
 .rank-row.few { background: transparent; }
 .rank-row.few .bar i { background: #cbb9a1; }
 .rank-row.few .rank-pos { background: transparent; color: var(--muted); }
-/* @@podio */
 /* ---------------------------- Pannello di voto ------------------------- */
 /* Non impostare display su .sheet: il browser nasconde il <dialog> chiuso proprio con display:none */
 .sheet {
@@ -305,8 +304,13 @@ html:has(.sheet[open]) { overflow: hidden; } /* la pagina sotto non scorre */
   @keyframes pop { from { transform: scale(.94); opacity: 0; } }
   @keyframes pop-out { to { transform: scale(.96); opacity: 0; } }
 }
-/* @@sheet */
-/* @@animazioni */
+/* ------------------------------ Animazioni ----------------------------- */
+.bar i, .meter i { transition: width .8s cubic-bezier(.2, .8, .2, 1); }
+.vstars i { transition: width .12s ease-out; }
+.score.bump { animation: bump .6s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes bump { 40% { transform: scale(1.22); } }
+.confetti-layer { position: fixed; inset: 0; z-index: 200; overflow: hidden; pointer-events: none; }
+.confetto { position: absolute; width: 9px; height: 14px; margin: -7px 0 0 -4px; border-radius: 2px; will-change: transform, opacity; }
 
 /* ------------------------------ Schermi larghi ------------------------- */
 @media (min-width: 720px) {
@@ -320,4 +324,5 @@ html:has(.sheet[open]) { overflow: hidden; } /* la pagina sotto non scorre */
 /* --------------------------- Movimento ridotto ------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .confetti-layer { display: none; }
 }
