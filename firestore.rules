@@ -21,7 +21,10 @@ service cloud.firestore {
         && request.resource.data.machineId in
              ['piano3', 'piano4-principale', 'piano4-secondaria',
               'piano6-principale', 'piano6-secondaria']
-        && request.resource.data.drinkId in ['lungo', 'espresso', 'cappuccino']
+        && request.resource.data.drinkId in
+             ['lungo', 'espresso', 'cappuccino', 'macchiato', 'cappuccino-cioccolato', 'caffe-deca',
+              'lungo-deca', 'cappuccino-deca', 'ginseng', 'cioccolato', 'cioccolato-forte',
+              'cioccolato-latte', 'caffe-cioccolato', 'te-limone', 'latte', 'latte-macchiato']
         && request.resource.data.drinkKey ==
              request.resource.data.machineId + '_' + request.resource.data.drinkId
         && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey
