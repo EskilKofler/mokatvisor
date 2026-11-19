@@ -1,6 +1,5 @@
 import {
-  start, el, ENTRIES, state, statOf, drinkButton, skel, scoreNum, scoreBlock, ariaFor, votesLabel,
-  sectionHead, pageHead,
+  start, el, ENTRIES, state, statOf, drinkButton, skel, scoreNum, scoreBlock, ariaFor, votesLabel, pageHead,
 } from "./core.js";
 
 /* ------------------------------------------------------------------ */
@@ -9,10 +8,13 @@ import {
 const MIN_VOTES = 1;   // voti minimi perché una bevanda entri nel podio e nella classifica "vera"
 const PRIOR_VOTES = 1; // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+/* ------------------------------------------------------------------ */
 
-// Media corretta (bayesiana): chi ha pochi voti viene "tirato" verso la media generale,
-// così 3 voti da 5 non battono 40 voti da 4,8. Serve solo a ordinare: a schermo c'è la media vera.
+const MEDALS = ["🥇", "🥈", "🥉"];
+const PLACES = ["Primo", "Secondo", "Terzo"];
+
+// Media corretta (bayesiana): chi ha pochi voti viene "tirato" verso la media generale.
+// Serve solo a ordinare: a schermo c'è sempre la media vera e il numero di voti.
 function rankedList() {
   let total = 0, votes = 0;
   for (const s of state.stats.values()) { total += s.sum; votes += s.n; }
@@ -35,16 +37,20 @@ const byScore = (a, b) =>
   group(a) - group(b) || r6(b.score) - r6(a.score) || b.n - a.n || a.key.localeCompare(b.key);
 const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
+/* ---- Podio ---- */
+
 function podItem(r, i) {
   const b = drinkButton(r, `top:${r.key}`, `pod p${i + 1}`);
-  b.setAttribute("aria-label", `${["Primo", "Secondo", "Terzo"][i]} posto. ${ariaFor(r, r)}`);
+  b.setAttribute("aria-label", `${PLACES[i]} posto. ${ariaFor(r, r)}`);
   const medal = el("span", "medal", MEDALS[i]);
   medal.setAttribute("aria-hidden", "true");
-  const body = el("span", "pod-body");
-  body.append(el("span", "pod-name", r.d.name), el("span", "pod-where", `${r.m.name} · ${r.m.floor}`));
-  const sc = el("span", "pod-score");
-  sc.append(scoreNum(r.avg), el("span", "pod-n", votesLabel(r.n)));
-  b.append(medal, body, sc);
+  const where = el("span", "pod-where");
+  where.append(el("span", "", r.m.name), el("span", "", r.m.floor));
+  const top = el("span", "pod-top");
+  top.append(medal, el("span", "pod-name", r.d.name), where);
+  const score = el("span", "pod-score");
+  score.append(scoreNum(r.avg), el("span", "pod-n", votesLabel(r.n)));
+  b.append(top, score);
   return b;
 }
 
@@ -53,90 +59,85 @@ function podEmpty(i, loading) {
   d.setAttribute("aria-hidden", loading ? "true" : "false");
   const medal = el("span", "medal", MEDALS[i]);
   medal.setAttribute("aria-hidden", "true");
-  const body = el("span", "pod-body");
-  if (loading) body.append(skel("w-80"), skel("w-60"));
-  else body.append(el("span", "pod-name", "Posto libero"), el("span", "pod-where", "Vota per portarla qui"));
-  d.append(medal, body);
+  const top = el("span", "pod-top");
+  top.append(medal);
+  if (loading) top.append(skel("w-80"), skel("w-60"));
+  else top.append(el("span", "pod-name", "Posto libero"), el("span", "pod-where", "Vota per portarla qui"));
+  d.append(top);
   return d;
 }
 
-function renderTop3() {
-  const sec = el("section", "section");
-  sec.setAttribute("aria-labelledby", "top3-title");
-  sec.append(...sectionHead("top3-title", "🏆 Top 3 di sempre", MIN_VOTES > 1 ? `Contano le bevande con almeno ${MIN_VOTES} voti.` : "Basta anche un solo voto per entrare."));
-  const pod = el("div", "podium");
-  if (allPending()) {
-    for (let i = 0; i < 3; i++) pod.append(podEmpty(i, true));
-    sec.append(pod);
-    return sec;
-  }
-  const top = rankedList().filter((r) => r.eligible).sort(byScore).slice(0, 3);
-  if (!top.length) {
-    const inv = el("div", "invite");
-    inv.append(
-      el("p", "invite-emoji", "🏆"),
-      el("p", "invite-title", "Il podio è ancora vuoto"),
-      el("p", "invite-text", "Scegli la tua bevanda preferita e dai il primo voto: il podio parte da qui!"),
-    );
-    sec.append(inv);
-    return sec;
-  }
-  for (let i = 0; i < 3; i++) pod.append(top[i] ? podItem(top[i], i) : podEmpty(i, false));
-  sec.append(pod);
-  return sec;
-}
+/* ---- Elenco: dal 4° posto in giù ---- */
 
 function rankRow(r, pos) {
-  const b = drinkButton(r, `rank:${r.key}`, `rank-row${r.eligible ? "" : " few"}`);
+  const b = drinkButton(r, `rank:${r.key}`, `rank-row${r.eligible ? "" : " dim"}`);
   b.setAttribute("aria-label", `${pos ? `${pos}° posto. ` : ""}${ariaFor(r, r)}`);
-  const p = el("span", "rank-pos", pos ? (pos <= 3 ? MEDALS[pos - 1] : String(pos)) : "·");
+  const p = el("span", "rank-pos", pos ? String(pos) : "–");
   p.setAttribute("aria-hidden", "true");
-  const main = el("span", "rank-main");
-  const top = el("span", "rank-top");
-  top.append(el("span", "drink-name", r.d.name), el("span", "rank-where", `${r.m.name} · ${r.m.floor}`));
+  const name = el("span", "rank-top");
+  name.append(el("span", "drink-name", r.d.name), el("span", "rank-where", `${r.m.name} · ${r.m.floor}`));
   const bar = el("span", "bar");
   bar.setAttribute("aria-hidden", "true");
   const fill = document.createElement("i");
   fill.style.width = `${((r.avg ?? 0) / 5) * 100}%`;
   bar.append(fill);
-  main.append(top, bar);
-  b.append(p, main, scoreBlock(r));
+  b.append(p, name, scoreBlock(r), bar);
   return b;
 }
 
-function renderRanking() {
-  const sec = el("section", "section");
-  sec.setAttribute("aria-labelledby", "ranking-title");
-  sec.append(...sectionHead("ranking-title", "Classifica",
-    "Dalla più apprezzata. La barra è la media; chi ha pochi voti conta meno."));
-  const ol = el("ol", "rank");
+function ghostRow() {
+  const li = el("li", "rank-row ghost");
+  li.setAttribute("aria-hidden", "true");
+  li.append(skel("w-40"), skel("w-80"), skel("w-40 tall"));
+  return li;
+}
+
+/* ---- Pagina ---- */
+
+function renderBoard() {
+  const sec = el("section", "page");
+  sec.append(pageHead("rank-title", "Classifica", "Le bevande più apprezzate, dalla prima all'ultima."));
+
+  // Dati in arrivo: scheletri
   if (allPending()) {
-    for (let i = 0; i < 5; i++) {
-      const li = el("li", "rank-row ghost");
-      li.setAttribute("aria-hidden", "true");
-      li.append(skel("w-40 tall"), skel("w-80"));
-      ol.append(li);
-    }
-    sec.append(ol);
+    const pod = el("div", "podium");
+    for (let i = 0; i < 3; i++) pod.append(podEmpty(i, true));
+    const ol = el("ol", "rank");
+    for (let i = 0; i < 6; i++) ol.append(ghostRow());
+    sec.append(pod, ol);
     return sec;
   }
-  let pos = 0, last = -1;
-  for (const r of rankedList().sort(byScore)) {
-    const g = group(r);
-    if (g !== last) {
-      if (g === 1) ol.append(el("li", "rank-sep", `Con pochi voti (meno di ${MIN_VOTES})`));
-      if (g === 2) ol.append(el("li", "rank-sep", "Ancora nessun voto"));
-      last = g;
-    }
-    const li = el("li");
-    li.append(rankRow(r, g === 0 ? ++pos : null));
-    ol.append(li);
+
+  const sorted = rankedList().sort(byScore);
+
+  // Nessun voto in tutto il sito: invito a votare
+  if (!sorted.some((r) => r.n > 0)) {
+    const inv = el("div", "invite");
+    const go = el("a", "btn", "Vai alle macchinette");
+    go.href = "./";
+    inv.append(
+      el("p", "invite-title", "Ancora nessun voto"),
+      el("p", "invite-text", "Sii il primo: scegli una bevanda e dai il tuo voto. La classifica parte da qui."),
+      go,
+    );
+    sec.append(inv);
+    return sec;
   }
-  sec.append(ol);
+
+  const top = sorted.filter((r) => r.eligible).slice(0, 3);
+  const pod = el("div", "podium");
+  for (let i = 0; i < 3; i++) pod.append(top[i] ? podItem(top[i], i) : podEmpty(i, false));
+
+  const ol = el("ol", "rank");
+  sorted.forEach((r, i) => {
+    if (top.includes(r)) return;
+    const li = el("li");
+    li.append(rankRow(r, r.eligible ? i + 1 : null));
+    ol.append(li);
+  });
+  sec.append(pod);
+  if (ol.children.length) sec.append(ol);
   return sec;
 }
 
-start({
-  page: "rank",
-  sections: () => [pageHead("rank-title", "Classifica", "Le bevande più apprezzate."), renderTop3(), renderRanking()],
-});
+start({ page: "rank", sections: () => [renderBoard()] });

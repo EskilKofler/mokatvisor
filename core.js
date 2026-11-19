@@ -185,12 +185,6 @@ export function photo(m, cls) {
 
 /* ---- Pezzi comuni delle pagine ---- */
 
-export function sectionHead(id, title, sub) {
-  const h = el("h2", "section-title", title);
-  h.id = id;
-  return [h, el("p", "section-sub", sub)];
-}
-
 export function refreshButton() {
   const b = el("button", "icon-btn", "↻");
   b.type = "button";
