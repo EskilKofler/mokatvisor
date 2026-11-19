@@ -54,7 +54,7 @@ export const state = {
 };
 
 // Cosa disegna e quali medie serve alla pagina corrente (impostato da start())
-const ctx = { sections: () => [], need: () => ENTRIES, vote: true };
+const ctx = { sections: () => [], need: () => ENTRIES, vote: true, mine: true };
 
 let auth, db;
 if (configured) {
@@ -188,6 +188,23 @@ export function refreshButton() {
   b.setAttribute("aria-label", "Aggiorna i risultati");
   b.title = "Aggiorna i risultati";
   return b;
+}
+
+// Quante delle bevande indicate l'utente ha già votato (da state.mine: nessuna lettura in più)
+export const votedCount = (entries) => entries.filter((e) => state.mine.has(e.key)).length;
+
+// "Hai votato 3 di 16" con una barretta sottile di avanzamento; segnaposto finché non so cosa ho votato
+export function progressLine(entries) {
+  const box = el("span", "progress");
+  if (!state.mineLoaded) { box.append(skel("w-60")); return box; }
+  const done = votedCount(entries), total = entries.length;
+  const bar = el("span", "progress-bar");
+  bar.setAttribute("aria-hidden", "true"); // il numero è già nel testo
+  const fill = document.createElement("i");
+  fill.style.width = `${total ? (done / total) * 100 : 0}%`;
+  bar.append(fill);
+  box.append(el("span", "progress-text", `Hai votato ${done} di ${total}`), bar);
+  return box;
 }
 
 // Piccolo link grigio "Aggiorna i risultati" (per le pagine senza titolo con ↻)
@@ -695,9 +712,11 @@ async function refresh() {
 // Ogni pagina chiama start(): page = voce attiva nella barra, sections = cosa disegnare,
 // need = quali medie servono (di default tutte)
 // vote = false: pagina di sola lettura (niente pannello di voto, bevande non cliccabili, non legge i voti dell'utente)
-export function start({ page, sections, need, vote: canVote = true }) {
+// mine = true: carica anche i voti dell'utente (di default solo nelle pagine dove si vota)
+export function start({ page, sections, need, vote: canVote = true, mine: wantMine = canVote }) {
   ctx.sections = sections;
   ctx.vote = canVote;
+  ctx.mine = wantMine;
   if (need) ctx.need = need;
   if (!configured) $("#setup-warning").hidden = false;
   renderTopbar(page);
@@ -729,7 +748,7 @@ export function start({ page, sections, need, vote: canVote = true }) {
       }
       state.user = user;
       try {
-        await Promise.all([ctx.vote ? loadMine() : null, loadStats()]);
+        await Promise.all([ctx.mine ? loadMine() : null, loadStats()]);
       } catch (e) {
         console.error(e);
         toast("Errore nel caricamento dei dati");

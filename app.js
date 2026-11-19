@@ -1,6 +1,6 @@
 import {
   start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, progressLine,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -43,6 +43,9 @@ function sortedMachines() {
   return [...FALLBACK_ORDER].sort((a, b) =>
     floorOf(b) - floorOf(a) || st.get(b.id).n - st.get(a.id).n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b));
 }
+
+// Le bevande di una macchinetta come voci {key, m, d}
+const entriesOf = (m) => ENTRIES.filter((e) => e.m === m);
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
@@ -104,7 +107,7 @@ function renderHero(m) {
   const head = el("div", "hero-head");
   const h = el("h1", "hero-title", m.name);
   h.id = "hero-title";
-  head.append(el("p", "eyebrow", m.floor), h);
+  head.append(el("p", "eyebrow", m.floor), h, progressLine(entriesOf(m)));
   sec.append(head, drinksOf(m, "hero"));
   return sec;
 }
@@ -141,7 +144,7 @@ function machineMenu(m) {
   head.setAttribute("aria-expanded", String(isOpen));
   head.setAttribute("aria-controls", `panel-${m.id}`);
   const title = el("span", "mcard-title");
-  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m));
+  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m), progressLine(entriesOf(m)));
   const chevron = el("span", "chevron");
   chevron.setAttribute("aria-hidden", "true");
   const ms = machineStat(m);
