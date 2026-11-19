@@ -725,6 +725,11 @@ $("#view").addEventListener("click", (ev) => {
 
 /* ------------------------------ Avvio --------------------------- */
 
+// L'informativa cita reCAPTCHA solo se App Check è davvero attivo (chiave inserita)
+const appCheckOn = configured && !String(appCheckSiteKey).startsWith("INCOLLA");
+$("#svc-plain").hidden = appCheckOn;
+$("#svc-captcha").hidden = !appCheckOn;
+
 renderView();
 
 if (configured) {
