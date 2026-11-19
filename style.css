@@ -36,6 +36,9 @@ main { max-width: 640px; margin: 0 auto; padding: 8px 16px 40px; }
 #account:empty { display: none; }
 .banner button { margin-top: 8px; }
 
+.back { display: inline-block; padding: 12px 0 0; color: var(--accent); font-weight: 600; text-decoration: none; }
+.back:hover { text-decoration: underline; }
+
 .card {
   background: var(--card);
   border-radius: 16px;
