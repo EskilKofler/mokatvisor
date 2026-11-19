@@ -4,12 +4,23 @@
 
 Sito statico (HTML + JS) che usa Firebase (Auth anonima + Firestore) e si pubblica gratis su GitHub Pages.
 
+## Privacy: niente account, commenti o nickname
+Il sito è **completamente anonimo** e deve restarlo: tra gli studenti ci sono anche ragazzi con meno di 14 anni,
+quindi non ci sono account, login (nemmeno con Google), nickname, commenti, foto, email o altri dati personali.
+Si salvano solo il voto (da 0 a 5) per ogni bevanda, la data e un codice casuale anonimo.
+Non aggiungere funzioni che raccolgano dati personali o testo libero, né analisi del traffico o pubblicità.
+
+In fondo a ogni pagina c'è la sezione «Informazioni e privacy» (in `index.html`): tienila allineata a ciò che il sito
+fa davvero e **sostituisci `[CONTATTO]` con un contatto reale prima di pubblicare**. La frase su reCAPTCHA compare da
+sola quando App Check è attivo.
+
 ## 1. Crea il progetto Firebase (piano Spark, gratis, niente carta)
 1. https://console.firebase.google.com → **Aggiungi progetto** (Analytics non serve).
 2. **Impostazioni progetto → Le tue app → Web (</>)** → registra l'app → copia l'oggetto `firebaseConfig` dentro `firebase-config.js`.
-3. **Authentication → Metodo di accesso**: abilita **Anonimo** e **Google**.
-4. **Authentication → Impostazioni → Domini autorizzati**: aggiungi `IL_TUO_UTENTE.github.io`
-   (`localhost` c'è già, per le prove).
+3. **Authentication → Metodo di accesso**: abilita **solo Anonimo**. Google e ogni altro provider devono restare disattivati.
+   In **Authentication → Utenti** non devono comparire utenti con email o provider Google (eventuali prove: eliminali).
+4. **Authentication → Impostazioni → Domini autorizzati**: puoi aggiungere `IL_TUO_UTENTE.github.io`
+   (`localhost` c'è già, per le prove); con il solo accesso anonimo di solito non serve, ma non fa danni.
 5. **Firestore Database → Crea database** (modalità produzione, regione `eur3` o `europe-west`).
 6. **Firestore → Regole**: incolla il contenuto di `firestore.rules` → Pubblica.
 7. **Firestore → Indici → Composti → Aggiungi**: collezione `ratings`, campi `drinkKey` (crescente) e `value` (crescente).
@@ -64,6 +75,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   restano in cache nella scheda per 60 secondi e dopo un voto si rilegge solo quella bevanda. Il piano Spark ha
   50.000 letture al giorno: tienine conto con tanti utenti.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
+- **Informazioni e privacy:** sezione fissa in fondo a ogni pagina (vedi sopra); contiene il segnaposto `[CONTATTO]`.
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash

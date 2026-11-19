@@ -3,7 +3,12 @@
 Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP ("kaffa-isiltep, by ISILTEP").
 
 ## Vincoli
-- **Costo 0 €**: hosting su GitHub Pages; Firebase piano Spark (Auth anonima + Google opzionale, Firestore). Niente Cloud Functions, niente servizi a pagamento.
+- **Privacy (vincolo assoluto)**: il sito è completamente anonimo perché tra gli studenti ci sono anche minori di 14 anni.
+  Niente login (Google incluso), account, nickname, commenti, foto, email o altri dati personali, niente testo libero,
+  niente analytics o pubblicità. Si salvano solo voto (0-5), data e il codice anonimo di Firebase Auth.
+- **Testi pubblici** (interfaccia, informativa, README, commenti nel codice, messaggi d'errore): non descrivere mai come
+  si potrebbe votare più volte o aggirare il limite di un voto per bevanda.
+- **Costo 0 €**: hosting su GitHub Pages; Firebase piano Spark (solo Auth anonima, Firestore). Niente Cloud Functions, niente servizi a pagamento.
 - ~1000 utenti. Un voto per utente e bevanda, modificabile; tutti vedono le medie.
 - Voti da 0 a 5 a passi di 0.5.
 - Interfaccia in italiano, pensata per il telefono (mobile first).
@@ -17,6 +22,9 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP ("ka
 - Classifica: `MIN_VOTES` e `PRIOR_VOTES` in cima ad `app.js`; ordinamento con media bayesiana, a schermo la media vera.
 - Dati: `sum` + `count` per bevanda con `getAggregateFromServer` (15 letture per caricamento), cache `sessionStorage` 60 s.
   Dopo un voto si rilegge solo quella bevanda. Attenzione alla quota Spark (50k letture/giorno).
+- In fondo a ogni pagina: sezione `#info` «Informazioni e privacy» (HTML statico in `index.html`, sempre visibile).
+  Contiene il segnaposto `[CONTATTO]` (da compilare con l'utente prima di pubblicare); la frase su reCAPTCHA appare
+  solo se App Check è attivo. Se cambia ciò che il sito raccoglie o usa, aggiornarla.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
