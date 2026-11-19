@@ -248,9 +248,24 @@ async function loadStat(key) {
   updateRow(key);
 }
 
+let lastStatsLoad = 0;
+const REFRESH_GAP_MS = 60_000;        // minimo tra due refresh automatici
+const REFRESH_GAP_FORCED_MS = 10_000; // minimo col pulsante "Aggiorna"
+
 async function loadAllStats() {
+  lastStatsLoad = Date.now();
   const keys = [...state.rows.keys()];
   await Promise.all(keys.map((k) => loadStat(k).catch((e) => console.error(k, e))));
+}
+
+// Ricarica tutte le medie solo se è passato abbastanza tempo (risparmia letture Firestore).
+// Ritorna 0 se ha aggiornato, altrimenti i secondi da aspettare.
+async function refreshStats({ force = false } = {}) {
+  const gap = force ? REFRESH_GAP_FORCED_MS : REFRESH_GAP_MS;
+  const wait = lastStatsLoad + gap - Date.now();
+  if (wait > 0) return Math.ceil(wait / 1000);
+  await loadAllStats();
+  return 0;
 }
 
 async function saveRating(machine, drink, value) {
@@ -300,11 +315,11 @@ if (configured) {
   });
 
   $("#refresh").addEventListener("click", async () => {
-    await loadAllStats();
-    toast("Risultati aggiornati");
+    const wait = await refreshStats({ force: true });
+    toast(wait ? `Già aggiornato, riprova tra ${wait} s` : "Risultati aggiornati");
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && state.user) loadAllStats();
+    if (document.visibilityState === "visible" && state.user) refreshStats().catch(console.error);
   });
 }
