@@ -46,25 +46,31 @@ function sortedMachines() {
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
-/* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto ---- */
+/* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto ----
+   Votata: sfondo pieno, bordo continuo e badge "✓ 4,5". Da votare: bordo tratteggiato e ☆. Non solo colore: icona + testo. */
 function drinkTile(e, spot) {
   const st = statOf(e.key);
-  const empty = st.known && st.n === 0;
-  const b = drinkButton(e, spot, `tile${empty ? " is-empty" : ""}`);
+  const mine = state.mine.get(e.key);
+  const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
+  const b = drinkButton(e, spot, `tile${knows ? (mine !== undefined ? " is-voted" : " is-todo") : ""}`);
   b.append(el("span", "tile-name", e.d.name));
   if (st.pending) {
     b.append(skel("w-60"));
-  } else if (empty) {
-    b.append(el("span", "tile-sub tile-first", "Diventa il primo a recensire"));
+  } else if (st.known && st.n === 0) {
+    b.append(el("span", "tile-sub tile-none", "Nessun voto"));
   } else if (!st.known) {
     b.append(el("span", "tile-sub", "Voti non disponibili"));
   } else {
-    const sub = el("span", "tile-sub score"); // .score e .avg-num: ci pensano le animazioni dopo un voto
+    // La media di tutti: ben visibile e separata dal badge del mio voto (.score e .avg-num: animazioni dopo un voto)
+    const sub = el("span", "tile-sub score");
     sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
     b.append(sub);
   }
-  const mine = state.mine.get(e.key);
-  if (mine !== undefined) b.append(el("span", "tile-mine", `Tuo voto ${nfVote.format(mine)}`));
+  if (knows) {
+    const badge = el("span", mine !== undefined ? "tile-badge" : "tile-badge todo", mine !== undefined ? `✓ ${nfVote.format(mine)}` : "☆");
+    badge.setAttribute("aria-hidden", "true"); // il testo per gli screen reader è nell'aria-label del riquadro
+    b.append(badge);
+  }
   return b;
 }
 

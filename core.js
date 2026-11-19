@@ -46,6 +46,7 @@ export const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf
 export const state = {
   user: null,
   mine: new Map(),     // key -> valore dato da me
+  mineLoaded: false,   // true quando so cosa ho già votato (prima i riquadri restano neutri)
   stats: new Map(),    // key -> { sum, n }
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
   loading: new Set(),  // chiavi delle medie in arrivo da Firestore (mostrano lo scheletro)
@@ -134,12 +135,11 @@ const countText = (st) => (st.known ? (st.n ? votesLabel(st.n) : "Nessun voto") 
 
 export function ariaFor(e, st) {
   const my = state.mine.get(e.key);
-  if (st.known && st.n === 0) {
-    return `${e.d.name}, ${e.m.name} (${e.m.floor}): ancora nessun voto. Diventa il primo a lasciare una recensione.`;
-  }
-  const media = st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`;
-  return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}, ${countText(st)}. ` +
-    (my === undefined ? "Tocca per votare." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
+  const media = st.known && st.n === 0
+    ? "ancora nessun voto"
+    : `${st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`}, ${countText(st)}`;
+  return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}. ` +
+    (my === undefined ? "Non l'hai ancora votata. Tocca per votare." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
 }
 
 // Bottone-bevanda: base comune a card, hero, podio e classifica
@@ -323,6 +323,7 @@ async function loadMine() {
     cacheWrite(name, data);
   }
   state.mine = new Map(Object.entries(data));
+  state.mineLoaded = true;
   renderView();
 }
 
@@ -723,6 +724,7 @@ export function start({ page, sections, need, vote: canVote = true }) {
       }
       if (state.user && state.user.uid !== user.uid) { // utente diverso da prima: azzero lo stato personale
         state.mine = new Map();
+        state.mineLoaded = false;
         closeSheet(true);
       }
       state.user = user;
