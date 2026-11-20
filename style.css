@@ -368,8 +368,7 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 .sheet::backdrop { background: var(--backdrop); }
 .sheet-in { position: relative; padding: 10px 22px calc(24px + env(safe-area-inset-bottom)); }
 .sheet-grip { width: 40px; height: 4px; border-radius: 99px; background: var(--line-strong); margin: 0 auto 16px; }
-.sheet-close { position: absolute; top: 12px; right: 14px; width: 44px; height: 44px; font-size: 1.1rem; background: var(--hover); border-color: transparent; }
-.sheet-title { font-size: 1.7rem; font-weight: 700; line-height: 1.15; letter-spacing: -.02em; margin: 2px 48px 0 0; }
+.sheet-title { font-size: 1.7rem; font-weight: 700; line-height: 1.15; letter-spacing: -.02em; margin: 2px 0 0; }
 .sheet-sub { color: var(--muted); }
 
 /* Stelle grandi (cinque, ben separate): mai sotto i 48 px, anche su schermi da 320 px */

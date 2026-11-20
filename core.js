@@ -634,7 +634,6 @@ function wireSheet() {
   });
 
   $("#sheet-save").addEventListener("click", submitVote);
-  $("#sheet-close").addEventListener("click", () => closeSheet());
   sheet.addEventListener("cancel", (ev) => { ev.preventDefault(); closeSheet(); }); // tasto Esc
   sheet.addEventListener("click", (ev) => { if (ev.target === sheet) closeSheet(); }); // tocco sullo sfondo
 }
@@ -649,10 +648,6 @@ function buildSheet() {
 
   const grip = el("div", "sheet-grip");
   grip.setAttribute("aria-hidden", "true");
-  const close = el("button", "icon-btn sheet-close", "✕");
-  close.id = "sheet-close";
-  close.type = "button";
-  close.setAttribute("aria-label", "Chiudi");
   const eyebrow = el("p", "eyebrow"); eyebrow.id = "sheet-eyebrow";
   const title = el("h2", "sheet-title"); title.id = "sheet-title";
   const sub = el("p", "sheet-sub"); sub.id = "sheet-sub";
@@ -693,7 +688,7 @@ function buildSheet() {
   save.type = "button";
   save.disabled = true;
 
-  inner.append(grip, close, eyebrow, title, sub, starsEl, row, prev, err, save);
+  inner.append(grip, eyebrow, title, sub, starsEl, row, prev, err, save);
   sheet.append(inner);
   document.body.append(sheet);
   wireSheet();
