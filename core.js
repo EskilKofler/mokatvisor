@@ -8,7 +8,7 @@ import {
   initializeAppCheck, ReCaptchaV3Provider,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-check.js";
 import {
-  getFirestore, collection, doc, setDoc, getDocs, query, where,
+  getFirestore, collection, doc, getDoc, writeBatch, getDocs, query, where,
   serverTimestamp, getAggregateFromServer, sum, count,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { firebaseConfig, appCheckSiteKey } from "./firebase-config.js";
@@ -20,6 +20,7 @@ import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modi
 const PRIOR_VOTES = 1;           // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
 const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
 const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
+const VOTE_GAP_MS = 5 * 60_000;   // una recensione ogni 5 minuti per utente (lo stesso intervallo è nelle regole Firestore)
 const CONTACT = "eskilkofler@gmail.com"; // a chi scrivere per informazioni o cancellazione dei dati
 
 /* ------------------------------------------------------------------ */
@@ -59,6 +60,7 @@ export const state = {
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
   loading: new Set(),  // chiavi delle medie in arrivo da Firestore (mostrano lo scheletro)
   fetchedAt: 0,        // quando sono stati letti (o salvati in cache) i dati attuali
+  lastVoteAt: 0,       // quando ho lasciato l'ultima recensione in questa sessione (ms)
 };
 
 // Cosa disegna e quali medie serve alla pagina corrente (impostato da start())
@@ -474,11 +476,34 @@ function closeSheet(now = false) {
   setTimeout(finishClose, 200); // = durata dell'animazione di chiusura
 }
 
+// Messaggio gentile quando l'intervallo tra due recensioni non è ancora passato
+function waitMessage(ms) {
+  const n = Math.max(1, Math.ceil(ms / 60_000));
+  return `Piano, il caffè va gustato! Riprova tra ${n} ${n === 1 ? "minuto" : "minuti"}.`;
+}
+
+// Quanto manca alla prossima recensione, in ms (0 = si può votare)
+async function waitLeft(uid) {
+  let last = state.lastVoteAt;
+  if (!last) {
+    try { // una sola lettura, solo quando un salvataggio è stato rifiutato
+      const snap = await getDoc(doc(db, "limits", uid));
+      last = snap.exists() ? snap.data().last.toMillis() : 0;
+    } catch { return 0; }
+  }
+  return Math.max(0, last + VOTE_GAP_MS - Date.now());
+}
+
+// Risultato: { ok: true } oppure { ok: false, message } (message solo se va detto qualcosa di preciso)
 async function saveRating(e, value) {
-  if (!state.user) return false;
+  if (!state.user) return { ok: false };
   const uid = state.user.uid;
+  const early = state.lastVoteAt ? state.lastVoteAt + VOTE_GAP_MS - Date.now() : 0;
+  if (early > 0) return { ok: false, message: waitMessage(early) };
   try {
-    await setDoc(doc(db, "ratings", `${uid}_${e.key}`), {
+    // voto e orario dell'ultimo voto si scrivono insieme
+    const batch = writeBatch(db);
+    batch.set(doc(db, "ratings", `${uid}_${e.key}`), {
       uid,
       machineId: e.m.id,
       drinkId: e.d.id,
@@ -486,15 +511,23 @@ async function saveRating(e, value) {
       value,
       updatedAt: serverTimestamp(),
     });
+    batch.set(doc(db, "limits", uid), { last: serverTimestamp() });
+    await batch.commit();
   } catch (err) {
     console.error(err);
-    return false;
+    const left = await waitLeft(uid);
+    if (left > 0) {
+      state.lastVoteAt = Date.now() + left - VOTE_GAP_MS;
+      return { ok: false, message: waitMessage(left) };
+    }
+    return { ok: false };
   }
+  state.lastVoteAt = Date.now();
   if (state.user?.uid === uid) {
     state.mine.set(e.key, value);
     cacheWrite(`mine:${uid}`, Object.fromEntries(state.mine));
   }
-  return true;
+  return { ok: true };
 }
 
 /* ---- Animazioni (tutte spente con prefers-reduced-motion) ---- */
@@ -592,12 +625,12 @@ async function submitVote() {
   vote.saving = true;
   $("#sheet-error").hidden = true;
   paintSheet();
-  const ok = await saveRating(e, value);
+  const res = await saveRating(e, value);
   if (!vote) return; // il pannello è stato chiuso nel frattempo (utente cambiato)
   vote.saving = false;
-  if (!ok) {
+  if (!res.ok) {
     const err = $("#sheet-error");
-    err.textContent = "Ops, non è partita. Controlla la connessione e riprova.";
+    err.textContent = res.message ?? "Ops, non è partita. Controlla la connessione e riprova.";
     err.hidden = false;
     paintSheet();
     return;

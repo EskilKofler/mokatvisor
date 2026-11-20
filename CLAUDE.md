@@ -62,6 +62,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   L'id del progetto Firebase (`projectId`, `authDomain`, `storageBucket`) resta quello originale anche se il sito cambia nome: **non toccarlo**.
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
 - Collezione `ratings`, doc id = `<uid>_<machineId>_<drinkId>`
+- Una recensione ogni 5 minuti per utente (`VOTE_GAP_MS` in `core.js`, stesso valore nelle regole): ogni voto scrive anche `limits/<uid>` = `{ last }` (solo orario, in un batch col voto); le regole accettano il voto solo se `last` è quello del batch e sono passati 5 min dal precedente. Messaggio gentile in `waitMessage()`. 2 scritture a voto.
 
 ## Come lavorare
 - Modifiche mirate e precise, mai riscritture complete dei file.

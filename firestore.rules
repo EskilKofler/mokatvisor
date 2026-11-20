@@ -38,7 +38,24 @@ service cloud.firestore {
         && request.resource.data.value >= 0
         && request.resource.data.value <= 5
         && request.resource.data.value * 2 == math.floor(request.resource.data.value * 2)
-        && request.resource.data.updatedAt == request.time;
+        && request.resource.data.updatedAt == request.time
+        // una recensione ogni 5 minuti: il voto si scrive insieme all'orario in limits/<uid>
+        && getAfter(/databases/$(database)/documents/limits/$(request.auth.uid)).data.last == request.time;
+
+      allow delete: if false;
+    }
+
+    // Orario dell'ultima recensione di ogni utente (solo il codice anonimo come id): serve a far passare
+    // 5 minuti tra una recensione e la successiva.
+    match /limits/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.keys().hasAll(['last'])
+        && request.resource.data.last == request.time
+        && (resource == null || request.time >= resource.data.last + duration.value(5, 'm'));
 
       allow delete: if false;
     }
