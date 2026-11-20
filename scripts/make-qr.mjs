@@ -187,7 +187,7 @@ function cartelliniHtml(cards) {
     .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
     .cta { margin-top: -.9mm !important; height: 10.5mm; max-width: 66mm; display: flex; align-items: center; justify-content: center; font-size: 14pt; font-weight: 700; line-height: 1.05; text-wrap: balance; }
-    .note { margin-top: 2.8mm !important; height: 3.6mm; display: flex; align-items: center; font-size: 8pt; line-height: 1.35; color: #555; white-space: nowrap; }
+    .note { margin-top: 2.8mm !important; height: 3.6mm; display: flex; align-items: center; font-size: 8.5pt; line-height: 1.35; color: #555; white-space: nowrap; }
     @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
     @media print { body { background: #fff; } .sheet { margin: 0; break-after: page; page-break-after: always; } .sheet:last-child { break-after: auto; page-break-after: auto; } }
   </style>
