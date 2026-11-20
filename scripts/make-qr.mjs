@@ -118,7 +118,7 @@ const esc = (s) =>
 // Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
 // Area utile 194 × 281 mm: 2 colonne × 3 righe di "slot". Ogni slot contiene un cartellino da 90 × 90,7 mm e, sotto, uno spazio
 // per il nome della macchinetta (6 pt, fuori dal cartellino). Tra le colonne ci sono 4 mm; tra le righe lo spazio dell'etichetta.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 90.7], gapX: 4, qr: 52.2, header: 18.3 };
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 90.7], gapX: 4, qr: 52.2, header: 17.8 };
 export const PER_PAGE = SHEET.cols * SHEET.rows;
 export const MIN_QR_MM = 52;
 
@@ -171,17 +171,18 @@ function cartelliniHtml(cards) {
     .ticket { height: ${card[1]}mm; border: .25mm solid #d2d2d2; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column; flex: none; }
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
-    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4mm; }
+    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2mm; padding-bottom: 1.2mm; }
     .band b { font-size: 20pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
-    .stars { display: flex; gap: 2mm; }
-    .stars svg { width: 4.4mm; height: 4.4mm; fill: #F5A524; }
+    /* Stelle vicine, con le punte arrotondate (stesso stile delle stelle del sito) */
+    .stars { display: flex; gap: .9mm; }
+    .stars svg { width: 5mm; height: 5mm; fill: #F5A524; stroke: #F5A524; stroke-width: 2; stroke-linejoin: round; overflow: visible; }
     /* QR → frase → nota. Il QR ha già ~5 mm di margine bianco (zona di quiete): tra i puntini neri e la frase ci sono 5 mm.
        La frase ha sempre l'altezza di due righe e la nota sta su una riga sola, così tutti i cartellini sono identici. */
-    .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 3mm 1.8mm; text-align: center; }
+    .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 3mm 4mm; text-align: center; }
     .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
-    .cta { margin-top: .3mm !important; height: 10.5mm; display: flex; align-items: center; font-size: 14pt; font-weight: 700; line-height: 1.05; text-wrap: balance; }
-    .note { margin-top: 3mm !important; height: 3.9mm; display: flex; align-items: center; font-size: 7.8pt; line-height: 1.35; color: #555; white-space: nowrap; }
+    .cta { margin-top: -.9mm !important; height: 10.5mm; display: flex; align-items: center; font-size: 14pt; font-weight: 700; line-height: 1.05; text-wrap: balance; }
+    .note { margin-top: 2.8mm !important; height: 3.6mm; display: flex; align-items: center; font-size: 7.4pt; line-height: 1.35; color: #555; white-space: nowrap; }
     /* Nome della macchinetta: fuori dal cartellino, per riconoscerlo dopo il taglio */
     .where { flex: 1; margin: 0; display: flex; align-items: center; justify-content: center; font-size: 6pt; color: #777; text-align: center; }
     @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
@@ -261,8 +262,9 @@ function verifySheet(sheet, cards) {
     const box = boxes[i], img = pages[(box?.page ?? 1) - 1];
     if (!box || !img) { problems.push(`${c.item.id}: QR non trovato nel foglio`); return; }
     if (box.w < MIN_QR_MM) problems.push(`${c.item.id}: il QR nel foglio misura ${box.w.toFixed(1)} mm (minimo ${MIN_QR_MM} mm)`);
-    // Ritaglio esatto del riquadro del QR (margine bianco incluso): fuori ci sono la fascia scura e il testo, che non vanno misurati
-    const cx = Math.round(px(box.x)), cy = Math.round(px(box.y)), cw = Math.round(px(box.w));
+    // Ritaglio del riquadro del QR, ristretto di 0,6 mm per lato (il margine bianco del QR è di circa 5 mm): fuori ci sono la fascia
+    // scura e il testo, che non vanno misurati
+    const cx = Math.round(px(box.x + 0.6)), cy = Math.round(px(box.y + 0.6)), cw = Math.round(px(box.w - 1.2));
     const crop = new Uint8ClampedArray(cw * cw * 4);
     let minX = cw, minY = cw, maxX = -1, maxY = -1;
     for (let y = 0; y < cw; y++) {
