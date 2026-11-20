@@ -89,11 +89,10 @@ function drinkTile(e, spot) {
   const st = statOf(e.key);
   const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
-  // Nuova recensione non permessa qui (macchinetta non sbloccata) oppure attesa dei 5 minuti dopo un voto:
+  // Nuova recensione non permessa qui (macchinetta non sbloccata) oppure attesa dopo l'ultima nuova recensione:
   // niente stile "da votare", il tocco apre il pannello con i risultati. Chi ha già votato può sempre modificare.
   const locked = !canVote(e.m) && !voted;
-  const waiting = voteWaitMs() > 0;
-  const plain = locked || waiting;
+  const plain = locked || (!voted && voteWaitMs() > 0);
   const b = drinkButton(e, spot, `tile${locked ? " ro" : ""}${knows ? (voted ? " is-voted" : plain ? "" : " is-todo") : ""}`);
   if (plain) b.setAttribute("aria-label", readOnlyLabel(e, st));
   // nomi lunghi: carattere un po' più piccolo; le varianti premium hanno il tag PREMIUM
@@ -329,8 +328,9 @@ $("#view").addEventListener("click", (ev) => {
   if (!b) return;
   const e = ENTRIES.find((x) => x.key === b.dataset.key);
   if (!e) return;
-  const locked = !canVote(e.m) && !state.mine.has(e.key);
-  if (!locked && voteWaitMs() === 0) return; // si può votare o modificare: apre il pannello di voto (core.js)
+  const voted = state.mine.has(e.key);
+  const locked = !canVote(e.m) && !voted;
+  if (voted || (!locked && voteWaitMs() === 0)) return; // si può votare o modificare: apre il pannello di voto (core.js)
   ev.stopPropagation();
   openReadOnly(e, b.dataset.spot, locked ? "qr" : "wait");
 }, true);

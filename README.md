@@ -121,7 +121,7 @@ La cartella `qr/` è in `.gitignore`: i file si rigenerano quando serve.
 
 ## Sicurezza (promemoria)
 - Le chiavi in `firebase-config.js` sono pubbliche per natura: contano le regole di Firestore.
-- Una recensione ogni 5 minuti per utente, controllata dalle regole (documento `limits/<codice anonimo>` con la sola data dell'ultimo voto).
+- Una nuova recensione ogni 5 minuti per utente, controllata dalle regole (documento `limits/<codice anonimo>` con la sola data dell'ultimo voto). Le recensioni già date si modificano quando si vuole (5 secondi tra due modifiche della stessa bevanda).
 - Le regole di Firestore accettano solo i campi previsti (voto da 0 a 5 a passi di 0,5, macchinetta e bevanda
   dell'elenco, data e codice anonimo): nessun testo libero e nessun dato personale.
 - Facoltativo ma consigliato: **App Check** con reCAPTCHA v3 (gratis) per bloccare bot e script.

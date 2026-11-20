@@ -20,7 +20,9 @@ import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modi
 const PRIOR_VOTES = 1;           // voti "virtuali" della media generale nella media corretta (bayesiana): piccolo = conta poco
 const CACHE_MS = 60_000;          // le medie restano in sessionStorage per 60 s (risparmia letture Firestore)
 const REFRESH_FORCED_MS = 10_000; // minimo tra due aggiornamenti col pulsante ↻
-const VOTE_GAP_MS = 5 * 60_000;   // una recensione ogni 5 minuti per utente (lo stesso intervallo è nelle regole Firestore)
+const VOTE_GAP_MS = 5 * 60_000;   // una NUOVA recensione ogni 5 minuti per utente (stesso intervallo nelle regole Firestore)
+const EDIT_GAP_MS = 5_000;        // minimo tra due modifiche della stessa recensione (stesso intervallo nelle regole)
+const editedAt = new Map();       // key -> quando ho salvato quella recensione l'ultima volta (in questa sessione)
 const CONTACT = "eskilkofler@gmail.com"; // a chi scrivere per informazioni o cancellazione dei dati
 
 /* ------------------------------------------------------------------ */
@@ -449,7 +451,7 @@ function setVote(v) {
 }
 
 function openSheet(e, spot) {
-  if (!state.user) { toast("Un attimo, ti sto collegando…"); return; }
+  if (!state.user || !state.mineLoaded) { toast("Un attimo, ti sto collegando…"); return; }
   const prev = state.mine.get(e.key) ?? null;
   vote = { e, spot, value: prev ?? 0, prev, saving: false, touched: false }; // una nuova recensione parte da 0,0
   $("#sheet-eyebrow").textContent = e.m.floor;
@@ -508,13 +510,17 @@ async function waitLeft(uid) {
 }
 
 // Risultato: { ok: true } oppure { ok: false, message } (message solo se va detto qualcosa di preciso)
-async function saveRating(e, value) {
+async function saveRating(e, value, isNew) {
   if (!state.user) return { ok: false };
   const uid = state.user.uid;
-  const early = voteWaitMs();
-  if (early > 0) return { ok: false, message: waitMessage(early) };
+  if (isNew) {
+    const early = voteWaitMs();
+    if (early > 0) return { ok: false, message: waitMessage(early) };
+  } else if (Date.now() - (editedAt.get(e.key) ?? 0) < EDIT_GAP_MS) {
+    return { ok: false, message: "Con calma, riprova tra qualche secondo." };
+  }
   try {
-    // voto e orario dell'ultimo voto si scrivono insieme
+    // una nuova recensione e l'orario dell'ultima si scrivono insieme; una modifica scrive solo la recensione
     const batch = writeBatch(db);
     batch.set(doc(db, "ratings", `${uid}_${e.key}`), {
       uid,
@@ -524,18 +530,19 @@ async function saveRating(e, value) {
       value,
       updatedAt: serverTimestamp(),
     });
-    batch.set(doc(db, "limits", uid), { last: serverTimestamp() });
+    if (isNew) batch.set(doc(db, "limits", uid), { last: serverTimestamp() });
     await batch.commit();
   } catch (err) {
     console.error(err);
-    const left = await waitLeft(uid);
+    const left = isNew ? await waitLeft(uid) : 0;
     if (left > 0) {
       setLastVote(Date.now() + left - VOTE_GAP_MS);
       return { ok: false, message: waitMessage(left) };
     }
     return { ok: false };
   }
-  setLastVote(Date.now());
+  editedAt.set(e.key, Date.now());
+  if (isNew) setLastVote(Date.now());
   if (state.user?.uid === uid) {
     state.mine.set(e.key, value);
     cacheWrite(`mine:${uid}`, Object.fromEntries(state.mine));
@@ -638,7 +645,7 @@ async function submitVote() {
   vote.saving = true;
   $("#sheet-error").hidden = true;
   paintSheet();
-  const res = await saveRating(e, value);
+  const res = await saveRating(e, value, prev == null);
   if (!vote) return; // il pannello è stato chiuso nel frattempo (utente cambiato)
   vote.saving = false;
   if (!res.ok) {
