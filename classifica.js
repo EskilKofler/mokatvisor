@@ -30,13 +30,21 @@ const byScore = (a, b) =>
 // Nome breve della macchinetta: senza «Macchinetta » davanti a «Torretta»
 // (per «Brambillino» toglie anche il piano in fondo, che nella classifica si legge già prima)
 const shortName = (m) => m.name.replace(/^Macchinetta\s+(?=Torretta|Brambillino)/, "").replace(/^(Brambillino)\s+.*$/, "$1");
-// L'etichetta del piano può già contenere il nome (es. «Brambillino 1° piano»): non lo ripeto
-const floorHasName = (m) => !!m.floor && m.floor.includes(shortName(m));
+// Dove si trova, in ordine di lettura: «4° piano», «Torretta principale»; per Brambillino al contrario:
+// «Brambillino», «1° piano» / «Piano terra» (l'etichetta del piano contiene già il nome: non lo ripeto)
+function whereParts(m) {
+  const name = shortName(m);
+  if (m.floor?.startsWith(`${name} `)) {
+    const floor = m.floor.slice(name.length + 1);
+    return [name, floor.charAt(0).toUpperCase() + floor.slice(1)];
+  }
+  return [m.floor, name].filter(Boolean);
+}
 const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
 // Frase di lettura per gli screen reader: la pagina mostra soltanto, non si vota da qui
 const describe = (r) =>
-  `${drinkLabel(r.d)}, ${[r.m.floor, floorHasName(r.m) ? "" : shortName(r.m)].filter(Boolean).join(", ")}: ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
+  `${drinkLabel(r.d)}, ${whereParts(r.m).join(", ")}: ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
 
 /* ---- Podio ---- */
 
@@ -48,8 +56,7 @@ function podItem(r, i) {
   const medal = el("span", "medal", MEDALS[i]);
   medal.setAttribute("aria-hidden", "true");
   const where = el("span", "pod-where");
-  if (r.m.floor) where.append(el("span", "", r.m.floor));
-  if (!floorHasName(r.m)) where.append(el("span", "", shortName(r.m)));
+  for (const part of whereParts(r.m)) where.append(el("span", "", part));
   const top = el("span", "pod-top");
   top.append(medal, withPremiumTag(el("span", "pod-name", r.d.name), r.d), where);
   const score = el("span", "pod-score");
@@ -81,7 +88,7 @@ function rankRow(r, pos) {
   const p = el("span", "rank-pos", pos ? String(pos) : "–");
   p.setAttribute("aria-hidden", "true");
   const name = el("span", "rank-top");
-  name.append(withPremiumTag(el("span", "drink-name", r.d.name), r.d), el("span", "rank-where", [r.m.floor, floorHasName(r.m) ? "" : shortName(r.m)].filter(Boolean).join(" · ")));
+  name.append(withPremiumTag(el("span", "drink-name", r.d.name), r.d), el("span", "rank-where", whereParts(r.m).join(" · ")));
   const bar = el("span", "bar");
   bar.setAttribute("aria-hidden", "true");
   const fill = document.createElement("i");
