@@ -56,7 +56,21 @@ export const MACHINES = [
     ],
   }),
 
-  machine({ id: "piano4-secondaria", floor: "4° piano", name: "Caffè Torretta secondaria", rows: BASIC_ROWS() }),
+  // 4° piano secondaria: pannello reale, 9 righe. Nella riga 5 a sinistra c'è un posto vuoto.
+  machine({
+    id: "piano4-secondaria", floor: "4° piano", name: "Caffè Torretta secondaria",
+    rows: [
+      [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
+      [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
+      [drink("caffe-macchiato-premium", "Caffè macchiato", { premium: true }), drink("cappuccino-al-ginseng", "Cappuccino al ginseng")],
+      [drink("cappuccino-premium", "Cappuccino", { premium: true }), drink("caffe-d-orzo", "Caffè d'orzo")],
+      [null, drink("caffe-d-orzo-macchiato", "Caffè d'orzo macchiato")],
+      [drink("espresso", "Espresso"), drink("cappuccino-d-orzo", "Cappuccino d'orzo")],
+      [drink("caffe-lungo", "Caffè lungo"), drink("bevanda-cioccolato", "Bevanda al gusto di cioccolato")],
+      [drink("caffe-macchiato", "Caffè macchiato"), drink("bevanda-latte", "Bevanda al gusto di latte")],
+      [drink("cappuccino", "Cappuccino"), drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
+    ],
+  }),
 
   // 6° piano principale: pannello dalla foto di esempio (16 bevande, 9 righe a sinistra, 7 a destra)
   machine({
