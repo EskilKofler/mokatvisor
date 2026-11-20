@@ -118,9 +118,9 @@ const esc = (s) =>
 // Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
 // Area utile 194 × 281 mm: 2 colonne × 3 righe di "slot". Ogni slot contiene un cartellino da 90 × 90,7 mm e, sotto, uno spazio
 // per il nome della macchinetta (6 pt, fuori dal cartellino). Tra le colonne ci sono 4 mm; tra le righe lo spazio dell'etichetta.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 90.7], gapX: 4, qr: 52.2, header: 17.8 };
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 90.7], gapX: 4, qr: 50.5, header: 19.5 };
 export const PER_PAGE = SHEET.cols * SHEET.rows;
-export const MIN_QR_MM = 52;
+export const MIN_QR_MM = 50;
 
 // Cinque stelle con la stessa forma e lo stesso colore di quelle del sito (style.css, --star-on): punte arrotondate,
 // sfumatura ambra dall'alto in basso. Ogni stella ha la sua sfumatura (id diversi).
@@ -178,7 +178,7 @@ function cartelliniHtml(cards) {
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
     .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3mm; padding-bottom: .4mm; }
-    .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; position: relative; top: .86mm; } /* centrato otticamente fra il bordo sopra e le stelle */
+    .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; position: relative; top: .64mm; } /* centrato otticamente fra il bordo sopra e le stelle */
     /* Stelle del sito (la forma ha già il suo margine dentro il riquadro, quindi quasi nessuno spazio fra una e l'altra) */
     .stars { display: flex; gap: .1mm; }
     .stars svg { width: 4.6mm; height: 4.6mm; display: block; }
