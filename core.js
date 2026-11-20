@@ -413,7 +413,7 @@ export async function loadStats({ force = false } = {}) {
 /* ----------------------------- Voto ----------------------------- */
 
 // Un'etichetta per ogni mezzo punto: indice = voto * 2
-const LABELS = ["Meglio l'acqua", "Ahia", "Proprio no", "Può migliorare", "Così così", "Quasi ci siamo", "Va bene", "Niente male", "Buono!", "Ottimo!", "Top!"];
+const LABELS = ["Meglio l'acqua", "Ahia", "Proprio no", "Deludente", "Mediocre", "Così così", "Va bene", "Niente male", "Buono!", "Ottimo!", "Top!"];
 let sheet, starsEl; // creati da buildSheet()
 let vote = null; // { e, spot, value, prev, saving } mentre il pannello è aperto
 const reducedMotion = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
