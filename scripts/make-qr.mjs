@@ -49,12 +49,12 @@ const machineUrl = (base, id) => {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// Foglio A4 con un cartellino per macchinetta (2 colonne x 3 righe, l'ultimo spazio resta vuoto).
+// Foglio A4 con un cartellino per macchinetta (2 colonne x 3 righe, 6 cartellini). Senza piano, l'etichetta piccola non c'è.
 // Il QR è l'SVG incorporato, così il file è autonomo e stampa nitido a qualsiasi dimensione.
 function sheetHtml(cards) {
   const tickets = cards.map(({ m, url, svg }) => `
     <article class="ticket">
-      <p class="floor">${esc(m.floor)}</p>
+      ${m.floor ? `<p class="floor">${esc(m.floor)}</p>` : ""}
       <h2>${esc(m.name)}</h2>
       <div class="qr">${svg}</div>
       <p class="cta">Valuta le bevande di questa macchinetta</p>
