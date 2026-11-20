@@ -1,6 +1,7 @@
 import {
-  start, $, el, keyOf, ENTRIES, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, } from "./core.js";
+  start, $, el, keyOf, ENTRIES, withPremiumTag, statOf, drinkButton, skel, photo,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore,
+} from "./core.js";
 import { MACHINES } from "./machines.js";
 
 // ?m=<id>: quella macchinetta in primo piano (id mancante o non valido → home)
@@ -52,7 +53,8 @@ function drinkTile(e, spot) {
   const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
   const b = drinkButton(e, spot, `tile${knows ? (voted ? " is-voted" : " is-todo") : ""}`);
-  b.append(el("span", `tile-name${e.d.name.length >= 23 ? " long" : ""}`, e.d.name)); // nomi lunghi: carattere un po' più piccolo
+  // nomi lunghi: carattere un po' più piccolo; le varianti premium hanno il tag PREMIUM
+  b.append(withPremiumTag(el("span", `tile-name${e.d.name.length >= 23 ? " long" : ""}`, e.d.name), e.d));
   if (st.pending) {
     b.append(skel("w-60"));
   } else if (st.known && st.n === 0) {
@@ -145,7 +147,7 @@ function topLine(m) {
   if (m.drinks.some((d) => statOf(keyOf(m.id, d.id)).pending)) { line.append(skel("w-80")); return line; }
   const best = bestDrink(m);
   if (!best) { line.classList.add("none"); line.textContent = "Ancora nessuna recensione"; return line; }
-  line.append("Top: ", el("b", "", best.d.name), " ", el("span", "tile-star", "★"), ` ${nfAvg.format(best.avg)}`);
+  line.append("Top: ", withPremiumTag(el("b", "", best.d.name), best.d), " ", el("span", "tile-star", "★"), ` ${nfAvg.format(best.avg)}`);
   return line;
 }
 function machineMenu(m) {

@@ -1,5 +1,5 @@
 import {
-  start, el, ENTRIES, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink, globalMean, bayesScore,
+  start, el, ENTRIES, drinkLabel, withPremiumTag, state, statOf, skel, scoreNum, scoreBlock, nfAvg, votesLabel, refreshLink, globalMean, bayesScore,
 } from "./core.js";
 
 /* ------------------------------------------------------------------ */
@@ -31,7 +31,7 @@ const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
 // Frase di lettura per gli screen reader: la pagina mostra soltanto, non si vota da qui
 const describe = (r) =>
-  `${r.d.name}, ${r.m.name} (${r.m.floor}): ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
+  `${drinkLabel(r.d)}, ${r.m.name} (${r.m.floor}): ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
 
 /* ---- Podio ---- */
 
@@ -45,7 +45,7 @@ function podItem(r, i) {
   const where = el("span", "pod-where");
   where.append(el("span", "", r.m.name), el("span", "", r.m.floor));
   const top = el("span", "pod-top");
-  top.append(medal, el("span", "pod-name", r.d.name), where);
+  top.append(medal, withPremiumTag(el("span", "pod-name", r.d.name), r.d), where);
   const score = el("span", "pod-score");
   score.append(scoreNum(r.avg), el("span", "pod-n", votesLabel(r.n)));
   b.append(top, score);
@@ -75,7 +75,7 @@ function rankRow(r, pos) {
   const p = el("span", "rank-pos", pos ? String(pos) : "–");
   p.setAttribute("aria-hidden", "true");
   const name = el("span", "rank-top");
-  name.append(el("span", "drink-name", r.d.name), el("span", "rank-where", `${r.m.name} · ${r.m.floor}`));
+  name.append(withPremiumTag(el("span", "drink-name", r.d.name), r.d), el("span", "rank-where", `${r.m.name} · ${r.m.floor}`));
   const bar = el("span", "bar");
   bar.setAttribute("aria-hidden", "true");
   const fill = document.createElement("i");

@@ -31,6 +31,13 @@ export const el = (tag, cls = "", text = "") => {
   if (text) e.textContent = text;
   return e;
 };
+// Bevande "premium": stesso nome della normale ma id diverso. Il tag PREMIUM le distingue dove compaiono;
+// drinkLabel() è il testo semplice ("Espresso premium") per screen reader, conferme e descrizioni.
+export const drinkLabel = (d) => (d.premium ? `${d.name} premium` : d.name);
+export function withPremiumTag(node, d) {
+  if (d.premium) node.append(" ", el("span", "tag-premium", "PREMIUM"));
+  return node;
+}
 export const keyOf = (machineId, drinkId) => `${machineId}_${drinkId}`;
 export const nfAvg = new Intl.NumberFormat("it-IT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const nfVote = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
@@ -139,7 +146,7 @@ export function ariaFor(e, st) {
   const media = st.known && st.n === 0
     ? "ancora nessun voto"
     : `${st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`}, ${countText(st)}`;
-  return `${e.d.name}, ${e.m.name} (${e.m.floor}): ${media}. ` +
+  return `${drinkLabel(e.d)}, ${e.m.name} (${e.m.floor}): ${media}. ` +
     (my === undefined ? "Non l'hai ancora votata. Tocca per lasciare una recensione." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
 }
 
@@ -434,7 +441,9 @@ function openSheet(e, spot) {
   const prev = state.mine.get(e.key) ?? null;
   vote = { e, spot, value: prev ?? 0, prev, saving: false, touched: false }; // una nuova recensione parte da 0,0
   $("#sheet-eyebrow").textContent = e.m.floor;
-  $("#sheet-title").textContent = e.d.name;
+  const title = $("#sheet-title");
+  title.textContent = e.d.name; // azzera anche il tag della bevanda precedente
+  withPremiumTag(title, e.d); // + tag PREMIUM se serve
   $("#sheet-sub").textContent = e.m.name;
   $("#sheet-prev").textContent = prev == null
     ? "Sarà la tua prima recensione."
@@ -594,7 +603,7 @@ async function submitVote() {
     return;
   }
   closeSheet();
-  toast(prev == null ? `Grazie! ${nfVote.format(value)} ★ a ${e.d.name}` : `Recensione aggiornata: ${nfVote.format(value)} ★`);
+  toast(prev == null ? `Grazie! ${nfVote.format(value)} ★ a ${drinkLabel(e.d)}` : `Recensione aggiornata: ${nfVote.format(value)} ★`);
   state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo bordo
   renderView();
   setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso

@@ -214,6 +214,11 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 }
 .tile:active { background: var(--hover); }
 .tile-name { font-size: clamp(.82rem, 3.9vw, .92rem); font-weight: 600; line-height: 1.25; overflow-wrap: break-word; }
+.tag-premium {
+  display: inline-block; margin-left: 4px; padding: 0 5px; border: 1px solid var(--line-strong); border-radius: 6px;
+  color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .1em; line-height: 1.5;
+  vertical-align: .1em; white-space: nowrap; text-transform: uppercase;
+}
 .tile-name.long { font-size: clamp(.72rem, 3.4vw, .84rem); line-height: 1.22; } /* nomi lunghi: vanno a capo su 2-3 righe */
 .tile-sub { font-size: .85rem; font-weight: 500; line-height: 1.25; color: var(--muted); }
 .tile .score { align-items: baseline; flex-wrap: wrap; gap: 0 4px; }
