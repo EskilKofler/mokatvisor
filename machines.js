@@ -36,7 +36,7 @@ export const MACHINES = [
 
   // 4° piano principale: pannello reale. In basso a sinistra c'è un posto vuoto.
   machine({
-    id: "piano4-principale", floor: "4° piano", name: "Caffè Torretta principale",
+    id: "piano4-principale", floor: "4° piano", name: "Macchinetta Torretta principale",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-decaffeinato", "Caffè decaffeinato")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-decaffeinato", "Caffè macchiato decaffeinato")],
@@ -52,7 +52,7 @@ export const MACHINES = [
 
   // 4° piano secondaria: pannello reale, 9 righe. Nella riga 5 a sinistra c'è un posto vuoto.
   machine({
-    id: "piano4-secondaria", floor: "4° piano", name: "Caffè Torretta secondaria",
+    id: "piano4-secondaria", floor: "4° piano", name: "Macchinetta Torretta secondaria",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -68,7 +68,7 @@ export const MACHINES = [
 
   // 6° piano principale: pannello reale, 9 righe. Nella riga 5 a sinistra c'è un posto vuoto.
   machine({
-    id: "piano6-principale", floor: "6° piano", name: "Caffè Torretta principale",
+    id: "piano6-principale", floor: "6° piano", name: "Macchinetta Torretta principale",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -84,7 +84,7 @@ export const MACHINES = [
 
   // 6° piano secondaria: pannello reale, 6 righe senza posti vuoti né premium
   machine({
-    id: "piano6-secondaria", floor: "6° piano", name: "Caffè Torretta secondaria",
+    id: "piano6-secondaria", floor: "6° piano", name: "Macchinetta Torretta secondaria",
     rows: [
       [drink("espresso", "Caffè espresso"), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo", "Caffè lungo"), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],

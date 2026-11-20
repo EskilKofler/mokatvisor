@@ -27,8 +27,8 @@ const r6 = (x) => Math.round((x ?? -1) * 1e6); // a 6 decimali: niente falsi par
 // Ordine: punteggio corretto; a parità, più voti; poi ordine fisso
 const byScore = (a, b) =>
   group(a) - group(b) || r6(b.score) - r6(a.score) || b.n - a.n || a.key.localeCompare(b.key);
-// Nome breve della macchinetta: senza «Caffè » iniziale
-const shortName = (m) => m.name.replace(/^Caffè\s+/, "");
+// Nome breve della macchinetta: senza «Macchinetta » davanti a «Torretta»
+const shortName = (m) => m.name.replace(/^Macchinetta\s+(?=Torretta)/, "");
 const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
 // Frase di lettura per gli screen reader: la pagina mostra soltanto, non si vota da qui
