@@ -117,7 +117,7 @@ indirizzo base + `?m=` + id, quello del cartellino «Classifica» è indirizzo b
 vengono da `machines.js`, lo stesso file del sito: se ne aggiungi una, rilancia lo script.
 
 Nella cartella `qr/` trovi, per ogni macchinetta e per la classifica, `<id>.svg` (solo il QR) e `<id>.png` (almeno 1200 px di lato), più
-**`qr/cartellini.html`**: **pagine A4 verticali con 6 cartellini ciascuna** (2 colonne × 3 righe, circa 97 × 94 mm l'uno, **attaccati** l'uno all'altro senza spazi,
+**`qr/cartellini.html`**: **pagine A4 verticali con 6 cartellini ciascuna** (2 colonne × 3 righe, quadrati, circa 94 × 94 mm l'uno, **attaccati** l'uno all'altro senza spazi,
 con angoli arrotondati e bordo grigio chiaro: il bordo è la guida di taglio). Ogni cartellino ha una fascia scura con «Mokatvisor» e le stelle, il QR di circa 52 mm
 (margine bianco compreso), «Scansionami e valuta la tua bevanda!» e una piccola nota. **Sul cartellino non c'è scritto il nome della macchinetta**: l'ordine
 è quello della home (6° piano secondaria e principale, 4° piano secondaria e principale, Brambillino primo piano e piano terra, terzo piano) e per ultimo

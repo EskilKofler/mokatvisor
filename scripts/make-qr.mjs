@@ -117,8 +117,8 @@ const esc = (s) =>
 
 // Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
 // Area utile 194 × 281 mm: 2 colonne × 3 righe di cartellini attaccati l'uno all'altro (nessuno spazio in mezzo),
-// ognuno da 97 × 93,67 mm. Il bordo grigio sottile è la guida di taglio.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [97, 281 / 3], gapX: 0, qr: 52, header: 19.5 };
+// ognuno quadrato da 93,67 × 93,67 mm (centrati in orizzontale). Il bordo grigio sottile è la guida di taglio.
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [281 / 3, 281 / 3], gapX: 0, qr: 52, header: 19.5 };
 export const PER_PAGE = SHEET.cols * SHEET.rows;
 export const MIN_QR_MM = 50;
 
@@ -171,7 +171,7 @@ function cartelliniHtml(cards) {
     html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { margin: 0; background: #e6e6e6; color: #111; font: 8pt/1.2 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
     .sheet { position: relative; width: 194mm; height: 281mm; background: #fff; display: grid; justify-content: center;
-             grid-template-columns: repeat(${cols}, ${card[0]}mm); column-gap: ${gapX}mm; grid-template-rows: repeat(${rows}, ${slotH.toFixed(3)}mm); overflow: hidden; }
+             grid-template-columns: repeat(${cols}, ${card[0].toFixed(3)}mm); column-gap: ${gapX}mm; grid-template-rows: repeat(${rows}, ${slotH.toFixed(3)}mm); overflow: hidden; }
     .slot { display: flex; flex-direction: column; break-inside: avoid; page-break-inside: avoid; }
     .ticket { height: ${card[1].toFixed(3)}mm; border: .25mm solid #d2d2d2; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column; flex: none; }
     .ticket p { margin: 0; }
@@ -187,7 +187,7 @@ function cartelliniHtml(cards) {
     .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
     .cta { margin-top: -.9mm !important; height: 10.5mm; max-width: 66mm; display: flex; align-items: center; justify-content: center; font-size: 14pt; font-weight: 700; line-height: 1.05; text-wrap: balance; }
-    .note { margin-top: 2.8mm !important; height: 3.6mm; display: flex; align-items: center; font-size: 8.5pt; line-height: 1.35; color: #555; white-space: nowrap; }
+    .note { margin-top: 2.8mm !important; height: 3.6mm; display: flex; align-items: center; font-size: 8.2pt; line-height: 1.35; color: #555; white-space: nowrap; }
     @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
     @media print { body { background: #fff; } .sheet { margin: 0; break-after: page; page-break-after: always; } .sheet:last-child { break-after: auto; page-break-after: auto; } }
   </style>
@@ -321,7 +321,7 @@ for (const b of built) {
 }
 const htmlPath = path.join(OUT_DIR, "cartellini.html");
 await writeFile(htmlPath, cartelliniHtml(built));
-console.log(`✔ cartellini.html     ${Math.ceil(built.length / PER_PAGE)} pagine A4, ${built.length} cartellini 97×93,7 mm attaccati (2×3, margine ${SHEET.margin} mm)`);
+console.log(`✔ cartellini.html     ${Math.ceil(built.length / PER_PAGE)} pagine A4, ${built.length} cartellini quadrati 93,7×93,7 mm attaccati (2×3, margine ${SHEET.margin} mm)`);
 
 const pdfPath = path.join(OUT_DIR, "cartellini.pdf");
 await rm(pdfPath, { force: true });
