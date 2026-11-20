@@ -143,6 +143,15 @@ function renderHero(m) {
   return sec;
 }
 
+// Testo introduttivo della pagina di una macchinetta (?m=): piccolo, grigio, con «classifica» come link
+function machineIntro() {
+  const p = el("p", "machine-intro");
+  const link = el("a", "intro-link", "classifica");
+  link.href = "classifica.html";
+  p.append("Vota le bevande di questa macchinetta e scopri quali sono le bevande e le macchinette migliori controllando la ", link, "!");
+  return p;
+}
+
 function moreLinks() {
   const p = el("p", "more");
   const all = el("a", "more-link", "Vedi tutte le macchinette →");
@@ -320,7 +329,7 @@ function scheduleRepaint() {
 
 start({
   page: "home",
-  sections: () => { scheduleRepaint(); return single ? [renderHero(single), moreLinks()] : [renderMachines()]; },
+  sections: () => { scheduleRepaint(); return single ? [machineIntro(), renderHero(single), moreLinks()] : [renderMachines()]; },
   // ?m=: le 3 medie della macchinetta. Home: tutte (servono a ordinare le macchinette)
   need: () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES),
 });
