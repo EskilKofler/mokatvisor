@@ -36,7 +36,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
   (ora 28, con ~16 bevande × 5 macchinette saranno ~80: attenzione alla quota Spark, 50k letture/giorno). Home e
   classifica le leggono tutte, `?m=` solo quelle della macchinetta. Cache `sessionStorage` 60 s per bevanda. Dopo un voto
   si rilegge solo quella bevanda.
-- In fondo a ogni pagina: tendina piccola e grigia «Informazioni e privacy» (`<footer id="info">`), costruita da
+- In fondo a ogni pagina: sezione sempre visibile (non apribile) «Informazioni e privacy» (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
 - Barra in alto: icona ☕ + "Kaffa ISILTeP" (un solo link alla home) e le voci Macchinette / Classifica.

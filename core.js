@@ -255,12 +255,15 @@ function infoItems() {
   ];
 }
 
-// Menù a tendina piccolo e grigio, chiuso di default (<details> nativo: tastiera e screen reader funzionano da soli)
+// Informativa: sempre visibile in fondo alla pagina (nessuna tendina), in carattere piccolo e grigio
 function renderInfo() {
   const root = $("#info");
   root.replaceChildren();
-  const box = el("details", "info-box");
-  box.append(el("summary", "", "Informazioni e privacy"));
+  const box = el("section", "info-box");
+  box.setAttribute("aria-labelledby", "info-title");
+  const title = el("h2", "info-title", "Informazioni e privacy");
+  title.id = "info-title";
+  box.append(title);
   const ul = el("ul");
   for (const [lead, text, contact] of infoItems()) {
     const li = el("li");

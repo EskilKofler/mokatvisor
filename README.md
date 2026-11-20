@@ -10,7 +10,7 @@ quindi non ci sono account, login (nemmeno con Google), nickname, commenti, foto
 Si salvano solo il voto (da 0 a 5) per ogni bevanda, la data e un codice casuale anonimo.
 Non aggiungere funzioni che raccolgano dati personali o testo libero, né analisi del traffico o pubblicità.
 
-In fondo a ogni pagina c'è la tendina «Informazioni e privacy» (testo e costante `CONTACT`, cioè l'email di contatto,
+In fondo a ogni pagina c'è la sezione sempre visibile «Informazioni e privacy» (testo e costante `CONTACT`, cioè l'email di contatto,
 in `core.js`): tienila allineata a ciò che il sito fa davvero. La frase su reCAPTCHA compare da sola quando App Check
 è attivo.
 
@@ -96,7 +96,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/kaffa-isiltep/?m
   scheda per 60 secondi, una voce per bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il
   piano Spark ha 50.000 letture al giorno: con tante bevande tienine conto.
 - **Movimento ridotto:** con `prefers-reduced-motion` non ci sono coriandoli, conteggi o transizioni.
-- **Informazioni e privacy:** tendina piccola e grigia in fondo a ogni pagina (vedi sopra), con l'email di contatto.
+- **Informazioni e privacy:** sezione piccola e grigia, sempre visibile, in fondo a ogni pagina (vedi sopra), con l'email di contatto.
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash
