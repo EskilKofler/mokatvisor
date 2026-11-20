@@ -122,17 +122,23 @@ export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90,
 export const PER_PAGE = SHEET.cols * SHEET.rows;
 export const MIN_QR_MM = 52;
 
-// Cinque stelle ambra disegnate (non dipendono dal carattere del computer)
-const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z";
-const STARS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}"/></svg>`.repeat(5);
+// Cinque stelle con la stessa forma e lo stesso colore di quelle del sito (style.css, --star-on): punte arrotondate,
+// sfumatura ambra dall'alto in basso. Ogni stella ha la sua sfumatura (id diversi).
+const STAR = "M12.00 3.80 L14.35 9.46 L20.46 9.95 L15.80 13.94 L17.23 19.90 L12.00 16.70 L6.77 19.90 L8.20 13.94 L3.54 9.95 L9.65 9.46Z";
+const starsHtml = (card) => Array.from({ length: 5 }, (_, i) => {
+  const id = `sg${card}-${i}`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0" stop-color="#FFCE5C"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs>` +
+    `<path d="${STAR}" fill="url(#${id})" stroke="url(#${id})" stroke-width="1.7" stroke-linejoin="round"/></svg>`;
+}).join("");
 
 // Uno slot: cartellino (fascia scura con «Mokatvisor» e stelle, QR, frase, nota) + nome della macchinetta fuori dal cartellino
-function ticketHtml({ item, svg }) {
+function ticketHtml({ item, svg }, index) {
   const where = [item.small, item.title].filter(Boolean).join(" · ");
   return `
     <div class="slot">
       <article class="ticket">
-        <header class="band"><b>Mokatvisor</b><span class="stars" aria-hidden="true">${STARS}</span></header>
+        <header class="band"><b>Mokatvisor</b><span class="stars" aria-hidden="true">${starsHtml(index)}</span></header>
         <div class="body">
           <div class="qr" role="img" aria-label="QR code: ${esc(where)}">${svg}</div>
           <p class="cta">${esc(item.text)}</p>
@@ -149,7 +155,7 @@ function cartelliniHtml(cards) {
   const slotH = (297 - 2 * margin) / rows; // altezza di uno slot: cartellino + etichetta
   const pages = [];
   for (let i = 0; i < cards.length; i += PER_PAGE) {
-    const slots = Array.from({ length: PER_PAGE }, (_, k) => (cards[i + k] ? ticketHtml(cards[i + k]) : '<div class="slot"></div>'));
+    const slots = Array.from({ length: PER_PAGE }, (_, k) => (cards[i + k] ? ticketHtml(cards[i + k], i + k) : '<div class="slot"></div>'));
     pages.push(`  <main class="sheet">${slots.join("\n")}
   </main>`);
   }
@@ -173,9 +179,9 @@ function cartelliniHtml(cards) {
     /* Fascia scura in alto */
     .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; padding-bottom: .4mm; }
     .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
-    /* Stelle vicine, con le punte arrotondate (stesso stile delle stelle del sito) */
-    .stars { display: flex; gap: .8mm; }
-    .stars svg { width: 4.2mm; height: 4.2mm; fill: #F5A524; stroke: #F5A524; stroke-width: 2; stroke-linejoin: round; overflow: visible; }
+    /* Stelle del sito (la forma ha già il suo margine dentro il riquadro, quindi quasi nessuno spazio fra una e l'altra) */
+    .stars { display: flex; gap: .1mm; }
+    .stars svg { width: 5.6mm; height: 5.6mm; display: block; }
     /* QR → frase → nota. Il QR ha già ~5 mm di margine bianco (zona di quiete): tra i puntini neri e la frase ci sono 5 mm.
        La frase ha sempre l'altezza di due righe e la nota sta su una riga sola, così tutti i cartellini sono identici. */
     .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 3mm 4mm; text-align: center; }
