@@ -45,7 +45,7 @@ function bestDrink(m) {
 }
 
 // Home: i piani restano in ordine (6°, 4°, 3°); dentro lo stesso piano prima la macchinetta con più recensioni;
-// a parità l'ordine di prima (principale, poi secondaria). Le macchinette senza piano restano in coda, sempre nello stesso ordine
+// a parità l'ordine di prima (principale, poi secondaria). Le macchinette senza numero di piano (le due Brambillino) restano in coda, sempre nello stesso ordine
 const floorOf = (m) => parseInt(m.floor, 10) || 0; // "6° piano" → 6; senza piano → 0 (in fondo)
 function sortedMachines() {
   const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
