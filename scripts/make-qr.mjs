@@ -9,7 +9,7 @@
 // indipendente (jsQR) a piena risoluzione, a 200 px e a 200 px sfocato: se anche uno solo fallisce, lo script
 // si ferma con errore. Lo stile "rounded" (default) è accettato solo se supera la verifica, altrimenti si usa "square".
 import { mkdir, writeFile, rm } from "node:fs/promises";
-import { existsSync, readFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
 import { createRequire } from "node:module";
@@ -115,38 +115,42 @@ function buildQr(url, style) {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// Geometria del foglio (mm): A4 verticale con 8 mm di margine di sicurezza; l'area utile è 194 × 281 mm,
-// divisa in 2 colonne × 4 righe di cartellini orizzontali da 97 × 70,25 mm.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 4, cell: [97, 70.25], pad: 4, qr: 54, gap: 3.5 };
-const SLOTS = SHEET.cols * SHEET.rows;
+// Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
+// L'area utile è 194 × 281 mm, divisa in 2 colonne × 2 righe di cartellini A6 verticali da 97 × 140,5 mm.
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 2, cell: [97, 140.5], pad: 5, qr: 70 };
+export const PER_PAGE = SHEET.cols * SHEET.rows;
+export const MIN_QR_MM = 62;
 
-// Un cartellino orizzontale: QR a sinistra, a destra marchio e stelle, titolo, invito e nota
+// Un cartellino verticale, in colonna centrata. Cinque gruppi distribuiti in modo uniforme (flex, space-between):
+// marchio, nome (altezza di due righe riservata), QR, stelle + invito, nota. Così marchio e QR stanno sempre negli stessi punti.
 function ticketHtml({ item, svg }) {
   return `
     <article class="ticket">
-      <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
-      <div class="info">
-        <header class="head">
-          <b>Mokatvisor</b>
-          <span class="sub"><i>ISILTeP</i><em aria-hidden="true">★★★★★</em></span>
-        </header>
-        <div class="names">
-          ${item.small ? `<p class="small">${esc(item.small)}</p>` : ""}
-          <h2>${esc(item.title)}</h2>
-        </div>
-        <div class="foot">
-          <p class="cta">${esc(item.text)}</p>
-          <p class="note">Un gioco fatto da studenti, per studenti: solo per divertirsi.</p>
-        </div>
+      <header class="brand"><b>Mokatvisor</b><span>ISILTeP</span></header>
+      <div class="names">
+        ${item.small ? `<p class="small">${esc(item.small)}</p>` : ""}
+        <h2>${esc(item.title)}</h2>
       </div>
+      <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
+      <div class="invite">
+        <p class="stars" aria-hidden="true">★★★★★</p>
+        <p class="cta">${esc(item.text)}</p>
+      </div>
+      <p class="note">Un gioco fatto da studenti, per studenti: solo per divertirsi.</p>
     </article>`;
 }
 
-// Un solo foglio A4: 8 slot (gli slot senza cartellino restano vuoti). Linee di taglio tratteggiate fra i cartellini, fino ai
-// bordi dell'area utile, e piccole tacche agli angoli.
+// Pagine A4 da 4 cartellini (2 × 2). Linee di taglio tratteggiate fra i cartellini, fino ai bordi dell'area utile,
+// e piccole tacche agli angoli. Gli slot senza cartellino restano vuoti.
 function cartelliniHtml(cards) {
-  const { margin, cols, cell, pad, qr, gap } = SHEET;
-  const slots = Array.from({ length: SLOTS }, (_, i) => (cards[i] ? ticketHtml(cards[i]) : '<div class="ticket empty"></div>'));
+  const { margin, cols, cell, pad, qr } = SHEET;
+  const pages = [];
+  for (let i = 0; i < cards.length; i += PER_PAGE) {
+    const slots = Array.from({ length: PER_PAGE }, (_, k) => (cards[i + k] ? ticketHtml(cards[i + k]) : '<div class="ticket empty"></div>'));
+    pages.push(`  <main class="sheet">${slots.join("\n")}
+    ${["tl", "tr", "bl", "br"].map((c) => `<i class="tick h ${c}"></i><i class="tick v ${c}"></i>`).join("")}
+  </main>`);
+  }
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -154,42 +158,42 @@ function cartelliniHtml(cards) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mokatvisor · cartellini</title>
   <style>
-    /* Le stampanti di casa non stampano fino al bordo: margine di sicurezza di ${margin} mm e area utile 194 × 281 mm */
+    /* Margine di sicurezza di ${margin} mm: l'area utile di ogni pagina è 194 × 281 mm */
     @page { size: A4 portrait; margin: ${margin}mm; }
     * { box-sizing: border-box; }
     html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body { margin: 0; background: #e6e6e6; color: #111; font: 8.5pt/1.2 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+    body { margin: 0; background: #e6e6e6; color: #111; font: 8pt/1.2 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
     .sheet { position: relative; width: ${cols * cell[0]}mm; height: ${SHEET.rows * cell[1]}mm; background: #fff;
              display: grid; grid-template-columns: repeat(${cols}, ${cell[0]}mm); grid-template-rows: repeat(${SHEET.rows}, ${cell[1]}mm); overflow: hidden; }
-    .ticket { position: relative; padding: ${pad}mm; display: grid; grid-template-columns: ${qr}mm 1fr; column-gap: ${gap}mm; overflow: hidden;
-              border: 0 dashed #8c8c8c; }
+    .ticket { position: relative; padding: ${pad}mm; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+              text-align: center; overflow: hidden; border: 0 dashed #8c8c8c; break-inside: avoid; page-break-inside: avoid; }
     /* Linee di taglio: fra le colonne e fra le righe, fino al bordo dell'area utile */
     .ticket:nth-child(odd) { border-right-width: .25mm; }
-    .ticket:nth-child(-n+${SLOTS - cols}) { border-bottom-width: .25mm; }
+    .ticket:nth-child(-n+${PER_PAGE - cols}) { border-bottom-width: .25mm; }
     .ticket p, .ticket h2 { margin: 0; }
-    .qr { width: ${qr}mm; height: ${qr}mm; align-self: center; }
+    .brand { display: flex; flex-direction: column; align-items: center; }
+    .brand b { font-size: 19pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+    .brand span { font-size: 8pt; font-weight: 600; letter-spacing: .08em; color: #666; }
+    /* Il nome occupa sempre l'altezza di una riga piccola + due righe di titolo, anche se il titolo ne ha una */
+    .names { height: 21mm; width: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .small { font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
+    h2 { font-size: 21pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
-    .info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
-    .head b { display: block; font-size: 12.5pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
-    .sub { display: flex; align-items: baseline; justify-content: space-between; margin-top: .6mm; }
-    .sub i { font-style: normal; font-size: 7pt; font-weight: 600; letter-spacing: .06em; color: #666; }
-    .sub em { font-style: normal; font-size: 8.5pt; letter-spacing: .04em; color: #F5A524; white-space: nowrap; }
-    .small { font-size: 7pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
-    h2 { font-size: 15.5pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
-    .cta { font-size: 8.5pt; font-weight: 700; line-height: 1.2; }
-    .note { margin-top: 1.6mm !important; font-size: 7pt; line-height: 1.25; color: #666; }
+    .invite { display: flex; flex-direction: column; align-items: center; gap: .8mm; }
+    .stars { font-size: 13pt; letter-spacing: .08em; line-height: 1; color: #F5A524; }
+    .cta { font-size: 11pt; font-weight: 700; line-height: 1.2; max-width: 80mm; }
+    .note { font-size: 8pt; line-height: 1.25; color: #666; max-width: 80mm; }
     /* Tacche agli angoli dell'area utile */
     .tick { position: absolute; background: #8c8c8c; z-index: 2; }
     .tick.h { width: 3mm; height: .25mm; } .tick.v { width: .25mm; height: 3mm; }
     .tl { top: 0; left: 0; } .tr { top: 0; right: 0; } .bl { bottom: 0; left: 0; } .br { bottom: 0; right: 0; }
     @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
-    @media print { body { background: #fff; } .sheet { margin: 0; } }
+    @media print { body { background: #fff; } .sheet { margin: 0; break-after: page; page-break-after: always; } .sheet:last-child { break-after: auto; page-break-after: auto; } }
   </style>
 </head>
 <body>
-  <main class="sheet">${slots.join("\n")}
-    ${["tl", "tr", "bl", "br"].map((c) => `<i class="tick h ${c}"></i><i class="tick v ${c}"></i>`).join("")}
-  </main>
+${pages.join("\n")}
 </body>
 </html>
 `;
@@ -226,34 +230,42 @@ function findChrome() {
   return candidates.find((p) => p && existsSync(p)) ?? null;
 }
 
-// Crea il PDF (una pagina) e, se possibile, il PNG della pagina a 300 dpi. Ritorna { pdf, png } (percorso o null).
+// Crea il PDF (una pagina A4 ogni 4 cartellini) e, su macOS, i PNG delle pagine a 300 dpi con le posizioni dei QR.
+// Ritorna { pdf, pngs, layout } (percorsi, o null se non disponibili).
 function renderSheet(htmlPath, pdfPath) {
-  const pngPath = path.join(os.tmpdir(), "mokatvisor-cartellini.png");
+  const prefix = path.join(os.tmpdir(), "mokatvisor-cartellini");
+  const layoutPath = `${prefix}.json`;
   const tool = webkitTool();
   if (tool) {
-    const r = spawnSync(tool, [htmlPath, pdfPath, pngPath, String(DPI)], { stdio: "inherit", timeout: 90_000 });
-    if (r.status === 0 && existsSync(pdfPath) && existsSync(pngPath)) return { pdf: pdfPath, png: pngPath };
+    for (const f of readdirSync(os.tmpdir()).filter((f) => f.startsWith("mokatvisor-cartellini-"))) rmSync(path.join(os.tmpdir(), f), { force: true });
+    const r = spawnSync(tool, [htmlPath, pdfPath, prefix, String(DPI), layoutPath], { stdio: "inherit", timeout: 90_000 });
+    if (r.status === 0 && existsSync(pdfPath) && existsSync(layoutPath)) {
+      const pngs = readdirSync(os.tmpdir()).filter((f) => /^mokatvisor-cartellini-\d+\.png$/.test(f)).sort().map((f) => path.join(os.tmpdir(), f));
+      return { pdf: pdfPath, pngs, layout: layoutPath };
+    }
   }
   const chrome = findChrome();
   if (chrome) {
     const r = spawnSync(chrome, ["--headless", "--disable-gpu", "--no-pdf-header-footer", `--print-to-pdf=${pdfPath}`, pathToFileURL(htmlPath).href],
       { stdio: "ignore", timeout: 60_000 });
-    if (r.status === 0 && existsSync(pdfPath)) return { pdf: pdfPath, png: null };
+    if (r.status === 0 && existsSync(pdfPath)) return { pdf: pdfPath, pngs: [], layout: null };
   }
-  return { pdf: null, png: null };
+  return { pdf: null, pngs: [], layout: null };
 }
 
-// Controllo sul foglio reso a 300 dpi: ritaglia ogni QR, lo decodifica (jsQR) e misura quanto è grande sulla carta.
-// Ritorna l'elenco dei problemi (vuoto = tutto bene) e le misure.
-function verifySheet(pngPath, cards) {
-  const img = PNG.sync.read(readFileSync(pngPath));
+// Controllo sulle pagine rese a 300 dpi: ritaglia ogni QR (nella posizione misurata sulla pagina vera), lo decodifica (jsQR)
+// e misura quanto è grande sulla carta. Ritorna l'elenco dei problemi (vuoto = tutto bene) e le misure.
+function verifySheet(sheet, cards) {
+  const pages = sheet.pngs.map((p) => PNG.sync.read(readFileSync(p)));
+  const boxes = JSON.parse(readFileSync(sheet.layout, "utf8"));
   const px = (mm) => (mm * DPI) / 25.4;
-  const { margin, cols, cell, pad, qr } = SHEET;
   const problems = [], sizes = [];
+  if (boxes.length !== cards.length) problems.push(`trovati ${boxes.length} QR nel foglio, attesi ${cards.length}`);
   cards.forEach((c, i) => {
-    const col = i % cols, row = Math.floor(i / cols);
-    const x0 = margin + col * cell[0] + pad, y0 = margin + row * cell[1] + (cell[1] - qr) / 2; // angolo del QR (mm)
-    const cx = Math.round(px(x0 - 2)), cy = Math.round(px(y0 - 2)), cw = Math.round(px(qr + 4));
+    const box = boxes[i], img = pages[(box?.page ?? 1) - 1];
+    if (!box || !img) { problems.push(`${c.item.id}: QR non trovato nel foglio`); return; }
+    if (box.w < MIN_QR_MM) problems.push(`${c.item.id}: il QR nel foglio misura ${box.w.toFixed(1)} mm (minimo ${MIN_QR_MM} mm)`);
+    const cx = Math.round(px(box.x - 2)), cy = Math.round(px(box.y - 2)), cw = Math.round(px(box.w + 4));
     const crop = new Uint8ClampedArray(cw * cw * 4);
     let minX = cw, minY = cw, maxX = -1, maxY = -1;
     for (let y = 0; y < cw; y++) {
@@ -265,12 +277,11 @@ function verifySheet(pngPath, cards) {
     }
     const read = jsQR(crop, cw, cw)?.data ?? null;
     if (read !== c.item.url) problems.push(`${c.item.id}: letto ${read === null ? "niente" : `"${read}"`} (atteso "${c.item.url}")`);
-    // Misura: il disegno nero occupa N moduli; il QR con il margine ne occupa N + 8
+    // Misura sulla pagina resa: il disegno nero occupa N moduli; il QR con il margine ne occupa N + 8
     const n = totalModules(c.svg) - 8;
-    const modMm = ((maxX - minX + 1) / n) * 25.4 / DPI;
-    const sizeMm = modMm * (n + 8);
+    const sizeMm = (((maxX - minX + 1) / n) * (n + 8) * 25.4) / DPI;
     sizes.push(sizeMm);
-    if (sizeMm < 45) problems.push(`${c.item.id}: il QR misura ${sizeMm.toFixed(1)} mm (minimo 45 mm)`);
+    if (sizeMm < MIN_QR_MM) problems.push(`${c.item.id}: il QR stampato misura ${sizeMm.toFixed(1)} mm (minimo ${MIN_QR_MM} mm)`);
   });
   return { problems, sizes };
 }
@@ -308,24 +319,25 @@ for (const b of built) {
 }
 const htmlPath = path.join(OUT_DIR, "cartellini.html");
 await writeFile(htmlPath, cartelliniHtml(built));
-console.log(`✔ cartellini.html     un foglio A4, ${built.length} cartellini su ${SLOTS} slot (margine ${SHEET.margin} mm)`);
+console.log(`✔ cartellini.html     ${Math.ceil(built.length / PER_PAGE)} pagine A4, ${built.length} cartellini A6 (2×2, margine ${SHEET.margin} mm)`);
 
 const pdfPath = path.join(OUT_DIR, "cartellini.pdf");
 await rm(pdfPath, { force: true });
 const sheet = renderSheet(htmlPath, pdfPath);
-if (sheet.pdf) console.log("✔ cartellini.pdf      una pagina A4");
+if (sheet.pdf) console.log(`✔ cartellini.pdf      ${Math.ceil(built.length / PER_PAGE)} pagine A4`);
 else console.log("• cartellini.pdf non creato: nessun renderer trovato (su macOS serve Xcode; altrove Chrome/Chromium/Edge/Brave o CHROME_BIN). Stampa cartellini.html dal browser.");
 
-if (sheet.png) {
-  const { problems, sizes } = verifySheet(sheet.png, built);
-  await rm(sheet.png, { force: true });
+if (sheet.pngs.length && sheet.layout) {
+  const { problems, sizes } = verifySheet(sheet, built);
+  for (const f of sheet.pngs) await rm(f, { force: true });
+  await rm(sheet.layout, { force: true });
   if (problems.length) {
     for (const p of problems) console.error(`✘ ${p}`);
-    fail("controllo del foglio a 300 dpi fallito (i file sono stati scritti, ma NON stampare questo foglio)");
+    fail("controllo delle pagine a 300 dpi fallito (i file sono stati scritti, ma NON stampare questi fogli)");
   }
-  console.log(`✔ Foglio a ${DPI} dpi: ${built.length} QR letti e confrontati; misura del QR sulla carta ${Math.min(...sizes).toFixed(1)}–${Math.max(...sizes).toFixed(1)} mm (minimo 45)`);
+  console.log(`✔ Pagine a ${DPI} dpi: ${built.length} QR letti e confrontati; misura del QR sulla carta ${Math.min(...sizes).toFixed(1)}–${Math.max(...sizes).toFixed(1)} mm (minimo ${MIN_QR_MM})`);
 } else {
-  console.warn("⚠ Il foglio reso non è stato controllato a 300 dpi: serve macOS con Xcode (WebKit). Scansiona a mano ogni cartellino stampato.");
+  console.warn("⚠ Le pagine rese non sono state controllate a 300 dpi: serve macOS con Xcode (WebKit). Scansiona a mano ogni cartellino stampato.");
 }
 
 console.log(`\n✔ Verifica: ${built.length} QR su ${built.length} decodificati (piena risoluzione, 200 px, 200 px sfocato).`);
