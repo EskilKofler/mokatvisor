@@ -90,12 +90,12 @@ function titlesOf(m) {
 function itemsOf(base, withClassifica) {
   const rank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
   const items = [...MACHINES].sort((a, b) => rank(a) - rank(b)).map((m) => ({
-    id: m.id, url: machineUrl(base, m.id), ...titlesOf(m), text: "Hai preso una bevanda? Scansiona e dai le stelle!",
+    id: m.id, url: machineUrl(base, m.id), ...titlesOf(m), text: "Scansiona e dai le stelle!",
   }));
   if (withClassifica) {
     items.push({
       id: "classifica", url: new URL("classifica.html", base).toString(), title: "Classifica", small: "",
-      text: "Chi fa le bevande migliori? Guarda la classifica!",
+      text: "Scansiona e guarda chi vince!",
     });
   }
   return items;
@@ -117,26 +117,27 @@ const esc = (s) =>
 
 // Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
 // L'area utile è 194 × 281 mm, divisa in 2 colonne × 2 righe di cartellini A6 verticali da 97 × 140,5 mm.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 2, cell: [97, 140.5], pad: 5, qr: 70 };
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 2, cell: [97, 140.5], pad: 9, qr: 66 };
 export const PER_PAGE = SHEET.cols * SHEET.rows;
-export const MIN_QR_MM = 62;
+export const MIN_QR_MM = 65;
 
-// Un cartellino verticale, in colonna centrata. Cinque gruppi distribuiti in modo uniforme (flex, space-between):
-// marchio, nome (altezza di due righe riservata), QR, stelle + invito, nota. Così marchio e QR stanno sempre negli stessi punti.
+// Cinque stelle ambra disegnate (7 mm l'una): non dipendono dal carattere del computer
+const STAR = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z";
+const STARS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${STAR}"/></svg>`.repeat(5);
+
+// Un cartellino verticale, in colonna centrata, con pochi elementi ben distanziati (flex, space-between):
+// «Mokatvisor», QR, piano piccolo + titolo (altezza di due righe sempre riservata), stelle, frase.
 function ticketHtml({ item, svg }) {
   return `
     <article class="ticket">
-      <header class="brand"><b>Mokatvisor</b><span>ISILTeP</span></header>
+      <header class="brand">Mokatvisor</header>
+      <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
       <div class="names">
         ${item.small ? `<p class="small">${esc(item.small)}</p>` : ""}
         <h2>${esc(item.title)}</h2>
       </div>
-      <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
-      <div class="invite">
-        <p class="stars" aria-hidden="true">★★★★★</p>
-        <p class="cta">${esc(item.text)}</p>
-      </div>
-      <p class="note">Un gioco fatto da studenti, per studenti: solo per divertirsi.</p>
+      <div class="stars" aria-hidden="true">${STARS}</div>
+      <p class="cta">${esc(item.text)}</p>
     </article>`;
 }
 
@@ -171,19 +172,16 @@ function cartelliniHtml(cards) {
     .ticket:nth-child(odd) { border-right-width: .25mm; }
     .ticket:nth-child(-n+${PER_PAGE - cols}) { border-bottom-width: .25mm; }
     .ticket p, .ticket h2 { margin: 0; }
-    .brand { display: flex; flex-direction: column; align-items: center; }
-    .brand b { font-size: 19pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
-    .brand span { font-size: 8pt; font-weight: 600; letter-spacing: .08em; color: #666; }
-    /* Il nome occupa sempre l'altezza di una riga piccola + due righe di titolo, anche se il titolo ne ha una */
-    .names { height: 21mm; width: 100%; display: flex; flex-direction: column; justify-content: center; }
-    .small { font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
-    h2 { font-size: 21pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .brand { font-size: 16pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
     .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
-    .invite { display: flex; flex-direction: column; align-items: center; gap: .8mm; }
-    .stars { font-size: 13pt; letter-spacing: .08em; line-height: 1; color: #F5A524; }
-    .cta { font-size: 11pt; font-weight: 700; line-height: 1.2; max-width: 80mm; }
-    .note { font-size: 8pt; line-height: 1.25; color: #666; max-width: 80mm; }
+    /* Distanze minime: QR → titolo 6 mm, titolo → stelle 8 mm, stelle → frase 3 mm (lo spazio che avanza si divide in parti uguali) */
+    .names { margin-top: 6mm; width: 100%; height: 17.7mm; display: flex; flex-direction: column; justify-content: center; }
+    .small { font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
+    h2 { font-size: 18pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .stars { margin-top: 8mm; display: flex; gap: 1.8mm; }
+    .stars svg { width: 8mm; height: 8mm; fill: #F5A524; }
+    .cta { margin-top: 3mm !important; font-size: 11.5pt; font-weight: 700; line-height: 1.2; white-space: nowrap; }
     /* Tacche agli angoli dell'area utile */
     .tick { position: absolute; background: #8c8c8c; z-index: 2; }
     .tick.h { width: 3mm; height: .25mm; } .tick.v { width: .25mm; height: 3mm; }
