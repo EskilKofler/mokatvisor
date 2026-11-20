@@ -31,7 +31,8 @@ service cloud.firestore {
               'cappuccino-d-orzo', 'caffe-al-ginseng', 'caffe-macchiato-al-ginseng',
               'bevanda-cioccolato', 'bevanda-te-al-limone', 'caffe-al-ginseng-dolce',
               'caffe-macchiato-al-ginseng-dolce', 'cappuccino-al-ginseng-dolce',
-              'cappuccino-con-cioccolato']
+              'cappuccino-con-cioccolato', 'cappuccino-al-ginseng', 'caffe-d-orzo-macchiato',
+              'bevanda-latte']
         && request.resource.data.drinkKey ==
              request.resource.data.machineId + '_' + request.resource.data.drinkId
         && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey
