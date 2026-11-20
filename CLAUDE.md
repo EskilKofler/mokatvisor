@@ -27,7 +27,9 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   cambio di id l'utente deve ripubblicare le regole nella console.
 - Home: 5 menù chiusi (uno per macchinetta): piani in ordine 6°, 4°, 3°; nello stesso piano più recensioni prima (poi
   `HOME_ORDER`). Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
-  le macchinette" e "Vai alla classifica" (id non valido → home). Le bevande di una macchinetta sono una griglia a due
+  le macchinette" e "Vai alla classifica" (id mancante → home; id sconosciuto → home con la riga «Macchinetta non trovata: ecco tutte le altre»;
+  maiuscole e spazi ignorati). Id delle macchinette: `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`
+  (es. `?m=terzo`, `?m=quarto-principale`). Le bevande di una macchinetta sono una griglia a due
   colonne come il pannello reale, con posizione ESPLICITA (grid-row/grid-column dalle `rows`: il posto vuoto non collassa, sempre
   due colonne anche a 320 px); ogni riquadro (≥ 56 px) è un bottone
   che apre il pannello di voto. Stato per riquadro da `state.mine` (nessuna lettura in più):

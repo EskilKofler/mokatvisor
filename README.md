@@ -49,8 +49,8 @@ python3 -m http.server 8000
 3. Il sito sarà su `https://IL_TUO_UTENTE.github.io/mokatvisor/`.
 
 ## Foto delle macchinette
-Metti i file in `img/` con il nome dell'id: `piano3.jpg`, `piano4-principale.jpg`, `piano4-secondaria.jpg`,
-`piano6-principale.jpg`, `piano6-secondaria.jpg`. Comprimi le foto (max ~200 KB l'una).
+Metti i file in `img/` con il nome dell'id: `terzo.jpg`, `quarto-principale.jpg`, `quarto-secondaria.jpg`,
+`sesto-principale.jpg`, `sesto-secondaria.jpg`. Comprimi le foto (max ~200 KB l'una).
 
 ## Modificare macchinette o bevande
 In `machines.js` ogni macchinetta descrive il suo pannello **per righe, dall'alto in basso**: `rows[i] = [sinistra, destra]`.
@@ -68,8 +68,9 @@ macchinetta usa più. Se aggiungi una macchinetta, rigenera anche i QR (vedi sot
 
 ## QR code per le macchinette
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/mokatvisor/?m=<id>`
-(es. `?m=piano3`): mostra quella macchinetta in grande, con le sue bevande e le medie, poi i link
-«Vedi tutte le macchinette» e «Vai alla classifica». Senza `?m=` (o con un id non valido) si vede la home.
+(es. `?m=terzo`, `?m=quarto-principale`; maiuscole e spazi ai lati non contano): mostra quella macchinetta in grande, con le sue bevande e le medie, poi i link
+«Vedi tutte le macchinette» e «Vai alla classifica». Senza `?m=` si vede la home; con un id che non corrisponde a nessuna macchinetta si vede la home con la riga «Macchinetta non trovata: ecco tutte le altre».
+Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`.
 
 ## Com'è fatto il sito
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
@@ -115,7 +116,7 @@ Senza argomenti l'indirizzo base è `https://eskilkofler.github.io/mokatvisor/`.
 
 **Stampa i QR solo con l'indirizzo definitivo.** Il QR contiene l'indirizzo scritto nel momento in cui lo generi:
 se poi cambi nome del repository, utente GitHub o dominio, i cartellini già attaccati non funzionano più.
-Prima di stampare: pubblica il sito, apri a mano `.../?m=piano3` per controllare, poi genera e stampa.
+Prima di stampare: pubblica il sito, apri a mano `.../?m=terzo` per controllare, poi genera e stampa.
 La cartella `qr/` è in `.gitignore`: i file si rigenerano quando serve.
 
 ## Sicurezza (promemoria)
