@@ -238,7 +238,6 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 .tile.just-voted { animation: tile-glow .8s ease-out both; }
 @keyframes tile-glow { 0% { box-shadow: 0 0 0 0 var(--ok-glow); } 100% { box-shadow: 0 0 0 11px rgba(31, 157, 85, 0); } }
 /* Da votare: bordo tratteggiato e tono più spento (nessuna stella) */
-.tile-mine { display: block; margin-top: 2px; font-size: .78rem; font-weight: 600; color: var(--ink); }
 .tile.is-todo { background: var(--card-2); border-style: dashed; border-color: var(--line-strong); }
 
 .more { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }

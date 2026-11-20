@@ -51,6 +51,16 @@ const appCheckOn = configured && !String(appCheckSiteKey).startsWith("INCOLLA");
 // Tutte le bevande, una per (macchinetta, bevanda)
 export const ENTRIES = MACHINES.flatMap((m) => m.drinks.map((d) => ({ key: keyOf(m.id, d.id), m, d })));
 
+// L'orario dell'ultima recensione resta sul dispositivo, così l'attesa di 5 minuti vale anche dopo un ricaricamento
+const LAST_KEY = "mokatvisor:ultimo-voto";
+function lastVoteStored() {
+  try { const t = Number(localStorage.getItem(LAST_KEY)); return t > 0 && t <= Date.now() ? t : 0; } catch { return 0; }
+}
+function setLastVote(t) {
+  state.lastVoteAt = t;
+  try { localStorage.setItem(LAST_KEY, String(t)); } catch { /* niente storage: resta in memoria */ }
+}
+
 export const state = {
   user: null,
   mine: new Map(),     // key -> valore dato da me
@@ -60,7 +70,7 @@ export const state = {
   settled: !configured, // true quando il primo caricamento delle medie è finito (anche con errori)
   loading: new Set(),  // chiavi delle medie in arrivo da Firestore (mostrano lo scheletro)
   fetchedAt: 0,        // quando sono stati letti (o salvati in cache) i dati attuali
-  lastVoteAt: 0,       // quando ho lasciato l'ultima recensione in questa sessione (ms)
+  lastVoteAt: lastVoteStored(), // quando ho lasciato l'ultima recensione (ms); ricordato su questo dispositivo
 };
 
 // Cosa disegna e quali medie serve alla pagina corrente (impostato da start())
@@ -476,8 +486,11 @@ function closeSheet(now = false) {
   setTimeout(finishClose, 200); // = durata dell'animazione di chiusura
 }
 
+// Quanto manca alla prossima recensione, in ms (0 = si può votare)
+export const voteWaitMs = () => Math.max(0, state.lastVoteAt + VOTE_GAP_MS - Date.now());
+
 // Messaggio gentile quando l'intervallo tra due recensioni non è ancora passato
-function waitMessage(ms) {
+export function waitMessage(ms) {
   const n = Math.max(1, Math.ceil(ms / 60_000));
   return `Piano, il caffè va gustato! Riprova tra ${n} ${n === 1 ? "minuto" : "minuti"}.`;
 }
@@ -498,7 +511,7 @@ async function waitLeft(uid) {
 async function saveRating(e, value) {
   if (!state.user) return { ok: false };
   const uid = state.user.uid;
-  const early = state.lastVoteAt ? state.lastVoteAt + VOTE_GAP_MS - Date.now() : 0;
+  const early = voteWaitMs();
   if (early > 0) return { ok: false, message: waitMessage(early) };
   try {
     // voto e orario dell'ultimo voto si scrivono insieme
@@ -517,12 +530,12 @@ async function saveRating(e, value) {
     console.error(err);
     const left = await waitLeft(uid);
     if (left > 0) {
-      state.lastVoteAt = Date.now() + left - VOTE_GAP_MS;
+      setLastVote(Date.now() + left - VOTE_GAP_MS);
       return { ok: false, message: waitMessage(left) };
     }
     return { ok: false };
   }
-  state.lastVoteAt = Date.now();
+  setLastVote(Date.now());
   if (state.user?.uid === uid) {
     state.mine.set(e.key, value);
     cacheWrite(`mine:${uid}`, Object.fromEntries(state.mine));

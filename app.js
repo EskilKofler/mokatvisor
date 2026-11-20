@@ -1,6 +1,7 @@
 import {
   start, $, el, keyOf, ENTRIES, withPremiumTag, statOf, drinkButton, skel, photo,
   pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, drinkLabel,
+  voteWaitMs, waitMessage,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
@@ -88,9 +89,13 @@ function drinkTile(e, spot) {
   const st = statOf(e.key);
   const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
-  const readOnly = !canVote(e.m); // sola lettura: niente stile "da votare", il tocco apre il pannello dei risultati
-  const b = drinkButton(e, spot, `tile${readOnly ? " ro" : ""}${knows ? (voted ? " is-voted" : readOnly ? "" : " is-todo") : ""}`);
-  if (readOnly) b.setAttribute("aria-label", readOnlyLabel(e, st));
+  // Nuova recensione non permessa qui (macchinetta non sbloccata) oppure attesa dei 5 minuti dopo un voto:
+  // niente stile "da votare", il tocco apre il pannello con i risultati. Chi ha già votato può sempre modificare.
+  const locked = !canVote(e.m) && !voted;
+  const waiting = voteWaitMs() > 0;
+  const plain = locked || waiting;
+  const b = drinkButton(e, spot, `tile${locked ? " ro" : ""}${knows ? (voted ? " is-voted" : plain ? "" : " is-todo") : ""}`);
+  if (plain) b.setAttribute("aria-label", readOnlyLabel(e, st));
   // nomi lunghi: carattere un po' più piccolo; le varianti premium hanno il tag PREMIUM
   b.append(withPremiumTag(el("span", `tile-name${e.d.name.length >= 23 ? " long" : ""}`, e.d.name), e.d));
   if (st.pending) {
@@ -105,7 +110,6 @@ function drinkTile(e, spot) {
     sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
     b.append(sub);
   }
-  if (readOnly && voted) b.append(el("span", "tile-mine", `Il tuo voto: ${nfVote.format(state.mine.get(e.key))} ★`));
   // Appena votata: breve alone verde. Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
   // da dove era (delay negativo), così non si interrompe né riparte da capo.
   const pop = state.pop;
@@ -247,6 +251,19 @@ function qrIcon() {
   return svg;
 }
 
+function clockIcon() {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("class", "ro-qr-icon");
+  svg.setAttribute("aria-hidden", "true");
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "9");
+  const h = document.createElementNS(SVG_NS, "path");
+  h.setAttribute("d", "M12 7v5l3 2");
+  for (const n of [c, h]) { n.setAttribute("fill", "none"); n.setAttribute("stroke", "currentColor"); n.setAttribute("stroke-width", "2"); n.setAttribute("stroke-linecap", "round"); n.setAttribute("stroke-linejoin", "round"); svg.append(n); }
+  return svg;
+}
+
 let roSheet, roSpot = null;
 function closeReadOnly() {
   if (!roSheet?.open) return;
@@ -262,7 +279,7 @@ function buildReadOnly() {
   const inner = el("div", "sheet-in");
   const title = el("h2", "sheet-title"); title.id = "ro-title";
   const qr = el("p", "ro-qr");
-  qr.append(qrIcon(), el("span", "", "Per votare, scansiona il QR sulla macchinetta"));
+  qr.id = "ro-note";
   const close = el("button", "btn block ghost", "Chiudi");
   close.type = "button";
   close.addEventListener("click", closeReadOnly);
@@ -278,7 +295,8 @@ function buildReadOnly() {
   roSheet.addEventListener("click", (ev) => { if (ev.target === roSheet) closeReadOnly(); }); // tocco sullo sfondo
   document.body.append(roSheet);
 }
-function openReadOnly(e, spot) {
+// kind: "qr" (nuova recensione solo con il QR) oppure "wait" (attesa tra due recensioni)
+function openReadOnly(e, spot, kind) {
   if (!roSheet) buildReadOnly();
   roSpot = spot;
   const st = statOf(e.key);
@@ -295,6 +313,10 @@ function openReadOnly(e, spot) {
     score.append(el("span", "ro-n", st.pending ? "Caricamento…" : st.known ? "Nessun voto ancora" : "Voti non disponibili"));
   }
   const my = state.mine.get(e.key);
+  $("#ro-note").replaceChildren(
+    kind === "qr" ? qrIcon() : clockIcon(),
+    el("span", "", kind === "qr" ? "Per votare, scansiona il QR sulla macchinetta" : waitMessage(voteWaitMs())),
+  );
   $("#ro-mine").textContent = my === undefined ? "" : `Il tuo voto: ${nfVote.format(my)} ★`;
   if (typeof roSheet.showModal === "function") roSheet.showModal(); else roSheet.setAttribute("open", "");
   roSheet.focus({ preventScroll: true });
@@ -306,14 +328,24 @@ $("#view").addEventListener("click", (ev) => {
   const b = ev.target.closest("[data-key]");
   if (!b) return;
   const e = ENTRIES.find((x) => x.key === b.dataset.key);
-  if (!e || canVote(e.m)) return;
+  if (!e) return;
+  const locked = !canVote(e.m) && !state.mine.has(e.key);
+  if (!locked && voteWaitMs() === 0) return; // si può votare o modificare: apre il pannello di voto (core.js)
   ev.stopPropagation();
-  openReadOnly(e, b.dataset.spot);
+  openReadOnly(e, b.dataset.spot, locked ? "qr" : "wait");
 }, true);
+
+// Finita l'attesa tra due recensioni i riquadri tornano da soli come prima
+let repaintTimer = 0;
+function scheduleRepaint() {
+  clearTimeout(repaintTimer);
+  const wait = voteWaitMs();
+  if (wait > 0) repaintTimer = setTimeout(renderView, wait + 300);
+}
 
 start({
   page: "home",
-  sections: () => (single ? [renderHero(single), moreLinks()] : [renderMachines()]),
+  sections: () => { scheduleRepaint(); return single ? [renderHero(single), moreLinks()] : [renderMachines()]; },
   // ?m=: le 3 medie della macchinetta. Home: tutte (servono a ordinare le macchinette)
   need: () => (single ? ENTRIES.filter((e) => e.m === single) : ENTRIES),
 });

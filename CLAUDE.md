@@ -37,8 +37,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   pannello. Senza voti "Nessun voto ancora"; un solo invito in cima se la macchinetta non ha voti. Breve alone
   verde dopo un voto (spento con prefers-reduced-motion). Niente "Hai votato X di N".
 - Voto per macchinetta (`app.js`, regola di interfaccia, non di sicurezza): votabili la macchinetta aperta con `?m=` e quelle già
-  aperte così su questo dispositivo (elenco in localStorage, `mokatvisor:macchinette`; senza storage vale per la sessione). Le altre
-  mostrano media, voti e il mio voto in sola lettura (pannello `ro-*` in `app.js`, con invito a scansionare il QR). Dalla home non c'è nessun link a `?m=`. Non scrivere nei testi pubblici altro su questo meccanismo.
+  aperte così su questo dispositivo (elenco in localStorage, `mokatvisor:macchinette`; senza storage vale per la sessione). Nelle altre non si possono lasciare NUOVE recensioni (riquadro non votato → pannello `ro-*` in `app.js` con media, voti e invito a scansionare il QR), ma le bevande già votate restano sempre modificabili. Dalla home non c'è nessun link a `?m=`. Non scrivere nei testi pubblici altro su questo meccanismo.
 - Classifica (`classifica.js`): **sola lettura, niente voto** (`start({ vote: false })`). Podio 2-1-3 ed elenco
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).
@@ -62,7 +61,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   L'id del progetto Firebase (`projectId`, `authDomain`, `storageBucket`) resta quello originale anche se il sito cambia nome: **non toccarlo**.
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
 - Collezione `ratings`, doc id = `<uid>_<machineId>_<drinkId>`
-- Una recensione ogni 5 minuti per utente (`VOTE_GAP_MS` in `core.js`, stesso valore nelle regole): ogni voto scrive anche `limits/<uid>` = `{ last }` (solo orario, in un batch col voto); le regole accettano il voto solo se `last` è quello del batch e sono passati 5 min dal precedente. Messaggio gentile in `waitMessage()`. 2 scritture a voto.
+- Una recensione ogni 5 minuti per utente (`VOTE_GAP_MS` in `core.js`, stesso valore nelle regole): ogni voto scrive anche `limits/<uid>` = `{ last }` (solo orario, in un batch col voto); le regole accettano il voto solo se `last` è quello del batch e sono passati 5 min dal precedente. Messaggio gentile in `waitMessage()`. L'orario dell'ultimo voto è ricordato in localStorage (`mokatvisor:ultimo-voto`): per 5 minuti i riquadri perdono il bordo tratteggiato e il tocco apre il pannello `ro-*` con il messaggio d'attesa (stesso pannello del QR); poi tornano da soli normali. 2 scritture a voto.
 
 ## Come lavorare
 - Modifiche mirate e precise, mai riscritture complete dei file.
