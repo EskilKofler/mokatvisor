@@ -40,6 +40,10 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
 - Barra in alto: solo "Moka" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
+- Stile: neutro e minimale. Tutti i colori sono variabili CSS in cima a `style.css` (tema chiaro e scuro automatico con
+  `prefers-color-scheme`); niente marrone né beige. Sfondo grigio chiarissimo, card bianche con bordo 1px, pulsanti primari
+  neri, ambra (`--star`) solo per le stelle, verde (`--ok`) solo per "votato". Raggi 10-14 px, titoli peso 600-700. Per
+  cambiare un colore si cambia la variabile, non un esadecimale sparso. Contrasto AA e bersagli ≥ 44 px.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
   L'id del progetto Firebase (`projectId`, `authDomain`, `storageBucket`) resta quello originale anche se il sito cambia nome: **non toccarlo**.

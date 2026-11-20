@@ -517,7 +517,7 @@ function animateStat(key, old, now) {
 }
 
 // Coriandoli leggeri: pezzetti colorati che escono da (x, y), salgono e ricadono
-const CONFETTI_COLORS = ["#f0a91e", "#c47a2c", "#7a431f", "#e9c58b", "#d9534f", "#4f9d69"];
+const CONFETTI_COLORS = ["#F5A524", "#1F9D55", "#16161A", "#8A8A94"]; // ambra, verde, nero, grigio
 function confetti(x, y, count) {
   if (reducedMotion() || !document.body.animate) return;
   let layer = $("#confetti");
