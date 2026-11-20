@@ -22,7 +22,7 @@ service cloud.firestore {
           && request.resource.data.drinkId is string
           && request.resource.data.machineId in
              ['terzo', 'quarto-principale', 'quarto-secondaria',
-              'sesto-principale', 'sesto-secondaria', 'brambillino-sotto']
+              'sesto-principale', 'sesto-secondaria', 'brambillino-sopra', 'brambillino-sotto']
           && request.resource.data.drinkId in
              ['espresso', 'caffe-lungo', 'caffe-macchiato', 'caffe-al-ginseng-dolce',
               'caffe-macchiato-al-ginseng-dolce', 'cappuccino-al-ginseng-dolce', 'cappuccino',
@@ -32,7 +32,7 @@ service cloud.firestore {
               'caffe-macchiato-decaffeinato', 'cappuccino-decaffeinato', 'caffe-d-orzo',
               'cappuccino-d-orzo', 'caffe-al-ginseng', 'caffe-macchiato-al-ginseng',
               'cappuccino-al-ginseng', 'caffe-d-orzo-macchiato', 'bevanda-latte',
-              'bevanda-latte-macchiato', 'bevanda-cioccolato-forte']
+              'bevanda-latte-macchiato', 'bevanda-cioccolato-forte', 'ginseng-macchiato']
           && request.resource.data.drinkKey ==
              request.resource.data.machineId + '_' + request.resource.data.drinkId
           && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey
