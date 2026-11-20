@@ -90,12 +90,12 @@ function titlesOf(m) {
 function itemsOf(base, withClassifica) {
   const rank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
   const items = [...MACHINES].sort((a, b) => rank(a) - rank(b)).map((m) => ({
-    id: m.id, url: machineUrl(base, m.id), ...titlesOf(m), text: "Scansiona e dai le stelle!",
+    id: m.id, url: machineUrl(base, m.id), ...titlesOf(m), text: "Scansionami e valuta la tua bevanda!",
   }));
   if (withClassifica) {
     items.push({
       id: "classifica", url: new URL("classifica.html", base).toString(), title: "Classifica", small: "",
-      text: "Scansiona e guarda la classifica!",
+      text: "Scansionami e guarda la classifica!",
     });
   }
   return items;
@@ -116,9 +116,9 @@ const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // Geometria (mm): pagine A4 verticali con 8 mm di margine di sicurezza (le stampanti di casa non stampano fino al bordo).
-// Area utile 194 × 281 mm: 2 colonne × 3 righe di "slot". Ogni slot contiene un cartellino da 90 × 89,5 mm e, sotto, uno spazio
+// Area utile 194 × 281 mm: 2 colonne × 3 righe di "slot". Ogni slot contiene un cartellino da 90 × 90 mm e, sotto, uno spazio
 // per il nome della macchinetta (6 pt, fuori dal cartellino). Tra le colonne ci sono 4 mm; tra le righe lo spazio dell'etichetta.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 89.5], gapX: 4, qr: 54, header: 14.5 };
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 3, card: [90, 90], gapX: 4, qr: 52.4, header: 13.5 };
 export const PER_PAGE = SHEET.cols * SHEET.rows;
 export const MIN_QR_MM = 52;
 
@@ -171,16 +171,17 @@ function cartelliniHtml(cards) {
     .ticket { height: ${card[1]}mm; border: .25mm solid #d2d2d2; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column; flex: none; }
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
-    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2mm; }
-    .band b { font-size: 14pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
-    .stars { display: flex; gap: .8mm; }
+    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; }
+    .band b { font-size: 18pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+    .stars { display: flex; gap: 1.5mm; }
     .stars svg { width: 3.2mm; height: 3.2mm; fill: #F5A524; }
-    /* QR, frase e nota, a distanze uguali */
-    .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; padding: 0 4mm; text-align: center; }
+    /* QR → frase → nota. Il QR ha già ~5 mm di margine bianco (zona di quiete): tra i puntini neri e la frase ci sono 5 mm.
+       Frase e nota hanno sempre l'altezza di due righe, così tutti i cartellini sono identici. */
+    .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 4mm 2mm; text-align: center; }
     .qr { width: ${qr}mm; height: ${qr}mm; flex: none; }
     .qr svg { display: block; width: 100%; height: 100%; }
-    .cta { font-size: 11pt; font-weight: 700; line-height: 1.1; white-space: nowrap; }
-    .note { font-size: 7pt; line-height: 1.2; color: #666; max-width: 78mm; }
+    .cta { margin-top: .3mm !important; height: 10.7mm; display: flex; align-items: center; font-size: 14pt; font-weight: 700; line-height: 1.08; text-wrap: balance; }
+    .note { margin-top: 3mm !important; height: 7.7mm; display: flex; align-items: center; font-size: 8pt; line-height: 1.35; color: #555; max-width: 78mm; text-wrap: balance; }
     /* Nome della macchinetta: fuori dal cartellino, per riconoscerlo dopo il taglio */
     .where { flex: 1; margin: 0; display: flex; align-items: center; justify-content: center; font-size: 6pt; color: #777; text-align: center; }
     @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
@@ -260,7 +261,8 @@ function verifySheet(sheet, cards) {
     const box = boxes[i], img = pages[(box?.page ?? 1) - 1];
     if (!box || !img) { problems.push(`${c.item.id}: QR non trovato nel foglio`); return; }
     if (box.w < MIN_QR_MM) problems.push(`${c.item.id}: il QR nel foglio misura ${box.w.toFixed(1)} mm (minimo ${MIN_QR_MM} mm)`);
-    const cx = Math.round(px(box.x - 2)), cy = Math.round(px(box.y - 2)), cw = Math.round(px(box.w + 4));
+    // Ritaglio esatto del riquadro del QR (margine bianco incluso): fuori ci sono la fascia scura e il testo, che non vanno misurati
+    const cx = Math.round(px(box.x)), cy = Math.round(px(box.y)), cw = Math.round(px(box.w));
     const crop = new Uint8ClampedArray(cw * cw * 4);
     let minX = cw, minY = cw, maxX = -1, maxY = -1;
     for (let y = 0; y < cw; y++) {

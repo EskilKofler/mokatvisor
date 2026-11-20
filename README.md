@@ -118,8 +118,8 @@ vengono da `machines.js`, lo stesso file del sito: se ne aggiungi una, rilancia 
 
 Nella cartella `qr/` trovi, per ogni macchinetta e per la classifica, `<id>.svg` (solo il QR) e `<id>.png` (almeno 1200 px di lato), più
 **`qr/cartellini.html`**: **pagine A4 verticali con 6 cartellini ciascuna** (2 colonne × 3 righe, circa 90 × 90 mm l'uno, con angoli arrotondati e bordo
-grigio chiaro: il bordo è la guida di taglio). Ogni cartellino ha una fascia scura con «Mokatvisor» e le stelle, il QR di 54 mm (margine bianco
-compreso), «Scansiona e dai le stelle!» e una piccola nota; il nome della macchinetta (es. «4° piano · Torretta secondaria») è scritto
+grigio chiaro: il bordo è la guida di taglio). Ogni cartellino ha una fascia scura con «Mokatvisor» e le stelle, il QR di circa 52 mm (margine bianco
+compreso), «Scansionami e valuta la tua bevanda!» e una piccola nota; il nome della macchinetta (es. «4° piano · Torretta secondaria») è scritto
 **fuori** dal cartellino, sotto, per riconoscerlo prima del taglio. Con la classifica sono 8 cartellini, cioè 2 pagine (6 + 2). Ogni pagina ha un margine
 di sicurezza di 8 mm (le stampanti di casa non stampano fino al bordo). Lo script crea anche **`qr/cartellini.pdf`**:
 su macOS con Xcode usa WebKit (il motore di Safari), altrove Chrome, Chromium, Edge o Brave se ci sono (o la variabile `CHROME_BIN`); se non trova
@@ -134,7 +134,7 @@ con correzione d'errore M (Q se arrotondati) e margine bianco di 4 moduli.
 **Come stampare**
 1. Apri `qr/cartellini.pdf` (o `qr/cartellini.html` in **Chrome**) e stampa **tutte e 2 le pagine** su **A4**.
 2. **Scala: 100%** (non «Adatta alla pagina»), **margini: predefiniti**, intestazioni e piè di pagina disattivati, «Grafica di sfondo» attiva se stampi l'HTML.
-3. **Misura il QR stampato** con un righello: deve essere circa 5,4 cm di lato (quadrato bianco compreso).
+3. **Misura il QR stampato** con un righello: deve essere circa 5,2 cm di lato (quadrato bianco compreso).
 4. **Scansiona un cartellino con un iPhone e con un Android** prima di tagliare, e controlla che si apra la macchinetta giusta.
 5. Taglia lungo il bordo arrotondato di ogni cartellino (il nome sotto il cartellino resta fuori). Carta **adesiva opaca** consigliata (la carta lucida riflette e rende difficile la scansione).
 
