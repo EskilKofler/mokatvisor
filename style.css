@@ -126,7 +126,12 @@ h1, h2, h3, p { margin: 0; }
   color: var(--muted); font-size: clamp(.78rem, 3.7vw, .95rem); font-weight: 600; text-decoration: none; white-space: nowrap;
 }
 .nav-link:hover { background: var(--hover); color: var(--ink); }
-.nav-link[aria-current="page"] { background: var(--primary); color: var(--on-primary); }
+/* Voce attiva: il riquadro nero è più basso dell'area di tocco (che resta di 44 px) */
+.nav-link { position: relative; z-index: 0; }
+.nav-link[aria-current="page"] { color: var(--on-primary); }
+.nav-link[aria-current="page"]::before {
+  content: ""; position: absolute; inset: 8px 0; z-index: -1; border-radius: var(--radius-sm); background: var(--primary);
+}
 /* La barra è fissa: la pagina parte sotto di lei e i salti ad ancora non finiscono nascosti */
 body { padding-top: calc(56px + env(safe-area-inset-top)); }
 html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
