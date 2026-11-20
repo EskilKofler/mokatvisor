@@ -143,14 +143,8 @@ function renderHero(m) {
   return sec;
 }
 
-// Testo introduttivo della pagina di una macchinetta (?m=): piccolo, grigio, con «classifica» come link
-function machineIntro() {
-  const p = el("p", "machine-intro");
-  const link = el("a", "intro-link", "classifica");
-  link.href = "classifica.html";
-  p.append("Vota le bevande di questa macchinetta e scopri quali sono le bevande e le macchinette migliori controllando la ", link, "!");
-  return p;
-}
+// Testo introduttivo della pagina di una macchinetta (?m=): piccolo e grigio
+const machineIntro = () => el("p", "machine-intro", "Un gioco per valutare le bevande delle macchinette. Tocca a te!");
 
 function moreLinks() {
   const p = el("p", "more");
@@ -207,10 +201,10 @@ function machineMenu(m) {
 
 function renderMachines() {
   const sec = el("section", "page");
-  // Una riga che spiega dove si vota
-  const head = pageHead("machines-title", "Macchinette dell'ISILTeP",
-    "Qui vedi i risultati. Per votare, scansiona il QR sulla macchinetta dove hai preso il caffè: ogni macchinetta ha il suo.");
-  head.querySelector(".section-sub")?.classList.add("ro-note");
+  // Solo il titolo, senza sottotitolo
+  const head = pageHead("machines-title", "Macchinette dell'ISILTeP", "");
+  head.querySelector(".section-sub")?.remove();
+  head.classList.add("no-sub");
   sec.append(head);
   if (notFound) sec.append(el("p", "section-sub ro-note", "Macchinetta non trovata: ecco tutte le altre"));
   const list = el("div", "menus");
