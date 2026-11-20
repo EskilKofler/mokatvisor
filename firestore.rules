@@ -24,7 +24,12 @@ service cloud.firestore {
         && request.resource.data.drinkId in
              ['lungo', 'espresso', 'cappuccino', 'macchiato', 'cappuccino-cioccolato', 'caffe-deca',
               'lungo-deca', 'cappuccino-deca', 'ginseng', 'cioccolato', 'cioccolato-forte',
-              'cioccolato-latte', 'caffe-cioccolato', 'te-limone', 'latte', 'latte-macchiato']
+              'cioccolato-latte', 'caffe-cioccolato', 'te-limone', 'latte', 'latte-macchiato',
+              'espresso-premium', 'caffe-lungo-premium', 'caffe-macchiato-premium',
+              'cappuccino-premium', 'caffe-lungo', 'caffe-macchiato', 'caffe-decaffeinato',
+              'caffe-macchiato-decaffeinato', 'cappuccino-decaffeinato', 'caffe-d-orzo',
+              'cappuccino-d-orzo', 'caffe-al-ginseng', 'caffe-macchiato-al-ginseng',
+              'bevanda-cioccolato', 'bevanda-te-al-limone']
         && request.resource.data.drinkKey ==
              request.resource.data.machineId + '_' + request.resource.data.drinkId
         && ratingId == request.auth.uid + '_' + request.resource.data.drinkKey

@@ -53,13 +53,18 @@ Metti i file in `img/` con il nome dell'id: `piano3.jpg`, `piano4-principale.jpg
 `piano6-principale.jpg`, `piano6-secondaria.jpg`. Comprimi le foto (max ~200 KB l'una).
 
 ## Modificare macchinette o bevande
-In `machines.js` ci sono gli array `DRINKS` e `MACHINES` (li usano sia il sito sia lo script dei QR).
-Gli `id` devono usare solo minuscole, numeri e trattini.
-Non cambiare gli id dopo aver raccolto voti.
-Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`):
-se aggiungi una macchinetta o una bevanda in `machines.js`, aggiungi l'id anche lì e **ripubblica le regole** nella
-console Firebase, altrimenti il voto viene rifiutato.
-Se aggiungi una macchinetta, rigenera anche i QR (vedi sopra).
+In `machines.js` ogni macchinetta descrive il suo pannello **per righe, dall'alto in basso**: `rows[i] = [sinistra, destra]`.
+Ogni cella è una bevanda `drink("id", "Nome")` oppure `null` per un **posto vuoto** (nessun riquadro: la posizione sul
+sito resta quella della macchinetta dal vivo). Le varianti premium hanno `{ premium: true }`: stesso nome della bevanda
+normale ma id diverso, e il sito mostra il tag PREMIUM. Zucchero e bicchiere non sono bevande: non vanno inseriti.
+Gli `id` devono usare solo minuscole, numeri e trattini. Non cambiarli dopo aver raccolto voti: i voti sono legati
+all'id (`<macchinetta>_<bevanda>`). Attenzione: se in una macchinetta riusi un id che c'era già (es. `espresso`,
+`cappuccino`) per una bevanda diversa, i vecchi voti restano attaccati a quell'id: cancellali in Firestore
+(collezione `ratings`) prima di raccogliere voti veri.
+Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`): l'elenco contiene
+l'unione degli id usati da tutte le macchinette (oggi 31). Se aggiungi una macchinetta o una bevanda, aggiungi l'id anche
+lì e **ripubblica le regole** nella console Firebase, altrimenti il voto viene rifiutato; togli solo gli id che nessuna
+macchinetta usa più. Se aggiungi una macchinetta, rigenera anche i QR (vedi sotto).
 
 ## QR code per le macchinette
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=<id>`
@@ -80,9 +85,9 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=
   da votare il bordo tratteggiato e una ☆. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
   voto precedente». Senza voti: «Nessun voto ancora»; se nessuna bevanda della macchinetta ha voti compare un solo invito in
   cima.
-  In `machines.js` una macchinetta può avere un suo elenco
-  `drinks` e `leftCount` (quante bevande stanno a sinistra): ora il 6° piano principale usa le 16 bevande del pannello
-  dalla foto (`PANEL_DRINKS`), le altre le 3 di prima, finché non ci sono le foto vere.
+  Ogni macchinetta ha la sua disposizione, scritta in `machines.js` per **righe** (vedi sotto): oggi il 4° piano
+  principale usa le 17 bevande reali del suo pannello (con 4 varianti «PREMIUM») e il 6° piano principale le 16 del pannello
+  dalla foto di esempio; le altre hanno le 3 bevande di prima, finché non ci sono le foto vere.
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
   più alta) ed elenco di tutte le altre con una barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti
   minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1, in `core.js`). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
