@@ -19,8 +19,8 @@ service cloud.firestore {
         && request.resource.data.machineId is string
         && request.resource.data.drinkId is string
         && request.resource.data.machineId in
-             ['piano3', 'piano4-principale', 'piano4-secondaria',
-              'piano6-principale', 'piano6-secondaria']
+             ['terzo', 'quarto-principale', 'quarto-secondaria',
+              'sesto-principale', 'sesto-secondaria']
         && request.resource.data.drinkId in
              ['espresso', 'caffe-lungo', 'caffe-macchiato', 'caffe-al-ginseng-dolce',
               'caffe-macchiato-al-ginseng-dolce', 'cappuccino-al-ginseng-dolce', 'cappuccino',
