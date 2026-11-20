@@ -117,21 +117,22 @@ indirizzo base + `?m=` + id, quello del cartellino «Classifica» è indirizzo b
 vengono da `machines.js`, lo stesso file del sito: se ne aggiungi una, rilancia lo script.
 
 Nella cartella `qr/` trovi, per ogni macchinetta e per la classifica, `<id>.svg` (solo il QR) e `<id>.png` (almeno 1200 px di lato), più
-**`qr/cartellini.html`**: **un solo foglio A4 verticale con 8 cartellini orizzontali** (2 colonne × 4 righe, circa 97 × 70 mm ciascuno, QR di 54 mm
-con il margine bianco). Il foglio ha un margine di sicurezza di 8 mm (le stampanti di casa non stampano fino al bordo), linee di taglio
-tratteggiate tra i cartellini e piccole tacche agli angoli. Lo script crea anche **`qr/cartellini.pdf`** a pagina singola: su macOS con Xcode usa WebKit
-(il motore di Safari), altrove Chrome, Chromium, Edge o Brave se ci sono (o la variabile `CHROME_BIN`); se non trova niente, stampa `cartellini.html` dal browser.
+**`qr/cartellini.html`**: **pagine A4 verticali con 4 cartellini A6 ciascuna** (griglia 2 × 2, circa 97 × 140 mm l'uno, QR di 70 mm con il
+margine bianco). Con la classifica sono 8 cartellini, cioè 2 pagine piene. Ogni pagina ha un margine di sicurezza di 8 mm (le stampanti di casa non
+stampano fino al bordo), linee di taglio tratteggiate tra i cartellini e piccole tacche agli angoli. Lo script crea anche **`qr/cartellini.pdf`**:
+su macOS con Xcode usa WebKit (il motore di Safari), altrove Chrome, Chromium, Edge o Brave se ci sono (o la variabile `CHROME_BIN`); se non trova
+niente, stampa `cartellini.html` dal browser.
 
 **Controllo automatico.** Prima di scrivere i file ogni QR viene riletto con un decoder indipendente (jsQR) a piena risoluzione, a 200 px e a 200 px
-sfocato e confrontato con l'indirizzo atteso. Su macOS lo script rende anche il foglio a 300 dpi, ritaglia ogni QR del foglio, lo decodifica di nuovo e
-misura quanto è grande sulla carta (deve essere almeno 45 mm): se anche uno solo fallisce, esce con errore. Lo stile arrotondato è usato solo
+sfocato e confrontato con l'indirizzo atteso. Su macOS lo script rende anche le pagine a 300 dpi, ritaglia ogni QR, lo decodifica di nuovo e
+misura quanto è grande sulla carta (deve essere almeno 62 mm): se anche uno solo fallisce, esce con errore. Lo stile arrotondato è usato solo
 se tutti i QR passano la prova, altrimenti lo script usa i moduli quadrati per tutti. I QR sono neri (#111111) su bianco, senza logo,
 con correzione d'errore M (Q se arrotondati) e margine bianco di 4 moduli.
 
 **Come stampare**
-1. Apri `qr/cartellini.pdf` (o `qr/cartellini.html` in **Chrome**) e stampa su **A4**.
+1. Apri `qr/cartellini.pdf` (o `qr/cartellini.html` in **Chrome**) e stampa **tutte e 2 le pagine** su **A4**.
 2. **Scala: 100%** (non «Adatta alla pagina»), **margini: predefiniti**, intestazioni e piè di pagina disattivati, «Grafica di sfondo» attiva se stampi l'HTML.
-3. **Misura il QR stampato** con un righello: deve essere circa 4,5–5 cm di lato (quadrato bianco compreso).
+3. **Misura il QR stampato** con un righello: deve essere circa 6–7 cm di lato (quadrato bianco compreso).
 4. **Scansiona un cartellino con un iPhone e con un Android** prima di tagliare, e controlla che si apra la macchinetta giusta.
 5. Taglia lungo le linee tratteggiate. Carta **adesiva opaca** consigliata (la carta lucida riflette e rende difficile la scansione).
 
