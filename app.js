@@ -4,8 +4,12 @@ import {
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
-// ?m=<id>: quella macchinetta in primo piano (id mancante o non valido → home)
-const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
+// ?m=<id>: quella macchinetta in primo piano (senza distinguere maiuscole/minuscole né spazi ai lati).
+// Id mancante → home; id non corrispondente a nessuna macchinetta → home con una riga discreta.
+const rawM = new URLSearchParams(location.search).get("m");
+const wantedM = rawM?.trim().toLowerCase() ?? "";
+const single = MACHINES.find((m) => m.id === wantedM) ?? null;
+const notFound = wantedM !== "" && !single;
 if (single) document.title = `${single.name} (${single.floor}) · Mokatvisor`;
 
 /* ---- Macchinette abilitate al voto ----
@@ -218,6 +222,7 @@ function renderMachines() {
       : "Scegli una macchinetta e dì la tua.");
   if (someReadOnly) head.querySelector(".section-sub")?.classList.add("ro-note");
   sec.append(head);
+  if (notFound) sec.append(el("p", "section-sub ro-note", "Macchinetta non trovata: ecco tutte le altre"));
   const list = el("div", "menus");
   for (const m of sortedMachines()) list.append(machineMenu(m));
   sec.append(list);
