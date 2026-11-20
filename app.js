@@ -259,15 +259,12 @@ function buildReadOnly() {
   const title = el("h2", "sheet-title"); title.id = "ro-title";
   const qr = el("p", "ro-qr");
   qr.id = "ro-note";
-  const close = el("button", "btn block ghost", "Chiudi");
-  close.type = "button";
-  close.addEventListener("click", closeReadOnly);
   inner.append(
     el("div", "sheet-grip"), Object.assign(el("p", "eyebrow"), { id: "ro-eyebrow" }), title,
     Object.assign(el("p", "sheet-sub"), { id: "ro-sub" }),
     Object.assign(el("p", "ro-score"), { id: "ro-score" }),
     Object.assign(el("p", "sheet-prev"), { id: "ro-mine" }),
-    qr, close,
+    qr,
   );
   roSheet.append(inner);
   roSheet.addEventListener("cancel", (ev) => { ev.preventDefault(); closeReadOnly(); }); // tasto Esc
