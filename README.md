@@ -76,7 +76,7 @@ Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
-- **Macchinette (home):** 7 menù chiusi, uno per macchinetta: prima i due del 6° piano, poi i due del 4°, poi «Macchinetta Brambillino primo piano» (`brambillino-sopra`) e «Macchinetta Brambillino piano terra» (`brambillino-sotto`), infine quella del 3° piano.
+- **Macchinette (home):** 7 menù chiusi, uno per macchinetta: prima i due del 6° piano (prima la secondaria), poi i due del 4° (prima la secondaria), poi «Macchinetta Brambillino primo piano» (`brambillino-sopra`) e «Macchinetta Brambillino piano terra» (`brambillino-sotto`), infine quella del 3° piano.
   Dentro lo stesso piano sta sopra la macchinetta con più recensioni (a parità, la principale). Il menù chiuso mostra
   la bevanda migliore («Top: Cappuccino ★ 4,6») e il totale dei voti. Toccando una macchinetta si apre la griglia delle
   sue bevande.

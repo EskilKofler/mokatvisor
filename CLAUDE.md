@@ -25,8 +25,7 @@ Sito statico per votare le bevande delle 7 macchinette della scuola ISILTEP (il 
   la posizione resta quella della macchinetta dal vivo); `drinks` (voti e medie) è ricavato dalle righe. Varianti
   `premium: true` = stesso nome, id diverso, tag PREMIUM (in rosso, variabile `--premium`). Gli id usati vanno tutti in `firestore.rules`: dopo ogni
   cambio di id l'utente deve ripubblicare le regole nella console.
-- Home: 7 menù chiusi (uno per macchinetta): ordine 6° piano, 4° piano, «Macchinetta Brambillino primo piano» (id `brambillino-sopra`, etichetta «Brambillino 1° piano»), «Macchinetta Brambillino piano terra» (id `brambillino-sotto`, etichetta «Brambillino piano terra») e, SEMPRE per ultima, quella del 3° piano (`LAST_MACHINE` in `app.js`); nello stesso piano più recensioni prima (poi
-  `HOME_ORDER`). Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
+- Home: 7 menù chiusi (uno per macchinetta): ordine fisso (`HOME_ORDER` in `app.js`, non dipende dai voti): 6° piano (prima la secondaria, poi la principale), 4° piano (prima la secondaria, poi la principale), «Macchinetta Brambillino primo piano» (id `brambillino-sopra`, etichetta «Brambillino 1° piano»), «Macchinetta Brambillino piano terra» (id `brambillino-sotto`, etichetta «Brambillino piano terra») e, per ultima, quella del 3° piano. Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
   le macchinette" e "Vai alla classifica" (id mancante → home; id sconosciuto → home con la riga «Macchinetta non trovata: ecco tutte le altre»;
   maiuscole e spazi ignorati). Id delle macchinette: `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`, `brambillino-sopra`, `brambillino-sotto`
   (es. `?m=terzo`, `?m=quarto-principale`). Le bevande di una macchinetta sono una griglia a due

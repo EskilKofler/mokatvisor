@@ -17,10 +17,11 @@ if (single) document.title = `${placeOf(single)} · Mokatvisor`;
    Dalla home non si lasciano nuove recensioni; le recensioni già date si possono sempre modificare. */
 const canVote = (m) => m === single;
 
-// Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
-const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "brambillino-sopra", "brambillino-sotto", "terzo"];
+// Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano (prima la secondaria), 4° piano (prima la secondaria),
+// Brambillino 1° piano, Brambillino piano terra e, per ultima, quella del 3° piano
+const HOME_ORDER = ["sesto-secondaria", "sesto-principale", "quarto-secondaria", "quarto-principale", "brambillino-sopra", "brambillino-sotto", "terzo"];
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
-const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b)); // finché le medie non arrivano
+const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b));
 
 // Voti di una macchinetta: somma e numero su tutte le sue bevande
 function machineStat(m) {
@@ -44,16 +45,8 @@ function bestDrink(m) {
   return best;
 }
 
-// Home: 6° piano, 4° piano, Brambillino 1° piano, Brambillino piano terra e, per ultima, quella del 3° piano.
-// Dentro lo stesso piano prima la macchinetta con più recensioni; a parità l'ordine di prima (principale, poi secondaria).
-const LAST_MACHINE = "terzo";
-const floorOf = (m) => parseInt(m.floor?.match(/\d+/)?.[0], 10) || 0; // "6° piano" → 6, "Brambillino 1° piano" → 1, piano terra → 0
-function sortedMachines() {
-  const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
-  return [...FALLBACK_ORDER].sort((a, b) =>
-    (a.id === LAST_MACHINE) - (b.id === LAST_MACHINE) ||
-    floorOf(b) - floorOf(a) || st.get(b.id).n - st.get(a.id).n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b));
-}
+// Home: ordine fisso (HOME_ORDER), non dipende dai voti
+const sortedMachines = () => FALLBACK_ORDER;
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
