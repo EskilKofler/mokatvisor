@@ -1,6 +1,6 @@
 # Mokatvisor
 
-Sito statico per votare le bevande delle 6 macchinette della scuola ISILTEP (il sito si chiama "Mokatvisor"; repository e indirizzo: mokatvisor).
+Sito statico per votare le bevande delle 7 macchinette della scuola ISILTEP (il sito si chiama "Mokatvisor"; repository e indirizzo: mokatvisor).
 
 ## Vincoli
 - **Privacy (vincolo assoluto)**: il sito è completamente anonimo perché tra gli studenti ci sono anche minori di 14 anni.
@@ -25,10 +25,10 @@ Sito statico per votare le bevande delle 6 macchinette della scuola ISILTEP (il 
   la posizione resta quella della macchinetta dal vivo); `drinks` (voti e medie) è ricavato dalle righe. Varianti
   `premium: true` = stesso nome, id diverso, tag PREMIUM (in rosso, variabile `--premium`). Gli id usati vanno tutti in `firestore.rules`: dopo ogni
   cambio di id l'utente deve ripubblicare le regole nella console.
-- Home: 6 menù chiusi (uno per macchinetta): piani in ordine 6°, 4°, 3°, poi «Brambillino sotto» (`floor: null`: senza piano, senza etichetta); nello stesso piano più recensioni prima (poi
+- Home: 7 menù chiusi (uno per macchinetta): piani in ordine 6°, 4°, 3°, poi «Brambillino sopra» e «Brambillino sotto» (`floor: null`: senza piano, senza etichetta, sempre in quest'ordine in coda); nello stesso piano più recensioni prima (poi
   `HOME_ORDER`). Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
   le macchinette" e "Vai alla classifica" (id mancante → home; id sconosciuto → home con la riga «Macchinetta non trovata: ecco tutte le altre»;
-  maiuscole e spazi ignorati). Id delle macchinette: `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`, `brambillino-sotto`
+  maiuscole e spazi ignorati). Id delle macchinette: `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`, `brambillino-sopra`, `brambillino-sotto`
   (es. `?m=terzo`, `?m=quarto-principale`). Le bevande di una macchinetta sono una griglia a due
   colonne come il pannello reale, con posizione ESPLICITA (grid-row/grid-column dalle `rows`: il posto vuoto non collassa, sempre
   due colonne anche a 320 px); ogni riquadro (≥ 56 px) è un bottone
@@ -43,7 +43,7 @@ Sito statico per votare le bevande delle 6 macchinette della scuola ISILTEP (il 
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).
 - Dati: `sum` + `count` per bevanda con `getAggregateFromServer`: una lettura per ogni bevanda di ogni macchinetta
-  (ora 92, quasi il totale definitivo: attenzione alla quota Spark, 50k letture/giorno). Home e
+  (ora 104, quasi il totale definitivo: attenzione alla quota Spark, 50k letture/giorno). Home e
   classifica le leggono tutte, `?m=` solo quelle della macchinetta. Cache `sessionStorage` 60 s per bevanda. Dopo un voto
   si rilegge solo quella bevanda.
 - In fondo a ogni pagina: tendina chiusa «Informazioni e privacy» (senza linea sopra; il contenuto si vede solo toccandola) (`<footer id="info">`), costruita da
