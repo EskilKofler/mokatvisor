@@ -603,7 +603,6 @@ async function submitVote() {
     return;
   }
   closeSheet();
-  toast(prev == null ? `Grazie! ${nfVote.format(value)} ★ a ${drinkLabel(e.d)}` : `Recensione aggiornata: ${nfVote.format(value)} ★`);
   state.pop = reducedMotion() ? null : { key: e.key, at: performance.now() }; // il riquadro animerà il suo bordo
   renderView();
   setTimeout(() => celebrate(spot, value), reducedMotion() ? 0 : 180); // a pannello ormai chiuso
