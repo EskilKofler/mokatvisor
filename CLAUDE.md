@@ -1,6 +1,6 @@
 # Mokatvisor
 
-Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il sito si chiama "Mokatvisor"; repository e indirizzo: moka-isiltep).
+Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il sito si chiama "Mokatvisor"; repository e indirizzo: mokatvisor).
 
 ## Vincoli
 - **Privacy (vincolo assoluto)**: il sito è completamente anonimo perché tra gli studenti ci sono anche minori di 14 anni.

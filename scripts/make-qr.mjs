@@ -2,7 +2,7 @@
 // Genera in qr/ un QR code (SVG + PNG) per ogni macchinetta.
 //
 // Uso:   node scripts/make-qr.mjs <indirizzo-base>
-// Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/moka-isiltep/
+// Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/
 //
 // Ogni QR punta a <indirizzo-base>?m=<id-macchinetta>. L'elenco delle macchinette
 // viene da machines.js (lo stesso file usato dal sito).
@@ -25,7 +25,7 @@ function fail(msg) {
 function parseBase(arg) {
   if (!arg) {
     console.error("Uso: node scripts/make-qr.mjs <indirizzo-base>");
-    console.error("Es.: node scripts/make-qr.mjs https://TUOUTENTE.github.io/moka-isiltep/");
+    console.error("Es.: node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/");
     process.exit(1);
   }
   let u;

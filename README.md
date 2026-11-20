@@ -46,7 +46,7 @@ python3 -m http.server 8000
 ## 3. Pubblica su GitHub Pages
 1. Crea un repository **pubblico** e carica questi file.
 2. **Settings → Pages → Branch: main / (root)** → Save.
-3. Il sito sarà su `https://IL_TUO_UTENTE.github.io/moka-isiltep/`.
+3. Il sito sarà su `https://IL_TUO_UTENTE.github.io/mokatvisor/`.
 
 ## Foto delle macchinette
 Metti i file in `img/` con il nome dell'id: `piano3.jpg`, `piano4-principale.jpg`, `piano4-secondaria.jpg`,
@@ -67,7 +67,7 @@ lì e **ripubblica le regole** nella console Firebase, altrimenti il voto viene 
 macchinetta usa più. Se aggiungi una macchinetta, rigenera anche i QR (vedi sotto).
 
 ## QR code per le macchinette
-Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=<id>`
+Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/mokatvisor/?m=<id>`
 (es. `?m=piano3`): mostra quella macchinetta in grande, con le sue bevande e le medie, poi i link
 «Vedi tutte le macchinette» e «Vai alla classifica». Senza `?m=` (o con un id non valido) si vede la home.
 
@@ -105,8 +105,8 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash
-node scripts/make-qr.mjs https://TUOUTENTE.github.io/moka-isiltep/
-# oppure: npm run qr -- https://TUOUTENTE.github.io/moka-isiltep/
+node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/
+# oppure: npm run qr -- https://TUOUTENTE.github.io/mokatvisor/
 ```
 L'indirizzo base è obbligatorio (non è scritto nel codice). Nella cartella `qr/` trovi, per ogni macchinetta,
 `<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: un foglio A4 con 5 cartellini
