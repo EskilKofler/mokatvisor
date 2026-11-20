@@ -109,33 +109,38 @@ function buildQr(url, style) {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// Un cartellino A6 (105 × 148 mm): marchio, piano (se c'è), nome, QR, invito, nota
+// Geometria del foglio (mm): A4 verticale con 8 mm di margine di sicurezza; l'area utile è 194 × 281 mm,
+// divisa in 2 colonne × 4 righe di cartellini orizzontali da 97 × 70,25 mm.
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 4, cell: [97, 70.25], pad: 4, qr: 52, gap: 3.5 };
+const SLOTS = SHEET.cols * SHEET.rows;
+
+// Un cartellino orizzontale: QR a sinistra, a destra marchio e stelle, titolo, invito e nota
 function ticketHtml({ item, svg }) {
   return `
     <article class="ticket">
-      <header class="top">
-        <div class="brand"><b>Mokatvisor</b><span>ISILTeP</span></div>
-        <div class="stars" aria-hidden="true">★★★★★</div>
-      </header>
-      <div class="where">
-        ${item.small ? `<p class="floor">${esc(item.small)}</p>` : ""}
-        <h2>${esc(item.title)}</h2>
-      </div>
       <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
-      <p class="cta">${esc(item.text)}</p>
-      <p class="note">Un gioco tra studenti. Non è un'iniziativa della scuola.</p>
+      <div class="info">
+        <header class="head">
+          <b>Mokatvisor</b>
+          <span class="sub"><i>ISILTeP</i><em aria-hidden="true">★★★★★</em></span>
+        </header>
+        <div class="names">
+          ${item.small ? `<p class="small">${esc(item.small)}</p>` : ""}
+          <h2>${esc(item.title)}</h2>
+        </div>
+        <div class="foot">
+          <p class="cta">${esc(item.text)}</p>
+          <p class="note">Un gioco fatto da studenti, per studenti: solo per divertirsi.</p>
+        </div>
+      </div>
     </article>`;
 }
 
-// A4 verticale con 4 cartellini A6 (2 × 2) per pagina, senza margini di pagina: i cartellini riempiono il foglio
-// e due linee sottili al centro (più piccoli tacche ai bordi) indicano dove tagliare.
+// Un solo foglio A4: 8 slot (gli slot senza cartellino restano vuoti). Linee di taglio tratteggiate fra i cartellini, fino ai
+// bordi dell'area utile, e piccole tacche agli angoli.
 function cartelliniHtml(cards) {
-  const PER_PAGE = 4;
-  const pages = [];
-  for (let i = 0; i < cards.length; i += PER_PAGE) {
-    pages.push(`  <main class="sheet">${cards.slice(i, i + PER_PAGE).map(ticketHtml).join("\n")}
-  </main>`);
-  }
+  const { margin, cols, cell, pad, qr, gap } = SHEET;
+  const slots = Array.from({ length: SLOTS }, (_, i) => (cards[i] ? ticketHtml(cards[i]) : '<div class="ticket empty"></div>'));
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -143,36 +148,42 @@ function cartelliniHtml(cards) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mokatvisor · cartellini</title>
   <style>
-    @page { size: A4 portrait; margin: 0; }
+    /* Le stampanti di casa non stampano fino al bordo: margine di sicurezza di ${margin} mm e area utile 194 × 281 mm */
+    @page { size: A4 portrait; margin: ${margin}mm; }
     * { box-sizing: border-box; }
     html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body { margin: 0; background: #e6e6e6; color: #111; font: 10pt/1.3 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
-    .sheet { position: relative; width: 210mm; height: 297mm; margin: 0 auto; background: #fff;
-             display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.5mm 148.5mm; overflow: hidden; }
-    /* Segni di taglio sottili: linee al centro e tacche ai bordi */
-    .sheet::before, .sheet::after { content: ""; position: absolute; background: #b5b5b5; z-index: 2; }
-    .sheet::before { left: 0; right: 0; top: 148.5mm; height: .2mm; }
-    .sheet::after { top: 0; bottom: 0; left: 105mm; width: .2mm; }
-    .ticket { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 9mm 9mm 7mm; break-inside: avoid; }
+    body { margin: 0; background: #e6e6e6; color: #111; font: 8.5pt/1.2 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+    .sheet { position: relative; width: ${cols * cell[0]}mm; height: ${SHEET.rows * cell[1]}mm; background: #fff;
+             display: grid; grid-template-columns: repeat(${cols}, ${cell[0]}mm); grid-template-rows: repeat(${SHEET.rows}, ${cell[1]}mm); overflow: hidden; }
+    .ticket { position: relative; padding: ${pad}mm; display: grid; grid-template-columns: ${qr}mm 1fr; column-gap: ${gap}mm; overflow: hidden;
+              border: 0 dashed #8c8c8c; }
+    /* Linee di taglio: fra le colonne e fra le righe, fino al bordo dell'area utile */
+    .ticket:nth-child(odd) { border-right-width: .25mm; }
+    .ticket:nth-child(-n+${SLOTS - cols}) { border-bottom-width: .25mm; }
     .ticket p, .ticket h2 { margin: 0; }
-    .top { width: 100%; display: flex; align-items: center; justify-content: space-between; text-align: left; }
-    .brand { display: flex; flex-direction: column; line-height: 1.1; }
-    .brand b { font-size: 15pt; font-weight: 700; letter-spacing: -.03em; }
-    .brand span { font-size: 7.5pt; font-weight: 600; letter-spacing: .06em; color: #6b6b76; }
-    .stars { color: ${AMBER}; font-size: 12pt; letter-spacing: .08em; white-space: nowrap; }
-    .where { margin-top: 7mm; min-height: 25mm; display: flex; flex-direction: column; justify-content: center; }
-    .floor { font-size: 8pt; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6b6b76; margin-bottom: 1mm !important; }
-    h2 { font-size: 19pt; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; }
-    .qr { width: 55mm; height: 55mm; margin: 3mm 0 3mm; }
+    .qr { width: ${qr}mm; height: ${qr}mm; align-self: center; }
     .qr svg { display: block; width: 100%; height: 100%; }
-    .cta { font-size: 11pt; font-weight: 700; line-height: 1.25; max-width: 80mm; }
-    .note { margin-top: auto !important; font-size: 7pt; color: #6b6b76; }
-    @media screen { .sheet { margin: 8mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
-    @media print { body { background: #fff; } .sheet { margin: 0; break-after: page; } .sheet:last-child { break-after: auto; } }
+    .info { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+    .head b { display: block; font-size: 12.5pt; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+    .sub { display: flex; align-items: baseline; justify-content: space-between; margin-top: .6mm; }
+    .sub i { font-style: normal; font-size: 7pt; font-weight: 600; letter-spacing: .06em; color: #666; }
+    .sub em { font-style: normal; font-size: 8.5pt; letter-spacing: .04em; color: #F5A524; white-space: nowrap; }
+    .small { font-size: 7pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
+    h2 { font-size: 14.5pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .cta { font-size: 8.5pt; font-weight: 700; line-height: 1.2; }
+    .note { margin-top: 1.6mm !important; font-size: 7pt; line-height: 1.25; color: #666; }
+    /* Tacche agli angoli dell'area utile */
+    .tick { position: absolute; background: #8c8c8c; z-index: 2; }
+    .tick.h { width: 3mm; height: .25mm; } .tick.v { width: .25mm; height: 3mm; }
+    .tl { top: 0; left: 0; } .tr { top: 0; right: 0; } .bl { bottom: 0; left: 0; } .br { bottom: 0; right: 0; }
+    @media screen { .sheet { margin: ${margin}mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
+    @media print { body { background: #fff; } .sheet { margin: 0; } }
   </style>
 </head>
 <body>
-${pages.join("\n")}
+  <main class="sheet">${slots.join("\n")}
+    ${["tl", "tr", "bl", "br"].map((c) => `<i class="tick h ${c}"></i><i class="tick v ${c}"></i>`).join("")}
+  </main>
 </body>
 </html>
 `;
@@ -225,6 +236,7 @@ if (failed.length) {
 // 2) File: <id>.svg (solo QR), <id>.png (>= 1200 px), cartellini.html (+ cartellini.pdf se c'è un browser)
 await mkdir(OUT_DIR, { recursive: true });
 await rm(path.join(OUT_DIR, "stampa.html"), { force: true }); // vecchio foglio, sostituito da cartellini.html
+if (!classifica) for (const ext of ["svg", "png"]) await rm(path.join(OUT_DIR, `classifica.${ext}`), { force: true });
 for (const b of built) {
   await writeFile(path.join(OUT_DIR, `${b.item.id}.svg`), b.svg);
   await writeFile(path.join(OUT_DIR, `${b.item.id}.png`), b.png);
@@ -232,7 +244,7 @@ for (const b of built) {
 }
 const htmlPath = path.join(OUT_DIR, "cartellini.html");
 await writeFile(htmlPath, cartelliniHtml(built));
-console.log(`✔ cartellini.html     A4, 4 cartellini A6 per pagina (${Math.ceil(built.length / 4)} pagine)`);
+console.log(`✔ cartellini.html     un foglio A4, ${built.length} cartellini su ${SLOTS} slot (margine ${SHEET.margin} mm)`);
 
 const pdfPath = path.join(OUT_DIR, "cartellini.pdf");
 if (makePdf(htmlPath, pdfPath)) {
