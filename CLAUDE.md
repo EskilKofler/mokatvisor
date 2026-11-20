@@ -1,6 +1,6 @@
-# kaffa-isiltep
+# Moka
 
-Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (marchio: "Kaffa ISILTeP, by Eskil Kofler"; repository e indirizzo: kaffa-isiltep).
+Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il sito si chiama "Moka"; repository e indirizzo: moka-isiltep).
 
 ## Vincoli
 - **Privacy (vincolo assoluto)**: il sito è completamente anonimo perché tra gli studenti ci sono anche minori di 14 anni.
@@ -39,9 +39,10 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (mar
 - In fondo a ogni pagina: sezione sempre visibile (non apribile) «Informazioni e privacy» (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
-- Barra in alto: icona ☕ + "Kaffa ISILTeP" (un solo link alla home) e le voci Macchinette / Classifica.
+- Barra in alto: solo "Moka" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
+  L'id del progetto Firebase (`projectId`, `authDomain`, `storageBucket`) resta quello originale anche se il sito cambia nome: **non toccarlo**.
 - `firestore.rules`, `firestore.indexes.json`: regole e indice, incollati a mano nella console Firebase
 - Collezione `ratings`, doc id = `<uid>_<machineId>_<drinkId>`
 

@@ -1,4 +1,4 @@
-/* kaffa-isiltep: palette calda da caffè, pensata per il telefono (bersagli ≥ 44 px) */
+/* Moka: pensato per il telefono (bersagli ≥ 44 px) */
 
 [hidden] { display: none !important; }
 
@@ -60,8 +60,8 @@ h1, h2, h3, p { margin: 0; }
 }
 /* Tutto scala con la larghezza dello schermo (clamp + vw) e il nome può accorciarsi con "…":
    così il marchio non tocca mai i pulsanti, qualunque sia il carattere del telefono */
-.brand { display: flex; align-items: center; gap: clamp(5px, 2vw, 9px); flex: 1 1 auto; min-width: 0; min-height: 44px; color: var(--ink); text-decoration: none; white-space: nowrap; }
-.brand-logo { flex: none; font-size: clamp(1.2rem, 6vw, 1.6rem); line-height: 1; }
+.brand { display: flex; align-items: baseline; gap: clamp(6px, 2vw, 9px); flex: 1 1 auto; min-width: 0; min-height: 44px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand-sub { overflow: hidden; text-overflow: ellipsis; font-size: clamp(.6rem, 2.6vw, .7rem); font-weight: 600; letter-spacing: .12em; color: var(--muted); }
 .brand-name { overflow: hidden; text-overflow: ellipsis; font-size: clamp(.82rem, 4.3vw, 1.1rem); font-weight: 800; letter-spacing: -.01em; }
 .nav-links { display: flex; gap: 2px; flex: none; }
 .nav-link {

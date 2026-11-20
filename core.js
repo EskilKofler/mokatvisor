@@ -224,10 +224,8 @@ function renderTopbar(active) {
   nav.setAttribute("aria-label", "Principale");
   const brand = el("a", "brand");
   brand.href = "./";
-  const logo = el("span", "brand-logo", "☕");
-  logo.setAttribute("aria-hidden", "true");
-  const name = el("span", "brand-name", "Kaffa ISILTeP");
-  brand.append(logo, name); // icona e nome: un solo link alla home
+  // Solo il nome e, piccolo, "ISILTEP": un unico link alla home
+  brand.append(el("span", "brand-name", "Moka"), el("span", "brand-sub", "ISILTEP"));
   const links = el("div", "nav-links");
   for (const n of NAV) {
     const a = el("a", "nav-link", n.label);
@@ -293,17 +291,17 @@ export function renderView() {
 // Cache per sessione (sessionStorage): evita di rileggere Firestore a ogni apertura/ritorno sulla scheda
 function cacheRead(name) {
   try {
-    const o = JSON.parse(sessionStorage.getItem(`kaffa:${name}`));
+    const o = JSON.parse(sessionStorage.getItem(`moka:${name}`));
     return o && Date.now() - o.t < CACHE_MS ? o : null;
   } catch { return null; }
 }
 function cacheWrite(name, data, t = Date.now()) {
-  try { sessionStorage.setItem(`kaffa:${name}`, JSON.stringify({ t, data })); } catch { /* niente storage: pazienza */ }
+  try { sessionStorage.setItem(`moka:${name}`, JSON.stringify({ t, data })); } catch { /* niente storage: pazienza */ }
 }
 
 // Cache delle medie: una voce per bevanda con la propria ora di lettura, così una pagina che
 // ne usa solo alcune (?m=) e un'altra che le usa tutte condividono ciò che c'è già
-const STATS_CACHE = "kaffa:stats2";
+const STATS_CACHE = "moka:stats2";
 function statsCacheRead() {
   try { const o = JSON.parse(sessionStorage.getItem(STATS_CACHE)); return o && typeof o === "object" ? o : {}; }
   catch { return {}; }

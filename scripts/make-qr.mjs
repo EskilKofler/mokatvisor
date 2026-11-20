@@ -2,7 +2,7 @@
 // Genera in qr/ un QR code (SVG + PNG) per ogni macchinetta.
 //
 // Uso:   node scripts/make-qr.mjs <indirizzo-base>
-// Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/kaffa-isiltep/
+// Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/moka-isiltep/
 //
 // Ogni QR punta a <indirizzo-base>?m=<id-macchinetta>. L'elenco delle macchinette
 // viene da machines.js (lo stesso file usato dal sito).
@@ -25,7 +25,7 @@ function fail(msg) {
 function parseBase(arg) {
   if (!arg) {
     console.error("Uso: node scripts/make-qr.mjs <indirizzo-base>");
-    console.error("Es.: node scripts/make-qr.mjs https://TUOUTENTE.github.io/kaffa-isiltep/");
+    console.error("Es.: node scripts/make-qr.mjs https://TUOUTENTE.github.io/moka-isiltep/");
     process.exit(1);
   }
   let u;
@@ -62,7 +62,7 @@ function sheetHtml(cards) {
       <div class="qr">${svg}</div>
       <p class="cta">Valuta le bevande di questa macchinetta</p>
       <p class="url">${esc(url)}</p>
-      <p class="brand">☕ Kaffa ISILTeP · by Eskil Kofler</p>
+      <p class="brand">Moka · ISILTEP</p>
     </article>`).join("\n");
 
   return `<!DOCTYPE html>
@@ -70,7 +70,7 @@ function sheetHtml(cards) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kaffa-isiltep · cartellini QR</title>
+  <title>Moka · cartellini QR</title>
   <style>
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; }

@@ -5,7 +5,7 @@ import { MACHINES } from "./machines.js";
 
 // ?m=<id>: quella macchinetta in primo piano (id mancante o non valido → home)
 const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
-if (single) document.title = `${single.name} (${single.floor}) · Kaffa ISILTeP`;
+if (single) document.title = `${single.name} (${single.floor}) · Moka`;
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
 const HOME_ORDER = ["piano6-principale", "piano6-secondaria", "piano4-principale", "piano4-secondaria", "piano3"];

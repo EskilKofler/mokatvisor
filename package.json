@@ -1,8 +1,8 @@
 {
-  "name": "kaffa-isiltep",
+  "name": "moka-isiltep",
   "private": true,
   "type": "module",
-  "description": "Kaffa ISILTeP, by Eskil Kofler: voti delle macchinette. Il sito non ha build; questo file serve solo agli script.",
+  "description": "Moka (ISILTEP): voti delle macchinette. Il sito non ha build; questo file serve solo agli script.",
   "scripts": {
     "qr": "node scripts/make-qr.mjs"
   },
