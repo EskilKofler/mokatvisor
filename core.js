@@ -253,15 +253,13 @@ function infoItems() {
   ];
 }
 
-// Informativa: sempre visibile in fondo alla pagina (nessuna tendina), in carattere piccolo e grigio
+// Informativa: tendina piccola e grigia in fondo alla pagina, chiusa finché non la tocchi
+// (<details> nativo: tastiera e screen reader funzionano da soli)
 function renderInfo() {
   const root = $("#info");
   root.replaceChildren();
-  const box = el("section", "info-box");
-  box.setAttribute("aria-labelledby", "info-title");
-  const title = el("h2", "info-title", "Informazioni e privacy");
-  title.id = "info-title";
-  box.append(title);
+  const box = el("details", "info-box");
+  box.append(el("summary", "", "Informazioni e privacy"));
   const ul = el("ul");
   for (const [lead, text, contact] of infoItems()) {
     const li = el("li");
@@ -403,7 +401,15 @@ function paintSheet() {
   const v = vote.value;
   const fresh = vote.prev == null && !vote.touched; // nuova recensione ancora intatta: parte da 0,0
   const label = fresh ? "Quante stelle?" : LABELS[v * 2];
-  $("#sheet-fill").style.width = `${(v / 5) * 100}%`;
+  // Ogni stella si riempie per conto suo (0, metà o piena); quella che si accende fa un piccolo "pop"
+  [...starsEl.children].forEach((star, i) => {
+    const f = Math.min(1, Math.max(0, v - i));
+    const before = Number(star.dataset.f || 0);
+    star.firstChild.style.width = `${f * 100}%`;
+    star.classList.toggle("lit", f > 0);
+    if (f > before) { star.classList.remove("pop"); void star.offsetWidth; star.classList.add("pop"); }
+    star.dataset.f = String(f);
+  });
   $("#sheet-label").textContent = label;
   $("#sheet-number").textContent = nfAvg.format(v); // il valore scelto, in grande (anche 4,5)
   starsEl.setAttribute("aria-valuenow", String(v));
@@ -416,6 +422,7 @@ function paintSheet() {
 
 function setVote(v) {
   if (!vote || vote.saving) return;
+  if (v !== vote.value) navigator.vibrate?.(6); // leggero tick a ogni mezzo punto (dove il telefono lo permette)
   vote.value = v;
   vote.touched = true;
   $("#sheet-error").hidden = true;
@@ -660,9 +667,11 @@ function buildSheet() {
   starsEl.setAttribute("aria-valuestep", "0.5");
   starsEl.setAttribute("aria-valuenow", "0");
   starsEl.setAttribute("aria-valuetext", "Nessun voto");
-  const fill = document.createElement("i");
-  fill.id = "sheet-fill";
-  starsEl.append(fill);
+  for (let n = 0; n < 5; n++) {
+    const star = el("span", "vstar");
+    star.append(document.createElement("i"));
+    starsEl.append(star);
+  }
 
   const row = el("div", "sheet-row");
   const readout = el("div", "sheet-readout");

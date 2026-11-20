@@ -36,7 +36,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   (ora 28, con ~16 bevande × 5 macchinette saranno ~80: attenzione alla quota Spark, 50k letture/giorno). Home e
   classifica le leggono tutte, `?m=` solo quelle della macchinetta. Cache `sessionStorage` 60 s per bevanda. Dopo un voto
   si rilegge solo quella bevanda.
-- In fondo a ogni pagina: sezione sempre visibile (non apribile) «Informazioni e privacy» (`<footer id="info">`), costruita da
+- In fondo a ogni pagina: tendina chiusa «Informazioni e privacy» (senza linea sopra; il contenuto si vede solo toccandola) (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
 - Barra in alto: solo "Moka" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
@@ -44,6 +44,8 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   `prefers-color-scheme`); niente marrone né beige. Sfondo grigio chiarissimo, card bianche con bordo 1px, pulsanti primari
   neri, ambra (`--star`) solo per le stelle, verde (`--ok`) solo per "votato". Raggi 10-14 px, titoli peso 600-700. Per
   cambiare un colore si cambia la variabile, non un esadecimale sparso. Contrasto AA e bersagli ≥ 44 px.
+- Stelle del pannello di voto: cinque `.vstar` separate (SVG arrotondato con gradiente ambra), riempimento per stella,
+  piccolo "pop" e tick con `navigator.vibrate`; mai sotto i 48 px.
 - Animazioni sempre dietro `reducedMotion()` / `prefers-reduced-motion`. Niente `innerHTML`: solo `textContent`.
 - `firebase-config.js`: chiavi Firebase (pubbliche per natura; i valori `INCOLLA_QUI` li fornisce l'utente: **mai inventarli**)
   L'id del progetto Firebase (`projectId`, `authDomain`, `storageBucket`) resta quello originale anche se il sito cambia nome: **non toccarlo**.
