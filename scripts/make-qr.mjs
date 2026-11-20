@@ -178,7 +178,7 @@ function cartelliniHtml(cards) {
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
     .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3mm; padding-bottom: .4mm; }
-    .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+    .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; position: relative; top: .86mm; } /* centrato otticamente fra il bordo sopra e le stelle */
     /* Stelle del sito (la forma ha già il suo margine dentro il riquadro, quindi quasi nessuno spazio fra una e l'altra) */
     .stars { display: flex; gap: .1mm; }
     .stars svg { width: 4.6mm; height: 4.6mm; display: block; }
