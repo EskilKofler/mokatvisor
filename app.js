@@ -31,7 +31,7 @@ const unlocked = readUnlocked();
 const canVote = (m) => (single ? m === single : unlocked.has(m.id));
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
-const HOME_ORDER = ["piano6-principale", "piano6-secondaria", "piano4-principale", "piano4-secondaria", "piano3"];
+const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "terzo"];
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
 const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b)); // finché le medie non arrivano
 

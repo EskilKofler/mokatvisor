@@ -23,7 +23,7 @@ function machine({ id, floor, name, rows }) {
 export const MACHINES = [
   // 3° piano: pannello reale, 6 righe senza posti vuoti né premium
   machine({
-    id: "piano3", floor: "3° piano", name: "Macchinetta del terzo piano",
+    id: "terzo", floor: "3° piano", name: "Macchinetta del terzo piano",
     rows: [
       [drink("espresso", "Caffè espresso"), drink("cappuccino", "Cappuccino")],
       [drink("caffe-lungo", "Caffè lungo"), drink("cappuccino-con-cioccolato", "Cappuccino con cioccolato")],
@@ -36,7 +36,7 @@ export const MACHINES = [
 
   // 4° piano principale: pannello reale. In basso a sinistra c'è un posto vuoto.
   machine({
-    id: "piano4-principale", floor: "4° piano", name: "Macchinetta Torretta principale",
+    id: "quarto-principale", floor: "4° piano", name: "Macchinetta Torretta principale",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-decaffeinato", "Caffè decaffeinato")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-decaffeinato", "Caffè macchiato decaffeinato")],
@@ -52,7 +52,7 @@ export const MACHINES = [
 
   // 4° piano secondaria: pannello reale, 9 righe. Nella riga 5 a sinistra c'è un posto vuoto.
   machine({
-    id: "piano4-secondaria", floor: "4° piano", name: "Macchinetta Torretta secondaria",
+    id: "quarto-secondaria", floor: "4° piano", name: "Macchinetta Torretta secondaria",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -68,7 +68,7 @@ export const MACHINES = [
 
   // 6° piano principale: pannello reale, 9 righe. Nella riga 5 a sinistra c'è un posto vuoto.
   machine({
-    id: "piano6-principale", floor: "6° piano", name: "Macchinetta Torretta principale",
+    id: "sesto-principale", floor: "6° piano", name: "Macchinetta Torretta principale",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -84,7 +84,7 @@ export const MACHINES = [
 
   // 6° piano secondaria: pannello reale, 6 righe senza posti vuoti né premium
   machine({
-    id: "piano6-secondaria", floor: "6° piano", name: "Macchinetta Torretta secondaria",
+    id: "sesto-secondaria", floor: "6° piano", name: "Macchinetta Torretta secondaria",
     rows: [
       [drink("espresso", "Caffè espresso"), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo", "Caffè lungo"), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -95,5 +95,5 @@ export const MACHINES = [
     ],
   }),
 ];
-// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/piano3.jpg).
+// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/terzo.jpg).
 // Se il file non c'è, la foto semplicemente non appare.
