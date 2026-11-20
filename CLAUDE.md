@@ -44,7 +44,8 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
 - In fondo a ogni pagina: tendina chiusa «Informazioni e privacy» (senza linea sopra; il contenuto si vede solo toccandola) (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
-- Barra in alto: solo "Mokatvisor" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
+- Barra in alto: solo "Mokatvisor" (un unico link alla home), senza altre scritte, e le voci Macchinette / Classifica; titolo della home «Le macchinette dell'ISILTEP». Niente emoji nel logo.
+- Caratteri: solo i font di sistema (`--font` in `style.css`: system-ui, Segoe UI, Roboto…), niente font web né file di font, quindi nessuna licenza da pagare.
 - Stile: neutro e minimale. Tutti i colori sono variabili CSS in cima a `style.css` (tema chiaro e scuro automatico con
   `prefers-color-scheme`); niente marrone né beige. Sfondo grigio chiarissimo, card bianche con bordo 1px, pulsanti primari
   neri, ambra (`--star`) solo per le stelle, verde (`--ok`) solo per "votato". Raggi 10-14 px, titoli peso 600-700. Per

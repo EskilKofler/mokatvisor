@@ -231,8 +231,8 @@ function renderTopbar(active) {
   nav.setAttribute("aria-label", "Principale");
   const brand = el("a", "brand");
   brand.href = "./";
-  // Solo il nome e, piccolo, "ISILTEP": un unico link alla home
-  brand.append(el("span", "brand-name", "Mokatvisor"), el("span", "brand-sub", "ISILTEP"));
+  // Solo il nome del sito: un unico link alla home
+  brand.append(el("span", "brand-name", "Mokatvisor"));
   const links = el("div", "nav-links");
   for (const n of NAV) {
     const a = el("a", "nav-link", n.label);
