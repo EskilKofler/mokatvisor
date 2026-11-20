@@ -1,12 +1,34 @@
 import {
   start, $, el, keyOf, ENTRIES, withPremiumTag, statOf, drinkButton, skel, photo,
-  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore,
+  pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, drinkLabel,
 } from "./core.js";
 import { MACHINES } from "./machines.js";
 
 // ?m=<id>: quella macchinetta in primo piano (id mancante o non valido → home)
 const single = MACHINES.find((m) => m.id === new URLSearchParams(location.search).get("m")) ?? null;
 if (single) document.title = `${single.name} (${single.floor}) · Mokatvisor`;
+
+/* ---- Macchinette abilitate al voto ----
+   Si vota solo per la macchinetta aperta con ?m=<id> e per quelle già aperte da qui su questo dispositivo
+   (elenco in localStorage; se non è disponibile vale per la sessione). Le altre mostrano i risultati in sola lettura. */
+const UNLOCK_KEY = "mokatvisor:macchinette";
+const sessionUnlocked = new Set();
+function readUnlocked() {
+  const ids = new Set(sessionUnlocked);
+  try {
+    for (const id of JSON.parse(localStorage.getItem(UNLOCK_KEY)) ?? []) if (MACHINES.some((m) => m.id === id)) ids.add(id);
+  } catch { /* storage non disponibile o contenuto non valido: resta l'elenco della sessione */ }
+  return ids;
+}
+if (single) {
+  sessionUnlocked.add(single.id);
+  try {
+    const ids = readUnlocked();
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify([...ids]));
+  } catch { /* come sopra */ }
+}
+const unlocked = readUnlocked();
+const canVote = (m) => (single ? m === single : unlocked.has(m.id));
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
 const HOME_ORDER = ["piano6-principale", "piano6-secondaria", "piano4-principale", "piano4-secondaria", "piano3"];
@@ -46,13 +68,25 @@ function sortedMachines() {
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
+// Frase per gli screen reader dei riquadri in sola lettura
+function readOnlyLabel(e, st) {
+  const media = st.pending ? "voti in caricamento"
+    : !st.known ? "voti non disponibili"
+    : st.n === 0 ? "ancora nessun voto"
+    : `media ${nfAvg.format(st.avg)}, ${votesLabel(st.n)}`;
+  const my = state.mine.get(e.key);
+  return `${drinkLabel(e.d)}, ${e.m.name} (${e.m.floor}): ${media}.${my === undefined ? "" : ` Il tuo voto: ${nfVote.format(my)}.`} Tocca per i dettagli.`;
+}
+
 /* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto (mostra il mio voto) ----
    Votata: bordo verde continuo. Da votare: bordo tratteggiato (la forma del bordo distingue anche senza colore). */
 function drinkTile(e, spot) {
   const st = statOf(e.key);
   const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
-  const b = drinkButton(e, spot, `tile${knows ? (voted ? " is-voted" : " is-todo") : ""}`);
+  const readOnly = !canVote(e.m); // sola lettura: niente stile "da votare", il tocco apre il pannello dei risultati
+  const b = drinkButton(e, spot, `tile${readOnly ? " ro" : ""}${knows ? (voted ? " is-voted" : readOnly ? "" : " is-todo") : ""}`);
+  if (readOnly) b.setAttribute("aria-label", readOnlyLabel(e, st));
   // nomi lunghi: carattere un po' più piccolo; le varianti premium hanno il tag PREMIUM
   b.append(withPremiumTag(el("span", `tile-name${e.d.name.length >= 23 ? " long" : ""}`, e.d.name), e.d));
   if (st.pending) {
@@ -67,6 +101,7 @@ function drinkTile(e, spot) {
     sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
     b.append(sub);
   }
+  if (readOnly && voted) b.append(el("span", "tile-mine", `Il tuo voto: ${nfVote.format(state.mine.get(e.key))} ★`));
   // Appena votata: breve alone verde. Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
   // da dove era (delay negativo), così non si interrompe né riparte da capo.
   const pop = state.pop;
@@ -106,7 +141,7 @@ const hasNoVotes = (m) => m.drinks.every((d) => { const s = statOf(keyOf(m.id, d
 // Le bevande di una macchinetta: invito (se serve) e griglia
 function drinksOf(m, prefix) {
   const box = el("div", "drinks");
-  if (hasNoVotes(m)) box.append(el("p", "machine-invite", "Diventa il primo a lasciare una recensione"));
+  if (canVote(m) && hasNoVotes(m)) box.append(el("p", "machine-invite", "Diventa il primo a lasciare una recensione"));
   box.append(grid(m, prefix));
   return box;
 }
@@ -176,12 +211,100 @@ function machineMenu(m) {
 
 function renderMachines() {
   const sec = el("section", "page");
-  sec.append(pageHead("machines-title", "Macchinette dell'ISILTeP", "Scegli una macchinetta e dì la tua."));
+  // Se qualche macchinetta è in sola lettura: una riga che spiega dove si vota
+  const someReadOnly = MACHINES.some((m) => !canVote(m));
+  const head = pageHead("machines-title", "Macchinette dell'ISILTeP",
+    someReadOnly ? "Qui vedi i risultati. Per votare, scansiona il QR sulla macchinetta dove hai preso il caffè: ogni macchinetta ha il suo."
+      : "Scegli una macchinetta e dì la tua.");
+  if (someReadOnly) head.querySelector(".section-sub")?.classList.add("ro-note");
+  sec.append(head);
   const list = el("div", "menus");
   for (const m of sortedMachines()) list.append(machineMenu(m));
   sec.append(list);
   return sec;
 }
+
+/* ---- Pannello di sola lettura: media, numero di voti, il mio voto (se c'è) e come si vota ---- */
+const SVG_NS = "http://www.w3.org/2000/svg";
+function qrIcon() {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("class", "ro-qr-icon");
+  svg.setAttribute("aria-hidden", "true");
+  for (const [x, y, w] of [[3, 3, 7], [14, 3, 7], [3, 14, 7], [14, 14, 3], [18, 18, 3]]) {
+    const r = document.createElementNS(SVG_NS, "rect");
+    r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", w);
+    r.setAttribute("rx", w > 3 ? "1.5" : "0.5");
+    if (w > 3) { r.setAttribute("fill", "none"); r.setAttribute("stroke", "currentColor"); r.setAttribute("stroke-width", "2"); }
+    else r.setAttribute("fill", "currentColor");
+    svg.append(r);
+  }
+  return svg;
+}
+
+let roSheet, roSpot = null;
+function closeReadOnly() {
+  if (!roSheet?.open) return;
+  if (typeof roSheet.close === "function") roSheet.close(); else roSheet.removeAttribute("open");
+  // Il ridisegno può aver sostituito il bottone: rimetto il focus dove era
+  if (roSpot) $("#view").querySelector(`[data-spot="${roSpot}"]`)?.focus({ preventScroll: true });
+  roSpot = null;
+}
+function buildReadOnly() {
+  roSheet = el("dialog", "sheet");
+  roSheet.tabIndex = -1;
+  roSheet.setAttribute("aria-labelledby", "ro-title");
+  const inner = el("div", "sheet-in");
+  const title = el("h2", "sheet-title"); title.id = "ro-title";
+  const qr = el("p", "ro-qr");
+  qr.append(qrIcon(), el("span", "", "Per votare, scansiona il QR sulla macchinetta"));
+  const close = el("button", "btn block ghost", "Chiudi");
+  close.type = "button";
+  close.addEventListener("click", closeReadOnly);
+  inner.append(
+    el("div", "sheet-grip"), Object.assign(el("p", "eyebrow"), { id: "ro-eyebrow" }), title,
+    Object.assign(el("p", "sheet-sub"), { id: "ro-sub" }),
+    Object.assign(el("p", "ro-score"), { id: "ro-score" }),
+    Object.assign(el("p", "sheet-prev"), { id: "ro-mine" }),
+    qr, close,
+  );
+  roSheet.append(inner);
+  roSheet.addEventListener("cancel", (ev) => { ev.preventDefault(); closeReadOnly(); }); // tasto Esc
+  roSheet.addEventListener("click", (ev) => { if (ev.target === roSheet) closeReadOnly(); }); // tocco sullo sfondo
+  document.body.append(roSheet);
+}
+function openReadOnly(e, spot) {
+  if (!roSheet) buildReadOnly();
+  roSpot = spot;
+  const st = statOf(e.key);
+  $("#ro-eyebrow").textContent = e.m.floor;
+  const title = $("#ro-title");
+  title.textContent = e.d.name; // azzera anche il tag della bevanda precedente
+  withPremiumTag(title, e.d);
+  $("#ro-sub").textContent = e.m.name;
+  const score = $("#ro-score");
+  score.replaceChildren();
+  if (st.known && st.n > 0) {
+    score.append(el("span", "ro-num", nfAvg.format(st.avg)), el("span", "ro-star", "★"), el("span", "ro-n", `· ${votesLabel(st.n)}`));
+  } else {
+    score.append(el("span", "ro-n", st.pending ? "Caricamento…" : st.known ? "Nessun voto ancora" : "Voti non disponibili"));
+  }
+  const my = state.mine.get(e.key);
+  $("#ro-mine").textContent = my === undefined ? "" : `Il tuo voto: ${nfVote.format(my)} ★`;
+  if (typeof roSheet.showModal === "function") roSheet.showModal(); else roSheet.setAttribute("open", "");
+  roSheet.focus({ preventScroll: true });
+}
+
+// Tocco su una bevanda di una macchinetta in sola lettura: apre il pannello dei risultati.
+// Ascolto in fase di cattura, così il pannello di voto (core.js) non si apre.
+$("#view").addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-key]");
+  if (!b) return;
+  const e = ENTRIES.find((x) => x.key === b.dataset.key);
+  if (!e || canVote(e.m)) return;
+  ev.stopPropagation();
+  openReadOnly(e, b.dataset.spot);
+}, true);
 
 start({
   page: "home",

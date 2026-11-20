@@ -34,6 +34,9 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   votato = bordo verde continuo; da votare = bordo tratteggiato (niente ☆). Niente badge con il voto: il voto si vede aprendo il
   pannello. Senza voti "Nessun voto ancora"; un solo invito in cima se la macchinetta non ha voti. Breve alone
   verde dopo un voto (spento con prefers-reduced-motion). Niente "Hai votato X di N".
+- Voto per macchinetta (`app.js`, regola di interfaccia, non di sicurezza): votabili la macchinetta aperta con `?m=` e quelle già
+  aperte così su questo dispositivo (elenco in localStorage, `mokatvisor:macchinette`; senza storage vale per la sessione). Le altre
+  mostrano media, voti e il mio voto in sola lettura (pannello `ro-*` in `app.js`, con invito a scansionare il QR). Dalla home non c'è nessun link a `?m=`. Non scrivere nei testi pubblici altro su questo meccanismo.
 - Classifica (`classifica.js`): **sola lettura, niente voto** (`start({ vote: false })`). Podio 2-1-3 ed elenco
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).
