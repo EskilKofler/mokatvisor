@@ -62,7 +62,7 @@ all'id (`<macchinetta>_<bevanda>`). Attenzione: se in una macchinetta riusi un i
 `cappuccino`) per una bevanda diversa, i vecchi voti restano attaccati a quell'id: cancellali in Firestore
 (collezione `ratings`) prima di raccogliere voti veri.
 Gli id ammessi sono elencati anche in `firestore.rules` (`machineId in [...]`, `drinkId in [...]`): l'elenco contiene
-l'unione degli id usati da tutte le macchinette (oggi 31). Se aggiungi una macchinetta o una bevanda, aggiungi l'id anche
+l'unione degli id usati da tutte le macchinette (oggi 35). Se aggiungi una macchinetta o una bevanda, aggiungi l'id anche
 lì e **ripubblica le regole** nella console Firebase, altrimenti il voto viene rifiutato; togli solo gli id che nessuna
 macchinetta usa più. Se aggiungi una macchinetta, rigenera anche i QR (vedi sotto).
 
@@ -85,9 +85,9 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=
   da votare il bordo tratteggiato e una ☆. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
   voto precedente». Senza voti: «Nessun voto ancora»; se nessuna bevanda della macchinetta ha voti compare un solo invito in
   cima.
-  Ogni macchinetta ha la sua disposizione, scritta in `machines.js` per **righe** (vedi sotto): oggi il 4° piano
-  principale usa le 17 bevande reali del suo pannello (con 4 varianti «PREMIUM») e il 6° piano principale le 16 del pannello
-  dalla foto di esempio; le altre hanno le 3 bevande di prima, finché non ci sono le foto vere.
+  Ogni macchinetta ha la sua disposizione, scritta in `machines.js` per **righe** (vedi sotto): oggi hanno il pannello reale il 3° piano (12 bevande) e il 4° piano
+  principale (17, con 4 varianti «PREMIUM» in rosso); il 6° piano principale usa le 16 della foto di esempio; il 4° e il 6°
+  piano secondario hanno le 3 bevande di prima, finché non ci sono le foto vere.
 - **Classifica:** pagina di **sola lettura** (non si vota da qui): podio con le 3 migliori bevande (la prima al centro e
   più alta) ed elenco di tutte le altre con una barra sottile. In cima a `classifica.js` ci sono `MIN_VOTES` (voti
   minimi per entrare in classifica, ora 1) e `PRIOR_VOTES` (voti «virtuali» della media generale nella media corretta, ora 1, in `core.js`). L'ordine usa la media corretta (bayesiana); a parità di punteggio vince chi ha più voti. A schermo si vede
@@ -96,7 +96,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/moka-isiltep/?m=
   punto; una nuova recensione parte da 0,0 e il pulsante «Lascia recensione» resta spento finché non tocchi le stelle;
   per dare zero si trascina il dito fino al bordo sinistro delle stelle, da tastiera ← o Home).
 - **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica leggono la
-  media di **ogni bevanda di ogni macchinetta** (oggi 28: 16 + 4×3; con 16 bevande per macchinetta saranno 80), la
+  media di **ogni bevanda di ogni macchinetta** (oggi 51: 12 + 17 + 3 + 16 + 3; con ~16 bevande per macchinetta saranno ~80), la
   vista `?m=` solo quelle di una macchinetta; i tuoi voti (per colorare i riquadri) si leggono una sola volta con `loadMine` nelle pagine dove si vota; la Classifica non li legge. Le medie restano in cache nella
   scheda per 60 secondi, una voce per bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il
   piano Spark ha 50.000 letture al giorno: con tante bevande tienine conto.

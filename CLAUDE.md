@@ -23,7 +23,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
 - `machines.js`: macchinette e bevande, condiviso da `app.js`, `core.js` e `scripts/make-qr.mjs` (QR in `qr/`, ignorata da git).
   Ogni macchinetta descrive il pannello per RIGHE: `rows[i] = [sinistra, destra]`, `null` = posto vuoto (nessun riquadro,
   la posizione resta quella della macchinetta dal vivo); `drinks` (voti e medie) è ricavato dalle righe. Varianti
-  `premium: true` = stesso nome, id diverso, tag PREMIUM. Gli id usati vanno tutti in `firestore.rules`: dopo ogni
+  `premium: true` = stesso nome, id diverso, tag PREMIUM (in rosso, variabile `--premium`). Gli id usati vanno tutti in `firestore.rules`: dopo ogni
   cambio di id l'utente deve ripubblicare le regole nella console.
 - Home: 5 menù chiusi (uno per macchinetta): piani in ordine 6°, 4°, 3°; nello stesso piano più recensioni prima (poi
   `HOME_ORDER`). Menù chiuso: "Top: bevanda ★ media" + totale voti. `?m=<id>`: macchinetta già aperta + link "Vedi tutte
@@ -38,7 +38,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
   minimale. `MIN_VOTES` (1) in cima al file, `PRIOR_VOTES` (1) in `core.js`; media bayesiana per ordinare, a parità più voti prima;
   a schermo la media vera e il numero di voti. Titolo visibile assente (h1 solo per screen reader).
 - Dati: `sum` + `count` per bevanda con `getAggregateFromServer`: una lettura per ogni bevanda di ogni macchinetta
-  (ora 28, con ~16 bevande × 5 macchinette saranno ~80: attenzione alla quota Spark, 50k letture/giorno). Home e
+  (ora 51, con ~16 bevande × 5 macchinette saranno ~80: attenzione alla quota Spark, 50k letture/giorno). Home e
   classifica le leggono tutte, `?m=` solo quelle della macchinetta. Cache `sessionStorage` 60 s per bevanda. Dopo un voto
   si rilegge solo quella bevanda.
 - In fondo a ogni pagina: tendina chiusa «Informazioni e privacy» (senza linea sopra; il contenuto si vede solo toccandola) (`<footer id="info">`), costruita da
