@@ -21,18 +21,30 @@ export function qrSvg(text, style = "rounded") {
   const { size, dark } = modulesOf(text, style);
   const total = size + QUIET * 2;
   const r = style === "rounded" ? 0.08 : 0; // arrotondamento lieve (oltre ~0,1 i decoder smettono di leggerlo)
-  let rects = "";
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (!dark(x, y)) continue;
-      // Un modulo poco più grande (0,02) evita sottili righe bianche fra moduli quadrati vicini
-      rects += r
-        ? `<rect x="${x + QUIET}" y="${y + QUIET}" width="1" height="1" rx="${r}"/>`
-        : `<rect x="${x + QUIET - 0.01}" y="${y + QUIET - 0.01}" width="1.02" height="1.02"/>`;
+  let body = "";
+  if (r) {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (dark(x, y)) body += `<rect x="${x + QUIET}" y="${y + QUIET}" width="1" height="1" rx="${r}"/>`;
+      }
     }
+  } else {
+    // Moduli quadrati: UN solo tracciato (righe di moduli vicini unite). Rettangoli separati lasciano sottili
+    // righe chiare fra un modulo e l'altro quando il file viene stampato o convertito in PDF.
+    let d = "";
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; ) {
+        if (!dark(x, y)) { x++; continue; }
+        let len = 0;
+        while (x + len < size && dark(x + len, y)) len++;
+        d += `M${x + QUIET} ${y + QUIET}h${len}v1h-${len}z`;
+        x += len;
+      }
+    }
+    body = `<path d="${d}"/>`;
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" shape-rendering="${r ? "geometricPrecision" : "crispEdges"}">` +
-    `<rect width="${total}" height="${total}" fill="#ffffff"/><g fill="${INK}">${rects}</g></svg>`;
+    `<rect width="${total}" height="${total}" fill="#ffffff"/><g fill="${INK}">${body}</g></svg>`;
 }
 
 // Numero di moduli per lato (margine incluso): serve a scegliere una scala intera per il PNG

@@ -9,12 +9,18 @@
 // indipendente (jsQR) a piena risoluzione, a 200 px e a 200 px sfocato: se anche uno solo fallisce, lo script
 // si ferma con errore. Lo stile "rounded" (default) è accettato solo se supera la verifica, altrimenti si usa "square".
 import { mkdir, writeFile, rm } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import os from "node:os";
+import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import { MACHINES, HOME_ORDER } from "../machines.js";
-import { qrSvg, qrPng, verifyQr } from "./qr-lib.mjs";
+import { qrSvg, qrPng, verifyQr, totalModules } from "./qr-lib.mjs";
+
+const require = createRequire(import.meta.url);
+const { PNG } = require("pngjs");
+const jsQR = require("jsqr");
 
 const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "qr");
 const DEFAULT_BASE = "https://eskilkofler.github.io/mokatvisor/";
@@ -111,7 +117,7 @@ const esc = (s) =>
 
 // Geometria del foglio (mm): A4 verticale con 8 mm di margine di sicurezza; l'area utile è 194 × 281 mm,
 // divisa in 2 colonne × 4 righe di cartellini orizzontali da 97 × 70,25 mm.
-export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 4, cell: [97, 70.25], pad: 4, qr: 52, gap: 3.5 };
+export const SHEET = { page: [210, 297], margin: 8, cols: 2, rows: 4, cell: [97, 70.25], pad: 4, qr: 54, gap: 3.5 };
 const SLOTS = SHEET.cols * SHEET.rows;
 
 // Un cartellino orizzontale: QR a sinistra, a destra marchio e stelle, titolo, invito e nota
@@ -169,7 +175,7 @@ function cartelliniHtml(cards) {
     .sub i { font-style: normal; font-size: 7pt; font-weight: 600; letter-spacing: .06em; color: #666; }
     .sub em { font-style: normal; font-size: 8.5pt; letter-spacing: .04em; color: #F5A524; white-space: nowrap; }
     .small { font-size: 7pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: .8mm !important; }
-    h2 { font-size: 14.5pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    h2 { font-size: 15.5pt; font-weight: 700; line-height: 1.08; letter-spacing: -.02em; overflow-wrap: anywhere; }
     .cta { font-size: 8.5pt; font-weight: 700; line-height: 1.2; }
     .note { margin-top: 1.6mm !important; font-size: 7pt; line-height: 1.25; color: #666; }
     /* Tacche agli angoli dell'area utile */
@@ -189,8 +195,26 @@ function cartelliniHtml(cards) {
 `;
 }
 
-// PDF con un browser headless, se ce n'è uno installato (variabile CHROME_BIN o percorsi comuni)
-function findBrowser() {
+/* ------------------------------ PDF e controllo ------------------------------ */
+
+// Su macOS si usa WebKit (il motore di Safari) tramite scripts/html-to-pdf.swift: crea il PDF e un PNG a 300 dpi della pagina.
+// Altrove, se c'è Chrome/Chromium/Edge/Brave (o CHROME_BIN), si crea solo il PDF.
+const DPI = 300;
+const SWIFT_SRC = fileURLToPath(new URL("./html-to-pdf.swift", import.meta.url));
+
+function webkitTool() {
+  if (process.platform !== "darwin" || spawnSync("xcrun", ["--find", "swiftc"], { stdio: "ignore" }).status !== 0) return null;
+  const dir = path.join(os.tmpdir(), "mokatvisor-tools"); // (il nome del file non deve coincidere con una cartella di WebKit in tmp)
+  mkdirSync(dir, { recursive: true });
+  const bin = path.join(dir, "html-to-pdf");
+  if (!existsSync(bin)) {
+    console.log("… compilo lo strumento PDF (una volta sola)");
+    if (spawnSync("swiftc", ["-O", SWIFT_SRC, "-o", bin], { stdio: "inherit" }).status !== 0) return null;
+  }
+  return bin;
+}
+
+function findChrome() {
   const candidates = [
     process.env.CHROME_BIN,
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -202,13 +226,53 @@ function findBrowser() {
   return candidates.find((p) => p && existsSync(p)) ?? null;
 }
 
-function makePdf(htmlPath, pdfPath) {
-  const browser = findBrowser();
-  if (!browser) return false;
-  const r = spawnSync(browser, [
-    "--headless", "--disable-gpu", "--no-pdf-header-footer", `--print-to-pdf=${pdfPath}`, pathToFileURL(htmlPath).href,
-  ], { stdio: "ignore", timeout: 60_000 });
-  return r.status === 0 && existsSync(pdfPath);
+// Crea il PDF (una pagina) e, se possibile, il PNG della pagina a 300 dpi. Ritorna { pdf, png } (percorso o null).
+function renderSheet(htmlPath, pdfPath) {
+  const pngPath = path.join(os.tmpdir(), "mokatvisor-cartellini.png");
+  const tool = webkitTool();
+  if (tool) {
+    const r = spawnSync(tool, [htmlPath, pdfPath, pngPath, String(DPI)], { stdio: "inherit", timeout: 90_000 });
+    if (r.status === 0 && existsSync(pdfPath) && existsSync(pngPath)) return { pdf: pdfPath, png: pngPath };
+  }
+  const chrome = findChrome();
+  if (chrome) {
+    const r = spawnSync(chrome, ["--headless", "--disable-gpu", "--no-pdf-header-footer", `--print-to-pdf=${pdfPath}`, pathToFileURL(htmlPath).href],
+      { stdio: "ignore", timeout: 60_000 });
+    if (r.status === 0 && existsSync(pdfPath)) return { pdf: pdfPath, png: null };
+  }
+  return { pdf: null, png: null };
+}
+
+// Controllo sul foglio reso a 300 dpi: ritaglia ogni QR, lo decodifica (jsQR) e misura quanto è grande sulla carta.
+// Ritorna l'elenco dei problemi (vuoto = tutto bene) e le misure.
+function verifySheet(pngPath, cards) {
+  const img = PNG.sync.read(readFileSync(pngPath));
+  const px = (mm) => (mm * DPI) / 25.4;
+  const { margin, cols, cell, pad, qr } = SHEET;
+  const problems = [], sizes = [];
+  cards.forEach((c, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const x0 = margin + col * cell[0] + pad, y0 = margin + row * cell[1] + (cell[1] - qr) / 2; // angolo del QR (mm)
+    const cx = Math.round(px(x0 - 2)), cy = Math.round(px(y0 - 2)), cw = Math.round(px(qr + 4));
+    const crop = new Uint8ClampedArray(cw * cw * 4);
+    let minX = cw, minY = cw, maxX = -1, maxY = -1;
+    for (let y = 0; y < cw; y++) {
+      for (let x = 0; x < cw; x++) {
+        const s = ((cy + y) * img.width + (cx + x)) * 4, d = (y * cw + x) * 4;
+        crop.set(img.data.subarray(s, s + 4), d);
+        if (img.data[s] < 128) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+      }
+    }
+    const read = jsQR(crop, cw, cw)?.data ?? null;
+    if (read !== c.item.url) problems.push(`${c.item.id}: letto ${read === null ? "niente" : `"${read}"`} (atteso "${c.item.url}")`);
+    // Misura: il disegno nero occupa N moduli; il QR con il margine ne occupa N + 8
+    const n = totalModules(c.svg) - 8;
+    const modMm = ((maxX - minX + 1) / n) * 25.4 / DPI;
+    const sizeMm = modMm * (n + 8);
+    sizes.push(sizeMm);
+    if (sizeMm < 45) problems.push(`${c.item.id}: il QR misura ${sizeMm.toFixed(1)} mm (minimo 45 mm)`);
+  });
+  return { problems, sizes };
 }
 
 /* --------------------------------- Main --------------------------------- */
@@ -247,11 +311,21 @@ await writeFile(htmlPath, cartelliniHtml(built));
 console.log(`✔ cartellini.html     un foglio A4, ${built.length} cartellini su ${SLOTS} slot (margine ${SHEET.margin} mm)`);
 
 const pdfPath = path.join(OUT_DIR, "cartellini.pdf");
-if (makePdf(htmlPath, pdfPath)) {
-  console.log("✔ cartellini.pdf");
+await rm(pdfPath, { force: true });
+const sheet = renderSheet(htmlPath, pdfPath);
+if (sheet.pdf) console.log("✔ cartellini.pdf      una pagina A4");
+else console.log("• cartellini.pdf non creato: nessun renderer trovato (su macOS serve Xcode; altrove Chrome/Chromium/Edge/Brave o CHROME_BIN). Stampa cartellini.html dal browser.");
+
+if (sheet.png) {
+  const { problems, sizes } = verifySheet(sheet.png, built);
+  await rm(sheet.png, { force: true });
+  if (problems.length) {
+    for (const p of problems) console.error(`✘ ${p}`);
+    fail("controllo del foglio a 300 dpi fallito (i file sono stati scritti, ma NON stampare questo foglio)");
+  }
+  console.log(`✔ Foglio a ${DPI} dpi: ${built.length} QR letti e confrontati; misura del QR sulla carta ${Math.min(...sizes).toFixed(1)}–${Math.max(...sizes).toFixed(1)} mm (minimo 45)`);
 } else {
-  await rm(pdfPath, { force: true });
-  console.log("• cartellini.pdf non creato: nessun browser headless trovato (imposta CHROME_BIN o stampa cartellini.html dal browser).");
+  console.warn("⚠ Il foglio reso non è stato controllato a 300 dpi: serve macOS con Xcode (WebKit). Scansiona a mano ogni cartellino stampato.");
 }
 
 console.log(`\n✔ Verifica: ${built.length} QR su ${built.length} decodificati (piena risoluzione, 200 px, 200 px sfocato).`);
