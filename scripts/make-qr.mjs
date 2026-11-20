@@ -171,11 +171,11 @@ function cartelliniHtml(cards) {
     .ticket { height: ${card[1]}mm; border: .25mm solid #d2d2d2; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column; flex: none; }
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
-    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2mm; padding-bottom: 1.2mm; }
-    .band b { font-size: 20pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; padding-bottom: .4mm; }
+    .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
     /* Stelle vicine, con le punte arrotondate (stesso stile delle stelle del sito) */
-    .stars { display: flex; gap: .9mm; }
-    .stars svg { width: 5mm; height: 5mm; fill: #F5A524; stroke: #F5A524; stroke-width: 2; stroke-linejoin: round; overflow: visible; }
+    .stars { display: flex; gap: .8mm; }
+    .stars svg { width: 4.2mm; height: 4.2mm; fill: #F5A524; stroke: #F5A524; stroke-width: 2; stroke-linejoin: round; overflow: visible; }
     /* QR → frase → nota. Il QR ha già ~5 mm di margine bianco (zona di quiete): tra i puntini neri e la frase ci sono 5 mm.
        La frase ha sempre l'altezza di due righe e la nota sta su una riga sola, così tutti i cartellini sono identici. */
     .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 3mm 4mm; text-align: center; }
