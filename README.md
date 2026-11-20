@@ -106,13 +106,26 @@ Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash
-node scripts/make-qr.mjs
+node scripts/make-qr.mjs                                    # indirizzo di default
+node scripts/make-qr.mjs https://ALTRO.indirizzo/           # indirizzo diverso
+node scripts/make-qr.mjs https://ALTRO.indirizzo/ --style square   # moduli quadrati (default: rounded, lieve)
 # oppure: npm run qr
-# indirizzo diverso: node scripts/make-qr.mjs https://ALTRO.indirizzo/
 ```
-Senza argomenti l'indirizzo base è `https://eskilkofler.github.io/mokatvisor/`. Nella cartella `qr/` trovi, per ogni macchinetta,
-`<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: fogli A4 con 6 cartellini ciascuno (7 cartellini su 2 fogli)
-(piano, nome, QR, scritta e indirizzo in chiaro). Aprilo nel browser e stampa in A4, scala 100%, senza intestazioni.
+Senza argomenti l'indirizzo base è `https://eskilkofler.github.io/mokatvisor/`; l'indirizzo di ogni macchinetta è
+indirizzo base + `?m=` + id. Le macchinette (id, nome, piano) vengono da `machines.js`, lo stesso file del sito: se ne aggiungi una, rilancia lo script.
+
+Nella cartella `qr/` trovi, per ogni macchinetta, `<id>.svg` (solo il QR) e `<id>.png` (almeno 1200 px di lato), più
+**`qr/cartellini.html`**: A4 con 4 cartellini A6 per pagina (2 × 2) e segni di taglio sottili. Se sul computer c'è Chrome, Chromium, Edge o Brave
+(o imposti `CHROME_BIN`), lo script crea anche `qr/cartellini.pdf`; altrimenti apri `cartellini.html` nel browser e stampa
+(A4 verticale, scala 100%, margini «nessuno», senza intestazioni e piè di pagina, grafica di sfondo attiva).
+
+**Controllo automatico.** Prima di scrivere i file ogni QR viene riletto con un decoder indipendente (jsQR) a piena risoluzione, a 200 px e a 200 px
+sfocato e confrontato con l'indirizzo atteso: se anche uno solo fallisce lo script si ferma con errore. Lo stile arrotondato è usato solo
+se tutti i QR passano la prova, altrimenti lo script usa i moduli quadrati per tutti. I QR sono neri (#111111) su bianco, senza logo,
+con correzione d'errore M (Q se arrotondati) e margine bianco di 4 moduli.
+
+**Formato consigliato:** cartellino A6 (105 × 148 mm), QR largo almeno 5 cm (nel cartellino è 5,5 cm), carta opaca (la carta lucida riflette e
+rende difficile la scansione). **Prima di attaccare ogni cartellino, scansionalo con un telefono** e controlla che si apra la macchinetta giusta.
 
 **Stampa i QR solo con l'indirizzo definitivo.** Il QR contiene l'indirizzo scritto nel momento in cui lo generi:
 se poi cambi nome del repository, utente GitHub o dominio, i cartellini già attaccati non funzionano più.
