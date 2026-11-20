@@ -49,10 +49,11 @@ const machineUrl = (base, id) => {
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-// Foglio A4 con un cartellino per macchinetta (2 colonne x 3 righe, 6 cartellini). Senza piano, l'etichetta piccola non c'è.
+// Foglio A4 con un cartellino per macchinetta (2 colonne x 3 righe, 6 cartellini; oltre i 6 si aggiunge un foglio). Senza piano, l'etichetta piccola non c'è.
 // Il QR è l'SVG incorporato, così il file è autonomo e stampa nitido a qualsiasi dimensione.
-function sheetHtml(cards) {
-  const tickets = cards.map(({ m, url, svg }) => `
+const PER_SHEET = 6;
+function ticketHtml(cards) {
+  return cards.map(({ m, url, svg }) => `
     <article class="ticket">
       ${m.floor ? `<p class="floor">${esc(m.floor)}</p>` : ""}
       <h2>${esc(m.name)}</h2>
@@ -61,7 +62,14 @@ function sheetHtml(cards) {
       <p class="url">${esc(url)}</p>
       <p class="brand">Mokatvisor · ISILTEP</p>
     </article>`).join("\n");
+}
 
+function sheetHtml(cards) {
+  // 6 cartellini per foglio A4: con più macchinette si aggiungono fogli
+  const sheets = [];
+  for (let i = 0; i < cards.length; i += PER_SHEET) {
+    sheets.push(`  <main class="sheet">${ticketHtml(cards.slice(i, i + PER_SHEET))}\n  </main>`);
+  }
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -85,12 +93,11 @@ function sheetHtml(cards) {
     .url { font-size: 7.5pt; margin-top: 1.5mm !important; word-break: break-all; }
     .brand { font-size: 8pt; margin-top: auto !important; color: #444; }
     @media screen { .sheet { margin: 10mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.25); } }
-    @media print { body { background: #fff; } .sheet { margin: 0; } }
+    @media print { body { background: #fff; } .sheet { margin: 0; break-after: page; } .sheet:last-child { break-after: auto; } }
   </style>
 </head>
 <body>
-  <main class="sheet">${tickets}
-  </main>
+${sheets.join("\n")}
 </body>
 </html>
 `;
