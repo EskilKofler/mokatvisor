@@ -105,10 +105,11 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/mokatvisor/?m=<i
 
 Per generare i QR serve [Node.js](https://nodejs.org) (una volta sola: `npm install`), poi:
 ```bash
-node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/
-# oppure: npm run qr -- https://TUOUTENTE.github.io/mokatvisor/
+node scripts/make-qr.mjs
+# oppure: npm run qr
+# indirizzo diverso: node scripts/make-qr.mjs https://ALTRO.indirizzo/
 ```
-L'indirizzo base è obbligatorio (non è scritto nel codice). Nella cartella `qr/` trovi, per ogni macchinetta,
+Senza argomenti l'indirizzo base è `https://eskilkofler.github.io/mokatvisor/`. Nella cartella `qr/` trovi, per ogni macchinetta,
 `<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: un foglio A4 con 5 cartellini
 (piano, nome, QR, scritta e indirizzo in chiaro). Aprilo nel browser e stampa in A4, scala 100%, senza intestazioni.
 

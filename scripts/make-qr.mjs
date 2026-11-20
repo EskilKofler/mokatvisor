@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Genera in qr/ un QR code (SVG + PNG) per ogni macchinetta.
 //
-// Uso:   node scripts/make-qr.mjs <indirizzo-base>
+// Uso:   node scripts/make-qr.mjs [indirizzo-base]   (senza argomento: https://eskilkofler.github.io/mokatvisor/)
 // Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/
 //
 // Ogni QR punta a <indirizzo-base>?m=<id-macchinetta>. L'elenco delle macchinette
@@ -22,12 +22,9 @@ function fail(msg) {
   process.exit(1);
 }
 
-function parseBase(arg) {
-  if (!arg) {
-    console.error("Uso: node scripts/make-qr.mjs <indirizzo-base>");
-    console.error("Es.: node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/");
-    process.exit(1);
-  }
+const DEFAULT_BASE = "https://eskilkofler.github.io/mokatvisor/";
+
+function parseBase(arg = DEFAULT_BASE) {
   let u;
   try { u = new URL(arg); } catch { fail(`indirizzo non valido: "${arg}"`); }
   if (u.protocol !== "https:" && u.protocol !== "http:") fail("l'indirizzo deve iniziare con https://");
