@@ -52,7 +52,7 @@ function drinkTile(e, spot) {
   const voted = state.mine.has(e.key);
   const knows = state.mineLoaded; // finché non so cosa ho votato il riquadro resta neutro
   const b = drinkButton(e, spot, `tile${knows ? (voted ? " is-voted" : " is-todo") : ""}`);
-  b.append(el("span", "tile-name", e.d.name));
+  b.append(el("span", `tile-name${e.d.name.length >= 23 ? " long" : ""}`, e.d.name)); // nomi lunghi: carattere un po' più piccolo
   if (st.pending) {
     b.append(skel("w-60"));
   } else if (st.known && st.n === 0) {
@@ -83,13 +83,22 @@ function drinkTile(e, spot) {
   return b;
 }
 
-// Griglia a due colonne come il pannello reale: le prime `leftCount` bevande a sinistra dall'alto in basso, poi la destra
-function grid(m, drinks, prefix, rows) {
+// Griglia a due colonne come il pannello reale, con posizione ESPLICITA (grid-row / grid-column): un posto vuoto
+// (null in machines.js) resta vuoto e non fa scorrere le altre bevande. Ordine nel DOM: colonna sinistra dall'alto
+// in basso, poi la destra (anche per tastiera e screen reader).
+function grid(m, prefix) {
   const g = el("div", "drink-grid");
-  g.style.setProperty("--rows", String(rows));
-  for (const d of drinks) {
-    const key = keyOf(m.id, d.id);
-    g.append(drinkTile({ key, m, d }, `${prefix}:${key}`));
+  g.style.setProperty("--rows", String(m.rows.length));
+  for (const col of [0, 1]) {
+    m.rows.forEach((row, i) => {
+      const d = row[col];
+      if (!d) return; // posto vuoto: nessun riquadro, nessun testo
+      const key = keyOf(m.id, d.id);
+      const tile = drinkTile({ key, m, d }, `${prefix}:${key}`);
+      tile.style.gridRow = String(i + 1);
+      tile.style.gridColumn = String(col + 1);
+      g.append(tile);
+    });
   }
   return g;
 }
@@ -101,7 +110,7 @@ const hasNoVotes = (m) => m.drinks.every((d) => { const s = statOf(keyOf(m.id, d
 function drinksOf(m, prefix) {
   const box = el("div", "drinks");
   if (hasNoVotes(m)) box.append(el("p", "machine-invite", "Diventa il primo a lasciare una recensione"));
-  box.append(grid(m, m.drinks, prefix, m.leftCount ?? Math.ceil(m.drinks.length / 2)));
+  box.append(grid(m, prefix));
   return box;
 }
 

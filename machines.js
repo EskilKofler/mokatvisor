@@ -17,7 +17,7 @@ const drink = (id, name, extra = {}) => ({ id, name, ...extra });
 // Costruisce la macchinetta e ricava `drinks` (voti e medie): prima la colonna sinistra dall'alto in basso, poi la destra.
 function machine({ id, floor, name, rows }) {
   const drinks = [...rows.map((r) => r[0]), ...rows.map((r) => r[1])].filter(Boolean);
-  return { id, floor, name, rows, drinks, leftCount: rows.filter((r) => r[0]).length };
+  return { id, floor, name, rows, drinks };
 }
 
 // Disposizione standard delle macchinette senza pannello dettagliato (come prima: 2 a sinistra, 1 a destra)
