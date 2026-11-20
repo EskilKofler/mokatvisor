@@ -47,7 +47,7 @@ function sortedMachines() {
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
 
 /* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto (mostra il mio voto) ----
-   Votata: bordo verde continuo. Da votare: bordo tratteggiato e ☆ (la forma del bordo distingue anche senza colore). */
+   Votata: bordo verde continuo. Da votare: bordo tratteggiato (la forma del bordo distingue anche senza colore). */
 function drinkTile(e, spot) {
   const st = statOf(e.key);
   const voted = state.mine.has(e.key);
@@ -66,11 +66,6 @@ function drinkTile(e, spot) {
     const sub = el("span", "tile-sub score");
     sub.append(el("span", "tile-star", "★"), el("span", "avg-num", nfAvg.format(st.avg)), el("span", "tile-n", `· ${votesLabel(st.n)}`));
     b.append(sub);
-  }
-  if (knows && !voted) {
-    const star = el("span", "tile-badge todo", "☆");
-    star.setAttribute("aria-hidden", "true"); // il testo per gli screen reader è nell'aria-label del riquadro
-    b.append(star);
   }
   // Appena votata: breve alone verde. Dopo un voto la pagina si ridisegna più volte: riprendo l'animazione
   // da dove era (delay negativo), così non si interrompe né riparte da capo.

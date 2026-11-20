@@ -82,7 +82,7 @@ Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/mokatvisor/?m=<i
 - **Bevande di una macchinetta:** griglia a due colonne che rispecchia il pannello reale (prima la colonna sinistra
   dall'alto in basso, poi la destra). Ogni riquadro è un pulsante con il nome e «★ media · N voti»; il tocco apre il
   pannello di voto. Quelli che hai già votato hanno il bordo verde; quelli
-  da votare il bordo tratteggiato e una ☆. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
+  da votare il bordo tratteggiato. Toccando una bevanda votata il pannello si apre con le tue stelle e «Il tuo
   voto precedente». Senza voti: «Nessun voto ancora»; se nessuna bevanda della macchinetta ha voti compare un solo invito in
   cima.
   Ogni macchinetta ha la sua disposizione, scritta in `machines.js` per **righe** (vedi sotto): oggi hanno tutte il pannello reale: il 3° piano e il 6° piano secondario con 12 bevande, il 4° piano

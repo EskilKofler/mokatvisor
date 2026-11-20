@@ -237,11 +237,8 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 /* Appena votata: breve alone verde (spento da prefers-reduced-motion) */
 .tile.just-voted { animation: tile-glow .8s ease-out both; }
 @keyframes tile-glow { 0% { box-shadow: 0 0 0 0 var(--ok-glow); } 100% { box-shadow: 0 0 0 11px rgba(31, 157, 85, 0); } }
-.tile-badge { position: absolute; right: 7px; }
-/* Da votare: bordo tratteggiato, tono più spento e una piccola stella vuota */
+/* Da votare: bordo tratteggiato e tono più spento (nessuna stella) */
 .tile.is-todo { background: var(--card-2); border-style: dashed; border-color: var(--line-strong); }
-.tile-badge.todo { bottom: 5px; padding: 0; background: none; color: var(--faint); font-size: 1rem; font-weight: 400; line-height: 1; }
-.tile.is-todo .tile-sub { padding-right: 1.3rem; } /* la ☆ sta in basso a destra: il nome usa tutta la larghezza */
 
 .more { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }
 .more .icon-btn { margin-left: auto; }
