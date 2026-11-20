@@ -177,11 +177,11 @@ function cartelliniHtml(cards) {
     .ticket { height: ${card[1]}mm; border: .25mm solid #d2d2d2; border-radius: 4mm; overflow: hidden; display: flex; flex-direction: column; flex: none; }
     .ticket p { margin: 0; }
     /* Fascia scura in alto */
-    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; padding-bottom: .4mm; }
+    .band { height: ${header}mm; flex: none; background: #141414; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3mm; padding-bottom: .4mm; }
     .band b { font-size: 17pt; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
     /* Stelle del sito (la forma ha già il suo margine dentro il riquadro, quindi quasi nessuno spazio fra una e l'altra) */
     .stars { display: flex; gap: .1mm; }
-    .stars svg { width: 5.6mm; height: 5.6mm; display: block; }
+    .stars svg { width: 4.6mm; height: 4.6mm; display: block; }
     /* QR → frase → nota. Il QR ha già ~5 mm di margine bianco (zona di quiete): tra i puntini neri e la frase ci sono 5 mm.
        La frase ha sempre l'altezza di due righe e la nota sta su una riga sola, così tutti i cartellini sono identici. */
     .body { flex: 1; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 3mm 4mm; text-align: center; }
