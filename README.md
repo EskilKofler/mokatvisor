@@ -50,7 +50,7 @@ python3 -m http.server 8000
 
 ## Foto delle macchinette
 Metti i file in `img/` con il nome dell'id: `terzo.jpg`, `quarto-principale.jpg`, `quarto-secondaria.jpg`,
-`sesto-principale.jpg`, `sesto-secondaria.jpg`. Comprimi le foto (max ~200 KB l'una).
+`sesto-principale.jpg`, `sesto-secondaria.jpg`, `brambillino-sotto.jpg`. Comprimi le foto (max ~200 KB l'una).
 
 ## Modificare macchinette o bevande
 In `machines.js` ogni macchinetta descrive il suo pannello **per righe, dall'alto in basso**: `rows[i] = [sinistra, destra]`.
@@ -70,13 +70,13 @@ macchinetta usa più. Se aggiungi una macchinetta, rigenera anche i QR (vedi sot
 Ogni macchinetta ha la sua pagina: `https://TUOUTENTE.github.io/mokatvisor/?m=<id>`
 (es. `?m=terzo`, `?m=quarto-principale`; maiuscole e spazi ai lati non contano): mostra quella macchinetta in grande, con le sue bevande e le medie, poi i link
 «Vedi tutte le macchinette» e «Vai alla classifica». Senza `?m=` si vede la home; con un id che non corrisponde a nessuna macchinetta si vede la home con la riga «Macchinetta non trovata: ecco tutte le altre».
-Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`.
+Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale`, `sesto-secondaria`, `brambillino-sotto`.
 
 ## Com'è fatto il sito
 - **Pagine:** `index.html` (Macchinette: home e `?m=`) e `classifica.html` (Classifica). In alto c'è una barra fissa con
   il nome del sito e le due voci. Il codice comune (Firebase, accesso anonimo, cache, pannello di voto, animazioni,
   barra e informativa) sta in `core.js`; `app.js` e `classifica.js` disegnano ciascuno la propria pagina.
-- **Macchinette (home):** 5 menù chiusi, uno per macchinetta: prima i due del 6° piano, poi i due del 4°, poi il 3°.
+- **Macchinette (home):** 6 menù chiusi, uno per macchinetta: prima i due del 6° piano, poi i due del 4°, poi il 3°, infine «Brambillino sotto» (senza piano).
   Dentro lo stesso piano sta sopra la macchinetta con più recensioni (a parità, la principale). Il menù chiuso mostra
   la bevanda migliore («Top: Cappuccino ★ 4,6») e il totale dei voti. Toccando una macchinetta si apre la griglia delle
   sue bevande.
@@ -97,7 +97,7 @@ Gli id sono `terzo`, `quarto-principale`, `quarto-secondaria`, `sesto-principale
   punto; una nuova recensione parte da 0,0 e il pulsante «Lascia recensione» resta spento finché non tocchi le stelle;
   per dare zero si trascina il dito fino al bordo sinistro delle stelle, da tastiera ← o Home).
 - **Letture Firestore:** una media costa una lettura (`sum` + `count` per bevanda). La home e la Classifica leggono la
-  media di **ogni bevanda di ogni macchinetta** (oggi 75: 12 + 17 + 17 + 17 + 12; è ormai il totale definitivo), la
+  media di **ogni bevanda di ogni macchinetta** (oggi 92: 12 + 17 + 17 + 17 + 12 + 17; è ormai il totale definitivo), la
   vista `?m=` solo quelle di una macchinetta; i tuoi voti (per colorare i riquadri) si leggono una sola volta con `loadMine` nelle pagine dove si vota; la Classifica non li legge. Le medie restano in cache nella
   scheda per 60 secondi, una voce per bevanda e condivisa tra le pagine; dopo un voto si rilegge solo quella bevanda. Il
   piano Spark ha 50.000 letture al giorno: con tante bevande tienine conto.
@@ -111,7 +111,7 @@ node scripts/make-qr.mjs
 # indirizzo diverso: node scripts/make-qr.mjs https://ALTRO.indirizzo/
 ```
 Senza argomenti l'indirizzo base è `https://eskilkofler.github.io/mokatvisor/`. Nella cartella `qr/` trovi, per ogni macchinetta,
-`<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: un foglio A4 con 5 cartellini
+`<id>.svg` e `<id>.png` (correzione d'errore Q), più **`qr/stampa.html`**: un foglio A4 con 6 cartellini
 (piano, nome, QR, scritta e indirizzo in chiaro). Aprilo nel browser e stampa in A4, scala 100%, senza intestazioni.
 
 **Stampa i QR solo con l'indirizzo definitivo.** Il QR contiene l'indirizzo scritto nel momento in cui lo generi:
