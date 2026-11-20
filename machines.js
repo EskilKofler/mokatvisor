@@ -20,12 +20,6 @@ function machine({ id, floor, name, rows }) {
   return { id, floor, name, rows, drinks };
 }
 
-// Disposizione standard delle macchinette senza pannello dettagliato (2 a sinistra, 1 a destra)
-const BASIC_ROWS = () => [
-  [drink("lungo", "Caffè lungo"), drink("cappuccino", "Cappuccino")],
-  [drink("espresso", "Caffè espresso"), null],
-];
-
 export const MACHINES = [
   // 3° piano: pannello reale, 6 righe senza posti vuoti né premium
   machine({
@@ -88,7 +82,18 @@ export const MACHINES = [
     ],
   }),
 
-  machine({ id: "piano6-secondaria", floor: "6° piano", name: "Caffè Torretta secondaria", rows: BASIC_ROWS() }),
+  // 6° piano secondaria: pannello reale, 6 righe senza posti vuoti né premium
+  machine({
+    id: "piano6-secondaria", floor: "6° piano", name: "Caffè Torretta secondaria",
+    rows: [
+      [drink("espresso", "Caffè espresso"), drink("caffe-al-ginseng", "Caffè al ginseng")],
+      [drink("caffe-lungo", "Caffè lungo"), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
+      [drink("caffe-macchiato", "Caffè macchiato"), drink("cappuccino-al-ginseng", "Cappuccino al ginseng")],
+      [drink("cappuccino", "Cappuccino"), drink("bevanda-cioccolato", "Bevanda al gusto di cioccolato")],
+      [drink("cappuccino-con-cioccolato", "Cappuccino con cioccolato"), drink("bevanda-latte", "Bevanda al gusto di latte")],
+      [drink("bevanda-latte-macchiato", "Bevanda al gusto di latte macchiato"), drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
+    ],
+  }),
 ];
 // Foto: metti il file in img/<id-macchinetta>.jpg (es. img/piano3.jpg).
 // Se il file non c'è, la foto semplicemente non appare.
