@@ -13,27 +13,9 @@ const single = MACHINES.find((m) => m.id === wantedM) ?? null;
 const notFound = wantedM !== "" && !single;
 if (single) document.title = `${single.name} (${single.floor}) · Mokatvisor`;
 
-/* ---- Macchinette abilitate al voto ----
-   Si vota solo per la macchinetta aperta con ?m=<id> e per quelle già aperte da qui su questo dispositivo
-   (elenco in localStorage; se non è disponibile vale per la sessione). Le altre mostrano i risultati in sola lettura. */
-const UNLOCK_KEY = "mokatvisor:macchinette";
-const sessionUnlocked = new Set();
-function readUnlocked() {
-  const ids = new Set(sessionUnlocked);
-  try {
-    for (const id of JSON.parse(localStorage.getItem(UNLOCK_KEY)) ?? []) if (MACHINES.some((m) => m.id === id)) ids.add(id);
-  } catch { /* storage non disponibile o contenuto non valido: resta l'elenco della sessione */ }
-  return ids;
-}
-if (single) {
-  sessionUnlocked.add(single.id);
-  try {
-    const ids = readUnlocked();
-    localStorage.setItem(UNLOCK_KEY, JSON.stringify([...ids]));
-  } catch { /* come sopra */ }
-}
-const unlocked = readUnlocked();
-const canVote = (m) => (single ? m === single : unlocked.has(m.id));
+/* ---- Nuove recensioni: solo dalla pagina della macchinetta (?m=<id>) ----
+   Dalla home non si lasciano nuove recensioni; le recensioni già date si possono sempre modificare. */
+const canVote = (m) => m === single;
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
 const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "terzo"];
@@ -218,12 +200,10 @@ function machineMenu(m) {
 
 function renderMachines() {
   const sec = el("section", "page");
-  // Se qualche macchinetta è in sola lettura: una riga che spiega dove si vota
-  const someReadOnly = MACHINES.some((m) => !canVote(m));
+  // Una riga che spiega dove si vota
   const head = pageHead("machines-title", "Macchinette dell'ISILTeP",
-    someReadOnly ? "Qui vedi i risultati. Per votare, scansiona il QR sulla macchinetta dove hai preso il caffè: ogni macchinetta ha il suo."
-      : "Scegli una macchinetta e dì la tua.");
-  if (someReadOnly) head.querySelector(".section-sub")?.classList.add("ro-note");
+    "Qui vedi i risultati. Per votare, scansiona il QR sulla macchinetta dove hai preso il caffè: ogni macchinetta ha il suo.");
+  head.querySelector(".section-sub")?.classList.add("ro-note");
   sec.append(head);
   if (notFound) sec.append(el("p", "section-sub ro-note", "Macchinetta non trovata: ecco tutte le altre"));
   const list = el("div", "menus");
@@ -309,7 +289,7 @@ function openReadOnly(e, spot, kind) {
   if (st.known && st.n > 0) {
     score.append(el("span", "ro-num", nfAvg.format(st.avg)), el("span", "ro-star", "★"), el("span", "ro-n", `· ${votesLabel(st.n)}`));
   } else {
-    score.append(el("span", "ro-n", st.pending ? "Caricamento…" : st.known ? "Nessun voto ancora" : "Voti non disponibili"));
+    score.append(el("span", "ro-n ro-empty", st.pending ? "Caricamento…" : st.known ? "Nessun voto ancora" : "Voti non disponibili"));
   }
   const my = state.mine.get(e.key);
   $("#ro-note").replaceChildren(

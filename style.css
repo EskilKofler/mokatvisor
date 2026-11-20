@@ -455,3 +455,4 @@ html:has(.sheet[open]) { overflow: hidden; } /* la pagina sotto non scorre */
 .ro-n { font-size: 1.05rem; font-weight: 500; color: var(--muted); }
 .ro-qr { display: flex; align-items: center; gap: 10px; margin: 18px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.35; }
 .ro-qr-icon { flex: none; width: 22px; height: 22px; }
+.ro-empty { display: block; width: 100%; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); font-size: .95rem; text-align: center; }
