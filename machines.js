@@ -114,6 +114,19 @@ export const MACHINES = [
       [null, drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
     ],
   }),
+
+  // Brambillino sopra: nessun piano. Pannello reale: 6 righe, nessun posto vuoto, nessuna bevanda premium.
+  machine({
+    id: "brambillino-sopra", floor: null, name: "Brambillino sopra",
+    rows: [
+      [drink("espresso", "Caffè espresso"), drink("cappuccino", "Cappuccino")],
+      [drink("caffe-lungo", "Caffè lungo"), drink("cappuccino-con-cioccolato", "Cappuccino con cioccolato")],
+      [drink("caffe-macchiato", "Caffè macchiato"), drink("bevanda-cioccolato", "Bevanda al gusto di cioccolato")],
+      [drink("caffe-al-ginseng", "Caffè al ginseng"), drink("latte", "Latte")],
+      [drink("ginseng-macchiato", "Ginseng macchiato"), drink("latte-macchiato", "Latte macchiato")],
+      [drink("cappuccino-al-ginseng", "Cappuccino al ginseng"), drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
+    ],
+  }),
 ];
-// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/terzo.jpg, img/brambillino-sotto.jpg).
+// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/terzo.jpg, img/brambillino-sopra.jpg).
 // Se il file non c'è, la foto semplicemente non appare.
