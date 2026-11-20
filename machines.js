@@ -20,14 +20,25 @@ function machine({ id, floor, name, rows }) {
   return { id, floor, name, rows, drinks };
 }
 
-// Disposizione standard delle macchinette senza pannello dettagliato (come prima: 2 a sinistra, 1 a destra)
+// Disposizione standard delle macchinette senza pannello dettagliato (2 a sinistra, 1 a destra)
 const BASIC_ROWS = () => [
   [drink("lungo", "Caffè lungo"), drink("cappuccino", "Cappuccino")],
   [drink("espresso", "Caffè espresso"), null],
 ];
 
 export const MACHINES = [
-  machine({ id: "piano3", floor: "3° piano", name: "Macchinetta del terzo piano", rows: BASIC_ROWS() }),
+  // 3° piano: pannello reale, 6 righe senza posti vuoti né premium
+  machine({
+    id: "piano3", floor: "3° piano", name: "Macchinetta del terzo piano",
+    rows: [
+      [drink("espresso", "Caffè espresso"), drink("cappuccino", "Cappuccino")],
+      [drink("caffe-lungo", "Caffè lungo"), drink("cappuccino-con-cioccolato", "Cappuccino con cioccolato")],
+      [drink("caffe-macchiato", "Caffè macchiato"), drink("bevanda-cioccolato", "Bevanda al gusto di cioccolato")],
+      [drink("caffe-al-ginseng-dolce", "Caffè al ginseng dolce"), drink("latte", "Latte")],
+      [drink("caffe-macchiato-al-ginseng-dolce", "Caffè macchiato al ginseng dolce"), drink("latte-macchiato", "Latte macchiato")],
+      [drink("cappuccino-al-ginseng-dolce", "Cappuccino al ginseng dolce"), drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
+    ],
+  }),
 
   // 4° piano principale: pannello reale. In basso a sinistra c'è un posto vuoto.
   machine({
