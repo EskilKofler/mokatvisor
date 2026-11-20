@@ -20,6 +20,9 @@ function machine({ id, floor, name, rows }) {
   return { id, floor, name, rows, drinks };
 }
 
+// Nome con il piano tra parentesi, se la macchinetta ne ha uno (es. «Brambillino sotto» non ha un piano)
+export const placeOf = (m) => (m.floor ? `${m.name} (${m.floor})` : m.name);
+
 export const MACHINES = [
   // 3° piano: pannello reale, 6 righe senza posti vuoti né premium
   machine({
@@ -94,6 +97,23 @@ export const MACHINES = [
       [drink("bevanda-latte-macchiato", "Bevanda al gusto di latte macchiato"), drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
     ],
   }),
+
+  // Brambillino sotto: nessun piano. Pannello reale: 9 righe, premium nelle prime 4 a sinistra, posto vuoto a sinistra nella riga 9
+  // (dove sul pannello c'è «senza bicchiere»).
+  machine({
+    id: "brambillino-sotto", floor: null, name: "Brambillino sotto",
+    rows: [
+      [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
+      [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
+      [drink("caffe-macchiato-premium", "Caffè macchiato", { premium: true }), drink("cappuccino-al-ginseng", "Cappuccino al ginseng")],
+      [drink("cappuccino-premium", "Cappuccino", { premium: true }), drink("caffe-d-orzo", "Caffè d'orzo")],
+      [drink("espresso", "Espresso"), drink("caffe-d-orzo-macchiato", "Caffè d'orzo macchiato")],
+      [drink("caffe-lungo", "Caffè lungo"), drink("cappuccino-d-orzo", "Cappuccino d'orzo")],
+      [drink("caffe-macchiato", "Caffè macchiato"), drink("bevanda-cioccolato", "Bevanda al gusto di cioccolato")],
+      [drink("cappuccino", "Cappuccino"), drink("bevanda-cioccolato-forte", "Bevanda al gusto di cioccolato forte")],
+      [null, drink("bevanda-te-al-limone", "Bevanda al gusto di tè al limone")],
+    ],
+  }),
 ];
-// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/terzo.jpg).
+// Foto: metti il file in img/<id-macchinetta>.jpg (es. img/terzo.jpg, img/brambillino-sotto.jpg).
 // Se il file non c'è, la foto semplicemente non appare.

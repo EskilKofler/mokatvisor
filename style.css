@@ -163,6 +163,7 @@ main { max-width: 760px; margin: 0 auto; padding: 8px 16px 8px; }
 
 /* ----------------------------- Sezioni --------------------------------- */
 .section-sub { color: var(--muted); font-size: .95rem; margin: 4px 0 16px; }
+.eyebrow:empty { display: none; } /* macchinetta senza piano */
 .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
 /* --------------------- Home: un menù per macchinetta -------------------- */

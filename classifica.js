@@ -33,7 +33,7 @@ const allPending = () => ENTRIES.some((e) => statOf(e.key).pending);
 
 // Frase di lettura per gli screen reader: la pagina mostra soltanto, non si vota da qui
 const describe = (r) =>
-  `${drinkLabel(r.d)}, ${shortName(r.m)} (${r.m.floor}): ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
+  `${drinkLabel(r.d)}, ${shortName(r.m)}${r.m.floor ? ` (${r.m.floor})` : ""}: ${r.avg == null ? "nessun voto" : `media ${nfAvg.format(r.avg)}, ${votesLabel(r.n)}`}`;
 
 /* ---- Podio ---- */
 
@@ -45,7 +45,8 @@ function podItem(r, i) {
   const medal = el("span", "medal", MEDALS[i]);
   medal.setAttribute("aria-hidden", "true");
   const where = el("span", "pod-where");
-  where.append(el("span", "", shortName(r.m)), el("span", "", r.m.floor));
+  where.append(el("span", "", shortName(r.m)));
+  if (r.m.floor) where.append(el("span", "", r.m.floor));
   const top = el("span", "pod-top");
   top.append(medal, withPremiumTag(el("span", "pod-name", r.d.name), r.d), where);
   const score = el("span", "pod-score");
@@ -77,7 +78,7 @@ function rankRow(r, pos) {
   const p = el("span", "rank-pos", pos ? String(pos) : "–");
   p.setAttribute("aria-hidden", "true");
   const name = el("span", "rank-top");
-  name.append(withPremiumTag(el("span", "drink-name", r.d.name), r.d), el("span", "rank-where", `${shortName(r.m)} · ${r.m.floor}`));
+  name.append(withPremiumTag(el("span", "drink-name", r.d.name), r.d), el("span", "rank-where", [shortName(r.m), r.m.floor].filter(Boolean).join(" · ")));
   const bar = el("span", "bar");
   bar.setAttribute("aria-hidden", "true");
   const fill = document.createElement("i");

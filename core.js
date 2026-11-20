@@ -12,7 +12,7 @@ import {
   serverTimestamp, getAggregateFromServer, sum, count,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import { firebaseConfig, appCheckSiteKey } from "./firebase-config.js";
-import { MACHINES } from "./machines.js"; // dati di macchinette e bevande: modificali lì
+import { MACHINES, placeOf } from "./machines.js"; // dati di macchinette e bevande: modificali lì
 
 /* ------------------------------------------------------------------ */
 /*  IMPOSTAZIONI                                                       */
@@ -160,7 +160,7 @@ export function ariaFor(e, st) {
   const media = st.known && st.n === 0
     ? "ancora nessun voto"
     : `${st.avg == null ? "nessuna media" : `media ${nfAvg.format(st.avg)}`}, ${countText(st)}`;
-  return `${drinkLabel(e.d)}, ${e.m.name} (${e.m.floor}): ${media}. ` +
+  return `${drinkLabel(e.d)}, ${placeOf(e.m)}: ${media}. ` +
     (my === undefined ? "Non l'hai ancora votata. Tocca per lasciare una recensione." : `Il tuo voto: ${nfVote.format(my)}. Tocca per modificarlo.`);
 }
 
@@ -194,7 +194,7 @@ export function scoreBlock(st) {
 export function photo(m, cls) {
   const img = el("img", cls);
   img.src = `img/${m.id}.jpg`;
-  img.alt = `Foto: ${m.name}, ${m.floor}`;
+  img.alt = `Foto: ${m.floor ? `${m.name}, ${m.floor}` : m.name}`;
   img.loading = "lazy";
   img.onerror = () => img.remove(); // se la foto non c'è, semplicemente non appare
   return img;
@@ -454,7 +454,7 @@ function openSheet(e, spot) {
   if (!state.user || !state.mineLoaded) { toast("Un attimo, ti sto collegando…"); return; }
   const prev = state.mine.get(e.key) ?? null;
   vote = { e, spot, value: prev ?? 0, prev, saving: false, touched: false }; // una nuova recensione parte da 0,0
-  $("#sheet-eyebrow").textContent = e.m.floor;
+  $("#sheet-eyebrow").textContent = e.m.floor ?? "";
   const title = $("#sheet-title");
   title.textContent = e.d.name; // azzera anche il tag della bevanda precedente
   withPremiumTag(title, e.d); // + tag PREMIUM se serve

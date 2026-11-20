@@ -3,7 +3,7 @@ import {
   pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, drinkLabel,
   voteWaitMs, waitMessage,
 } from "./core.js";
-import { MACHINES } from "./machines.js";
+import { MACHINES, placeOf } from "./machines.js";
 
 // ?m=<id>: quella macchinetta in primo piano (senza distinguere maiuscole/minuscole né spazi ai lati).
 // Id mancante → home; id non corrispondente a nessuna macchinetta → home con una riga discreta.
@@ -11,14 +11,14 @@ const rawM = new URLSearchParams(location.search).get("m");
 const wantedM = rawM?.trim().toLowerCase() ?? "";
 const single = MACHINES.find((m) => m.id === wantedM) ?? null;
 const notFound = wantedM !== "" && !single;
-if (single) document.title = `${single.name} (${single.floor}) · Mokatvisor`;
+if (single) document.title = `${placeOf(single)} · Mokatvisor`;
 
 /* ---- Nuove recensioni: solo dalla pagina della macchinetta (?m=<id>) ----
    Dalla home non si lasciano nuove recensioni; le recensioni già date si possono sempre modificare. */
 const canVote = (m) => m === single;
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
-const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "terzo"];
+const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "terzo", "brambillino-sotto"];
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
 const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b)); // finché le medie non arrivano
 
@@ -46,7 +46,7 @@ function bestDrink(m) {
 
 // Home: i piani restano in ordine (6°, 4°, 3°); dentro lo stesso piano prima la macchinetta con più recensioni;
 // a parità l'ordine di prima (principale, poi secondaria)
-const floorOf = (m) => parseInt(m.floor, 10); // "6° piano" → 6
+const floorOf = (m) => parseInt(m.floor, 10) || 0; // "6° piano" → 6; senza piano → 0 (in fondo)
 function sortedMachines() {
   const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
   return [...FALLBACK_ORDER].sort((a, b) =>
@@ -62,7 +62,7 @@ function readOnlyLabel(e, st) {
     : st.n === 0 ? "ancora nessun voto"
     : `media ${nfAvg.format(st.avg)}, ${votesLabel(st.n)}`;
   const my = state.mine.get(e.key);
-  return `${drinkLabel(e.d)}, ${e.m.name} (${e.m.floor}): ${media}.${my === undefined ? "" : ` Il tuo voto: ${nfVote.format(my)}.`} Tocca per i dettagli.`;
+  return `${drinkLabel(e.d)}, ${placeOf(e.m)}: ${media}.${my === undefined ? "" : ` Il tuo voto: ${nfVote.format(my)}.`} Tocca per i dettagli.`;
 }
 
 /* ---- Riquadro di una bevanda: nome e, sotto, "★ media · N voti". Tocco = pannello di voto (mostra il mio voto) ----
@@ -143,7 +143,7 @@ function renderHero(m) {
   const head = el("div", "hero-head");
   const h = el("h1", "hero-title", m.name);
   h.id = "hero-title";
-  head.append(el("p", "eyebrow", m.floor), h);
+  head.append(el("p", "eyebrow", m.floor ?? ""), h);
   sec.append(head, drinksOf(m, "hero"));
   return sec;
 }
@@ -180,7 +180,7 @@ function machineMenu(m) {
   head.setAttribute("aria-expanded", String(isOpen));
   head.setAttribute("aria-controls", `panel-${m.id}`);
   const title = el("span", "mcard-title");
-  title.append(el("span", "eyebrow", m.floor), el("span", "mcard-name", m.name), topLine(m));
+  title.append(el("span", "eyebrow", m.floor ?? ""), el("span", "mcard-name", m.name), topLine(m));
   const chevron = el("span", "chevron");
   chevron.setAttribute("aria-hidden", "true");
   const ms = machineStat(m);
@@ -279,7 +279,7 @@ function openReadOnly(e, spot, kind) {
   if (!roSheet) buildReadOnly();
   roSpot = spot;
   const st = statOf(e.key);
-  $("#ro-eyebrow").textContent = e.m.floor;
+  $("#ro-eyebrow").textContent = e.m.floor ?? "";
   const title = $("#ro-title");
   title.textContent = e.d.name; // azzera anche il tag della bevanda precedente
   withPremiumTag(title, e.d);
