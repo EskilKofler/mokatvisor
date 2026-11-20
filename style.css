@@ -1,4 +1,4 @@
-/* Moka: neutro e minimale, pensato per il telefono (bersagli ≥ 44 px, contrasto AA).
+/* Mokatvisor: neutro e minimale, pensato per il telefono (bersagli ≥ 44 px, contrasto AA).
    Tutti i colori stanno qui sotto, in variabili: tema chiaro di default, scuro automatico. */
 
 [hidden] { display: none !important; }
@@ -116,7 +116,7 @@ h1, h2, h3, p { margin: 0; }
   max-width: 760px; height: 56px; margin: 0 auto; padding: 0 clamp(6px, 2vw, 12px) 0 clamp(12px, 4vw, 16px);
   display: flex; align-items: center; justify-content: space-between; gap: clamp(3px, 1.5vw, 8px);
 }
-/* Marchio: "Moka" in grande e "ISILTEP" piccolo e spaziato sotto. Tutto scala con la larghezza dello schermo
+/* Marchio: "Mokatvisor" in grande e "ISILTEP" piccolo e spaziato sotto. Tutto scala con la larghezza dello schermo
    (clamp + vw) e può accorciarsi con "…": non tocca mai i pulsanti, qualunque sia il carattere del telefono */
 .brand { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; flex: 1 1 auto; min-width: 0; min-height: 44px; color: var(--ink); text-decoration: none; white-space: nowrap; }
 .brand-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: clamp(1.25rem, 6.2vw, 1.5rem); font-weight: 700; letter-spacing: -.04em; line-height: 1; }

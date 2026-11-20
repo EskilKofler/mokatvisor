@@ -62,7 +62,7 @@ function sheetHtml(cards) {
       <div class="qr">${svg}</div>
       <p class="cta">Valuta le bevande di questa macchinetta</p>
       <p class="url">${esc(url)}</p>
-      <p class="brand">Moka · ISILTEP</p>
+      <p class="brand">Mokatvisor · ISILTEP</p>
     </article>`).join("\n");
 
   return `<!DOCTYPE html>
@@ -70,7 +70,7 @@ function sheetHtml(cards) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Moka · cartellini QR</title>
+  <title>Mokatvisor · cartellini QR</title>
   <style>
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; }

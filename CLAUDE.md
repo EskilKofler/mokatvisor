@@ -1,6 +1,6 @@
-# Moka
+# Mokatvisor
 
-Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il sito si chiama "Moka"; repository e indirizzo: moka-isiltep).
+Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il sito si chiama "Mokatvisor"; repository e indirizzo: moka-isiltep).
 
 ## Vincoli
 - **Privacy (vincolo assoluto)**: il sito è completamente anonimo perché tra gli studenti ci sono anche minori di 14 anni.
@@ -44,7 +44,7 @@ Sito statico per votare le bevande delle 5 macchinette della scuola ISILTEP (il 
 - In fondo a ogni pagina: tendina chiusa «Informazioni e privacy» (senza linea sopra; il contenuto si vede solo toccandola) (`<footer id="info">`), costruita da
   `core.js` (testo e costante `CONTACT` = email di contatto). La frase su reCAPTCHA appare solo se App Check è attivo.
   Se cambia ciò che il sito raccoglie o usa, aggiornarla.
-- Barra in alto: solo "Moka" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
+- Barra in alto: solo "Mokatvisor" con un piccolo "ISILTEP" (un unico link alla home) e le voci Macchinette / Classifica. Niente emoji nel logo.
 - Stile: neutro e minimale. Tutti i colori sono variabili CSS in cima a `style.css` (tema chiaro e scuro automatico con
   `prefers-color-scheme`); niente marrone né beige. Sfondo grigio chiarissimo, card bianche con bordo 1px, pulsanti primari
   neri, ambra (`--star`) solo per le stelle, verde (`--ok`) solo per "votato". Raggi 10-14 px, titoli peso 600-700. Per

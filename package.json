@@ -2,7 +2,7 @@
   "name": "moka-isiltep",
   "private": true,
   "type": "module",
-  "description": "Moka (ISILTEP): voti delle macchinette. Il sito non ha build; questo file serve solo agli script.",
+  "description": "Mokatvisor (ISILTEP): voti delle macchinette. Il sito non ha build; questo file serve solo agli script.",
   "scripts": {
     "qr": "node scripts/make-qr.mjs"
   },
