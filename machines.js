@@ -20,6 +20,10 @@ function machine({ id, floor, name, rows }) {
   return { id, floor, name, rows, drinks };
 }
 
+// Ordine delle macchinette nella home (e sui cartellini): 6° piano (prima la secondaria), 4° piano (prima la secondaria),
+// Brambillino 1° piano, Brambillino piano terra e, per ultima, quella del 3° piano
+export const HOME_ORDER = ["sesto-secondaria", "sesto-principale", "quarto-secondaria", "quarto-principale", "brambillino-sopra", "brambillino-sotto", "terzo"];
+
 // Nome con il piano tra parentesi, se la macchinetta ne ha uno
 export const placeOf = (m) => (m.floor ? `${m.name} (${m.floor})` : m.name);
 

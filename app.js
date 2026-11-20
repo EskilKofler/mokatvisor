@@ -3,7 +3,7 @@ import {
   pageHead, refreshButton, renderView, state, nfAvg, nfVote, votesLabel, globalMean, bayesScore, drinkLabel,
   voteWaitMs, waitMessage,
 } from "./core.js";
-import { MACHINES, placeOf } from "./machines.js";
+import { MACHINES, HOME_ORDER, placeOf } from "./machines.js";
 
 // ?m=<id>: quella macchinetta in primo piano (senza distinguere maiuscole/minuscole né spazi ai lati).
 // Id mancante → home; id non corrispondente a nessuna macchinetta → home con una riga discreta.
@@ -17,9 +17,7 @@ if (single) document.title = `${placeOf(single)} · Mokatvisor`;
    Dalla home non si lasciano nuove recensioni; le recensioni già date si possono sempre modificare. */
 const canVote = (m) => m === single;
 
-// Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano (prima la secondaria), 4° piano (prima la secondaria),
-// Brambillino 1° piano, Brambillino piano terra e, per ultima, quella del 3° piano
-const HOME_ORDER = ["sesto-secondaria", "sesto-principale", "quarto-secondaria", "quarto-principale", "brambillino-sopra", "brambillino-sotto", "terzo"];
+// Ordine dei menù nella home: HOME_ORDER in machines.js (lo usa anche lo script dei cartellini)
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
 const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b));
 

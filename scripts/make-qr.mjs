@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Genera in qr/ i QR code e i cartellini stampabili delle macchinette.
 //
-// Uso:   node scripts/make-qr.mjs [indirizzo-base] [--style square|rounded]
+// Uso:   node scripts/make-qr.mjs [indirizzo-base] [--style square|rounded] [--senza-classifica]
 // Es.:   node scripts/make-qr.mjs https://TUOUTENTE.github.io/mokatvisor/ --style square
 //
-// L'indirizzo di ogni macchinetta è <indirizzo-base>?m=<id>. Le macchinette (id, nome, piano) vengono da
-// machines.js, lo stesso file del sito. Prima di scrivere qualsiasi file ogni QR viene riletto con un decoder
+// L'indirizzo di ogni macchinetta è <indirizzo-base>?m=<id>; in più c'è un cartellino «Classifica» (<indirizzo-base>classifica.html,
+// escluso con --senza-classifica). Le macchinette (id, nome, piano, ordine) vengono da machines.js, lo stesso file del sito. Prima di scrivere qualsiasi file ogni QR viene riletto con un decoder
 // indipendente (jsQR) a piena risoluzione, a 200 px e a 200 px sfocato: se anche uno solo fallisce, lo script
 // si ferma con errore. Lo stile "rounded" (default) è accettato solo se supera la verifica, altrimenti si usa "square".
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -13,7 +13,7 @@ import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
-import { MACHINES } from "../machines.js";
+import { MACHINES, HOME_ORDER } from "../machines.js";
 import { qrSvg, qrPng, verifyQr } from "./qr-lib.mjs";
 
 const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "qr");
@@ -29,16 +29,18 @@ function fail(msg) {
 
 function parseArgs(argv) {
   let style = "rounded";
+  let classifica = true;
   let base;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--style") style = argv[++i];
     else if (a.startsWith("--style=")) style = a.slice("--style=".length);
+    else if (a === "--senza-classifica") classifica = false;
     else if (a.startsWith("--")) fail(`opzione sconosciuta: ${a}`);
     else base ??= a;
   }
   if (style !== "square" && style !== "rounded") fail('--style deve essere "square" oppure "rounded"');
-  return { style, base: parseBase(base) };
+  return { style, classifica, base: parseBase(base) };
 }
 
 function parseBase(arg = DEFAULT_BASE) {
@@ -62,6 +64,37 @@ const machineUrl = (base, id) => {
   return u.toString();
 };
 
+// Titoli del cartellino a partire dai nomi del sito, senza la parola «Macchinetta» e senza ripetizioni:
+//   «4° piano» (piccolo) + «Torretta secondaria»; «Brambillino» (piccolo) + «Primo piano»; «Terzo piano» (senza riga piccola)
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+function titlesOf(m) {
+  let title = m.name.replace(/^Macchinetta\s+/, "");
+  let small = m.floor ?? "";
+  const brand = /^(\S+)\s+(.+)$/.exec(title)?.[1];
+  if (small && brand && small.startsWith(`${brand} `)) { // «Brambillino» + «Primo piano»
+    small = brand;
+    title = title.slice(brand.length + 1);
+  }
+  title = capitalize(title.replace(/^del\s+/, ""));
+  if (small !== brand && /piano$/i.test(small) && /piano$/i.test(title)) small = ""; // «3° piano» + «Terzo piano» sarebbe una ripetizione
+  return { title, small };
+}
+
+// I cartellini nell'ordine della home, più «Classifica»
+function itemsOf(base, withClassifica) {
+  const rank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
+  const items = [...MACHINES].sort((a, b) => rank(a) - rank(b)).map((m) => ({
+    id: m.id, url: machineUrl(base, m.id), ...titlesOf(m), text: "Hai preso una bevanda? Scansiona e dai le stelle!",
+  }));
+  if (withClassifica) {
+    items.push({
+      id: "classifica", url: new URL("classifica.html", base).toString(), title: "Classifica", small: "",
+      text: "Chi fa le bevande migliori? Guarda la classifica!",
+    });
+  }
+  return items;
+}
+
 /* ------------------------- QR di ogni macchinetta ------------------------ */
 
 // Genera il QR di una macchinetta in uno stile e lo verifica
@@ -77,7 +110,7 @@ const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // Un cartellino A6 (105 × 148 mm): marchio, piano (se c'è), nome, QR, invito, nota
-function ticketHtml({ m, svg }) {
+function ticketHtml({ item, svg }) {
   return `
     <article class="ticket">
       <header class="top">
@@ -85,11 +118,11 @@ function ticketHtml({ m, svg }) {
         <div class="stars" aria-hidden="true">★★★★★</div>
       </header>
       <div class="where">
-        ${m.floor ? `<p class="floor">${esc(m.floor)}</p>` : ""}
-        <h2>${esc(m.name)}</h2>
+        ${item.small ? `<p class="floor">${esc(item.small)}</p>` : ""}
+        <h2>${esc(item.title)}</h2>
       </div>
-      <div class="qr" role="img" aria-label="QR code di ${esc(m.name)}">${svg}</div>
-      <p class="cta">Hai preso una bevanda? Scansiona e dai le stelle!</p>
+      <div class="qr" role="img" aria-label="QR code: ${esc(item.title)}">${svg}</div>
+      <p class="cta">${esc(item.text)}</p>
       <p class="note">Un gioco tra studenti. Non è un'iniziativa della scuola.</p>
     </article>`;
 }
@@ -169,25 +202,23 @@ function makePdf(htmlPath, pdfPath) {
 
 /* --------------------------------- Main --------------------------------- */
 
-const { style, base } = parseArgs(process.argv.slice(2));
+const { style, base, classifica } = parseArgs(process.argv.slice(2));
+const items = itemsOf(base, classifica);
 
 // 1) Genero e verifico TUTTI i QR prima di scrivere qualsiasi file. Lo stile è uno solo per tutti i cartellini:
 //    se anche un solo QR arrotondato non supera la verifica, uso quello quadrato per tutti.
-const buildAll = (st) => MACHINES.map((m) => {
-  const url = machineUrl(base, m.id);
-  return { m, url, ...buildQr(url, st) };
-});
+const buildAll = (st) => items.map((item) => ({ item, ...buildQr(item.url, st) }));
 let built = buildAll(style);
 if (style === "rounded" && built.some((b) => b.problems.length)) {
   for (const b of built.filter((x) => x.problems.length)) {
-    console.warn(`⚠ ${b.m.id}: lo stile arrotondato non supera la verifica (${b.problems.join("; ")})`);
+    console.warn(`⚠ ${b.item.id}: lo stile arrotondato non supera la verifica (${b.problems.join("; ")})`);
   }
   console.warn("⚠ uso lo stile quadrato per tutti i QR\n");
   built = buildAll("square");
 }
 const failed = built.filter((b) => b.problems.length);
 if (failed.length) {
-  for (const b of failed) console.error(`✘ ${b.m.id}: ${b.problems.join("; ")}`);
+  for (const b of failed) console.error(`✘ ${b.item.id}: ${b.problems.join("; ")}`);
   fail(`${failed.length} QR non decodificabili: non ho scritto nessun file`);
 }
 
@@ -195,9 +226,9 @@ if (failed.length) {
 await mkdir(OUT_DIR, { recursive: true });
 await rm(path.join(OUT_DIR, "stampa.html"), { force: true }); // vecchio foglio, sostituito da cartellini.html
 for (const b of built) {
-  await writeFile(path.join(OUT_DIR, `${b.m.id}.svg`), b.svg);
-  await writeFile(path.join(OUT_DIR, `${b.m.id}.png`), b.png);
-  console.log(`✔ ${b.m.id.padEnd(20)} ${b.style.padEnd(7)} ${b.width} px  ${b.url}`);
+  await writeFile(path.join(OUT_DIR, `${b.item.id}.svg`), b.svg);
+  await writeFile(path.join(OUT_DIR, `${b.item.id}.png`), b.png);
+  console.log(`✔ ${b.item.id.padEnd(20)} ${b.style.padEnd(7)} ${b.width} px  ${b.item.url}`);
 }
 const htmlPath = path.join(OUT_DIR, "cartellini.html");
 await writeFile(htmlPath, cartelliniHtml(built));
