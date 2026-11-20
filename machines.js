@@ -101,7 +101,7 @@ export const MACHINES = [
   // Brambillino piano terra (id brambillino-sotto). Pannello reale: 9 righe, premium nelle prime 4 a sinistra, posto vuoto a sinistra nella riga 9
   // (dove sul pannello c'è «senza bicchiere»).
   machine({
-    id: "brambillino-sotto", floor: "piano terra", name: "Macchinetta Brambillino piano terra",
+    id: "brambillino-sotto", floor: "Brambillino piano terra", name: "Macchinetta Brambillino piano terra",
     rows: [
       [drink("espresso-premium", "Espresso", { premium: true }), drink("caffe-al-ginseng", "Caffè al ginseng")],
       [drink("caffe-lungo-premium", "Caffè lungo", { premium: true }), drink("caffe-macchiato-al-ginseng", "Caffè macchiato al ginseng")],
@@ -117,7 +117,7 @@ export const MACHINES = [
 
   // Brambillino primo piano (id brambillino-sopra). Pannello reale: 6 righe, nessun posto vuoto, nessuna bevanda premium.
   machine({
-    id: "brambillino-sopra", floor: "primo piano", name: "Macchinetta Brambillino primo piano",
+    id: "brambillino-sopra", floor: "Brambillino 1° piano", name: "Macchinetta Brambillino primo piano",
     rows: [
       [drink("espresso", "Caffè espresso"), drink("cappuccino", "Cappuccino")],
       [drink("caffe-lungo", "Caffè lungo"), drink("cappuccino-con-cioccolato", "Cappuccino con cioccolato")],

@@ -18,7 +18,7 @@ if (single) document.title = `${placeOf(single)} · Mokatvisor`;
 const canVote = (m) => m === single;
 
 // Ordine dei menù nella home (i dati in machines.js non si toccano): 6° piano, 4° piano, 3° piano
-const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "terzo", "brambillino-sopra", "brambillino-sotto"];
+const HOME_ORDER = ["sesto-principale", "sesto-secondaria", "quarto-principale", "quarto-secondaria", "brambillino-sopra", "brambillino-sotto", "terzo"];
 const homeRank = (m) => { const i = HOME_ORDER.indexOf(m.id); return i < 0 ? HOME_ORDER.length : i; };
 const FALLBACK_ORDER = [...MACHINES].sort((a, b) => homeRank(a) - homeRank(b)); // finché le medie non arrivano
 
@@ -44,13 +44,15 @@ function bestDrink(m) {
   return best;
 }
 
-// Home: i piani restano in ordine (6°, 4°, 3°); dentro lo stesso piano prima la macchinetta con più recensioni;
-// a parità l'ordine di prima (principale, poi secondaria). Le macchinette senza numero di piano (le due Brambillino) restano in coda, sempre nello stesso ordine
-const floorOf = (m) => parseInt(m.floor, 10) || 0; // "6° piano" → 6; senza piano → 0 (in fondo)
+// Home: 6° piano, 4° piano, Brambillino 1° piano, Brambillino piano terra e, per ultima, quella del 3° piano.
+// Dentro lo stesso piano prima la macchinetta con più recensioni; a parità l'ordine di prima (principale, poi secondaria).
+const LAST_MACHINE = "terzo";
+const floorOf = (m) => parseInt(m.floor?.match(/\d+/)?.[0], 10) || 0; // "6° piano" → 6, "Brambillino 1° piano" → 1, piano terra → 0
 function sortedMachines() {
   const st = new Map(MACHINES.map((m) => [m.id, machineStat(m)]));
   return [...FALLBACK_ORDER].sort((a, b) =>
-    floorOf(b) - floorOf(a) || (floorOf(a) ? st.get(b.id).n - st.get(a.id).n : 0) || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b));
+    (a.id === LAST_MACHINE) - (b.id === LAST_MACHINE) ||
+    floorOf(b) - floorOf(a) || st.get(b.id).n - st.get(a.id).n || FALLBACK_ORDER.indexOf(a) - FALLBACK_ORDER.indexOf(b));
 }
 
 const open = new Set(); // menù aperti nella home: le medie si leggono solo per queste macchinette
@@ -166,7 +168,10 @@ function topLine(m) {
   if (m.drinks.some((d) => statOf(keyOf(m.id, d.id)).pending)) { line.append(skel("w-80")); return line; }
   const best = bestDrink(m);
   if (!best) { line.classList.add("none"); line.textContent = "Ancora nessuna recensione"; return line; }
-  line.append("Top: ", withPremiumTag(el("b", "", best.d.name), best.d), " ", el("span", "tile-star", "★"), ` ${nfAvg.format(best.avg)}`);
+  // stella e numero vanno a capo insieme (mai la stella da sola in fondo a una riga)
+  const score = el("span", "top-score");
+  score.append(el("span", "tile-star", "★"), ` ${nfAvg.format(best.avg)}`);
+  line.append("Top: ", withPremiumTag(el("b", "", best.d.name), best.d), " ", score);
   return line;
 }
 function machineMenu(m) {
